@@ -52,7 +52,10 @@ func (s *AppSqlite) UpsertLoginInfo(l *LoginInfo) (err error) {
 	}
 	// Update login time if login info exist
 	query.LoginTime = time.Now().Local()
-	res = s.DB.Save(&query)
+	query.Remark = l.Remark
+	query.Prepath = l.Prepath
+	res = s.DB.Where("access_key = ? AND secret_key = ? AND endpoint = ?",
+		query.AccessKey, query.SecretKey, query.Endpoint).Save(&query)
 	if res.Error != nil {
 		return res.Error
 	}

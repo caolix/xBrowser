@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"log"
 	"time"
 	"xBrowser/app/db"
 	"xBrowser/app/s3lib"
@@ -9,6 +10,7 @@ import (
 
 // Greet returns a greeting for the given name
 func (a *App) Login(l db.LoginInfo, needSave bool) string {
+	log.Println(l.Endpoint, l.AccessKey, l.SecretKey, needSave)
 	a.S3Client = s3lib.NewS3(l.Endpoint, l.AccessKey, l.SecretKey)
 	_, err := a.S3Client.ListBuckets()
 	if err != nil {
@@ -44,7 +46,9 @@ func (a *App) LoadLatestLoginInfo() db.LoginInfo {
 		if err != nil {
 			return info
 		}
-		return *res
+		if res != nil {
+			return *res
+		}
 	}
 	return info
 }

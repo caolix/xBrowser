@@ -2,8 +2,8 @@ export namespace db {
 	
 	export class LoginInfo {
 	    endpoint: string;
-	    accessKey: string;
-	    secretKey: string;
+	    ak: string;
+	    sk: string;
 	    remark: string;
 	    prepath: string;
 	    // Go type: time.Time
@@ -16,8 +16,8 @@ export namespace db {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.endpoint = source["endpoint"];
-	        this.accessKey = source["accessKey"];
-	        this.secretKey = source["secretKey"];
+	        this.ak = source["ak"];
+	        this.sk = source["sk"];
 	        this.remark = source["remark"];
 	        this.prepath = source["prepath"];
 	        this.loginTime = this.convertValues(source["loginTime"], null);

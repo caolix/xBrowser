@@ -62,10 +62,19 @@
 import {reactive} from 'vue'
 import {CheckDbError, LoadLatestLoginInfo, Login} from '../../wailsjs/go/app/App'
 import {useRouter} from "vue-router";
-import {ElMessage} from 'element-plus'
+import {db} from '../../wailsjs/go/models'
+import {ElLoading, ElMessage} from 'element-plus'
 
 export default {
   setup: function () {
+    // NOTE: this code MUST before than ElLoading
+    const router = useRouter()
+    const loading = ElLoading.service({
+      lock: true,
+      text: 'Loading...',
+      background: 'rgba(0, 0, 0, 0.7)',
+    })
+
     const data = reactive({
       ak: "",
       sk: "",
@@ -74,7 +83,7 @@ export default {
       remark: "",
       save: false,
     })
-    const router = useRouter()
+
     CheckDbError().then(err => {
       if (err !== "") {
         ElMessage({
@@ -86,31 +95,34 @@ export default {
       }
     })
     LoadLatestLoginInfo().then(info => {
-          data.ak = info.accessKey
-          data.sk = info.secretKey
+          data.ak = info.ak
+          data.sk = info.sk
           data.endpoint = info.endpoint
           data.prepath = info.prepath
           data.remark = info.remark
+          loading.close()
         }
     )
 
     function login() {
       let info = new db.LoginInfo()
       info.endpoint = data.endpoint
-      info.accessKey = data.accessKey
-      info.secretKey = data.secretKey
+      info.ak = data.ak
+      info.sk = data.sk
       info.prepath = data.prepath
       info.remark = data.remark
       Login(info, data.save).then((res) => {
         if (res === "") {
+          console.log(router)
           router.push("/main")
-          return
+        } else {
+          ElMessage.error(res)
         }
-        ElMessage.error(res)
       })
     }
 
     return {
+      loading,
       data,
       router,
       login,
