@@ -3,8 +3,6 @@
     <img id="logo" alt="Wails logo" src="../assets/images/comeon.gif"/>
     <div class="container">
       <div class="input">
-        <div id="input" class="input-box">
-          <div class="demo-input-suffix">
             <span style="color: #ff0000"> * </span><span class="demo-input-label">Endpoint:</span>
             <el-row :gutter="10">
               <el-input
@@ -51,8 +49,6 @@
             <el-button type="primary" class="submit" @click="login">Login</el-button>
           </div>
         </div>
-      </div>
-    </div>
   </main>
 </template>
 
@@ -66,7 +62,7 @@ import {db} from '../../wailsjs/go/models'
 import {ElLoading, ElMessage} from 'element-plus'
 
 export default {
-  setup: function () {
+  setup () {
     // NOTE: this code MUST before than ElLoading
     const router = useRouter()
     const loading = ElLoading.service({
@@ -104,7 +100,7 @@ export default {
         }
     )
 
-    function login() {
+    const login = () => {
       let info = new db.LoginInfo()
       info.endpoint = data.endpoint
       info.ak = data.ak
@@ -124,7 +120,6 @@ export default {
     return {
       loading,
       data,
-      router,
       login,
     }
   }
@@ -136,7 +131,7 @@ export default {
 <style scoped>
 
 .el-checkbox {
-  color: #ffffff;
+  color: #000000;
 }
 
 .submit {
@@ -150,12 +145,14 @@ export default {
   display: inline-block;
   width: 130px;
   margin-top: 20px;
+  color: #000000;
 }
 
 .container {
   width: 420px;
   text-align: left;
   margin: 50px auto 20px auto;
+  border: 1px solid #EEE;
   min-height: 600px;
 }
 

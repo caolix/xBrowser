@@ -44,3 +44,22 @@ export namespace db {
 
 }
 
+export namespace app {
+	
+	export class ListBucketResult {
+	    buckets: string[];
+	    err: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ListBucketResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.buckets = source["buckets"];
+	        this.err = source["err"];
+	    }
+	}
+
+}
+

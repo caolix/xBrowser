@@ -6,8 +6,16 @@ export function CheckDbError() {
   return window['go']['app']['App']['CheckDbError']();
 }
 
+export function DeleteBucket(arg1) {
+  return window['go']['app']['App']['DeleteBucket'](arg1);
+}
+
 export function ListAllLoginInfo() {
   return window['go']['app']['App']['ListAllLoginInfo']();
+}
+
+export function ListBuckets() {
+  return window['go']['app']['App']['ListBuckets']();
 }
 
 export function LoadLatestLoginInfo() {
@@ -16,4 +24,8 @@ export function LoadLatestLoginInfo() {
 
 export function Login(arg1, arg2) {
   return window['go']['app']['App']['Login'](arg1, arg2);
+}
+
+export function MakeBucket(arg1) {
+  return window['go']['app']['App']['MakeBucket'](arg1);
 }

@@ -1,11 +1,14 @@
 <template>
-  <div>main view</div>
   <router-view/>
 </template>
 
 <script>
+import MainMenu from "./MainMenu.vue";
 export default {
-  name: "MainView"
+  components: {MainMenu},
+  setup() {
+    return {}
+  }
 }
 </script>
 

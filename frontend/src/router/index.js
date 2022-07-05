@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory } from "vue-router";
 const login = () => import ("../components/Login.vue")
 const main = () => import ("../components/MainView.vue")
+const bucketList = () => import ("../components/BucketList.vue")
 const routes = [
     {
         path: "/",
@@ -11,6 +12,14 @@ const routes = [
         path: "/main",
         name: "MainView",
         component: main,
+        children: [
+            {
+                path: '',
+                components: {
+                    default: bucketList()
+                }
+            }
+        ]
     },
 ];
 

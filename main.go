@@ -23,7 +23,7 @@ func main() {
 	err := wails.Run(&options.App{
 		Title:      "xBrowser",
 		Width:      1024,
-		Height:     768,
+		Height:     1024,
 		Assets:     assets,
 		OnStartup:  app.Startup,
 		OnDomReady: app.DomReady,
