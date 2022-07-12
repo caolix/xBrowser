@@ -5,17 +5,17 @@ import (
 	"github.com/journeymidnight/aws-sdk-go/aws/credentials"
 	"github.com/journeymidnight/aws-sdk-go/aws/session"
 	"github.com/journeymidnight/aws-sdk-go/service/s3"
+	"github.com/journeymidnight/aws-sdk-go/service/s3/s3manager"
 )
 
 type S3Client struct {
-	Client *s3.S3
+	Client   *s3.S3
+	Uploader *s3manager.Uploader
 }
 
 func NewS3(Endpoint, AccessKey, SecretKey string) *S3Client {
 	creds := credentials.NewStaticCredentials(AccessKey, SecretKey, "")
-
-	// By default make sure a region is specified
-	s3client := s3.New(session.Must(session.NewSession(
+	sess := session.Must(session.NewSession(
 		&aws.Config{
 			Credentials: creds,
 			DisableSSL:  aws.Bool(true),
@@ -23,7 +23,10 @@ func NewS3(Endpoint, AccessKey, SecretKey string) *S3Client {
 			Region:      aws.String("none"),
 		},
 	),
-	),
 	)
-	return &S3Client{s3client}
+	// By default make sure a region is specified
+	return &S3Client{
+		Client:   s3.New(sess),
+		Uploader: s3manager.NewUploader(sess),
+	}
 }

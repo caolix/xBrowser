@@ -1,1 +1,0 @@
-function t(n,o){return window.go.app.App.Login(n,o)}function e(n){return window.go.app.App.MakeBucket(n)}function p(){return window.go.app.App.CheckDbError()}function a(n){return window.go.app.App.DeleteBucket(n)}function r(){return window.go.app.App.ListBuckets()}function i(){return window.go.app.App.LoadLatestLoginInfo()}export{p as C,a as D,i as L,e as M,t as a,r as b};

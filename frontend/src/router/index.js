@@ -2,6 +2,8 @@ import { createRouter, createWebHashHistory } from "vue-router";
 const login = () => import ("../components/Login.vue")
 const main = () => import ("../components/MainView.vue")
 const bucketList = () => import ("../components/BucketList.vue")
+const objectList = () => import ("../components/ObjectList.vue")
+
 const routes = [
     {
         path: "/",
@@ -16,8 +18,12 @@ const routes = [
             {
                 path: '',
                 components: {
-                    default: bucketList()
-                }
+                    default: bucketList
+                },
+            },
+            {
+                path: 'bucket/:bucketName',
+                component : objectList,
             }
         ]
     },

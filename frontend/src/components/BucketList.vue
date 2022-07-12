@@ -7,12 +7,15 @@
     </el-col>
     <el-col :span=4>
       <el-button plain type="danger" @click="logout">
-        <el-icon style="padding-right: 6px"><SwitchButton /></el-icon> Logout
+        <el-icon style="padding-right: 6px">
+          <SwitchButton/>
+        </el-icon>
+        Logout
       </el-button>
     </el-col>
   </el-row>
 
-<!--  Create Bucket Dialog-->
+  <!--  Create Bucket Dialog-->
   <el-dialog v-model="dialogFormVisible" title="Create Bucket" destroy-on-close>
     <span>Name:</span>
     <el-input v-model="form.bucketname" autocomplete="off"/>
@@ -26,17 +29,26 @@
     </template>
   </el-dialog>
 
+  <!--  BucketList-->
   <div class="container">
     <el-table
         :data="bucketList"
         max-height="800"
         class="table"
     >
-<!--      <el-table-column type="index" label="#" width="100"/>-->
+      <!--      <el-table-column type="index" label="#" width="100"/>-->
       <el-table-column prop="name" label="BucketName" width="200">
         <template #default="scope">
-          <el-icon style="padding-right: 2px; padding-top: 2px"><Menu /></el-icon>
-          <el-link>{{ tableData[scope.$index].name }}</el-link>
+          <el-icon style="padding-right: 2px; padding-top: 2px">
+            <Menu/>
+          </el-icon>
+            <el-button
+                link
+                size="small"
+                @click="toBucket(tableData[scope.$index].name)"
+            >
+              {{ tableData[scope.$index].name }}
+            </el-button>
         </template>
       </el-table-column>
       <el-table-column label="Operations">
@@ -54,7 +66,9 @@
                   size="small"
                   type="danger"
               >
-                <el-icon style="padding-right: 6px"><Delete /></el-icon>
+                <el-icon style="padding-right: 6px">
+                  <Delete/>
+                </el-icon>
                 Delete
               </el-button>
             </template>
@@ -79,7 +93,7 @@ export default {
 
     var dialogFormVisible = ref(false)
 
-    const router = useRouter();
+    const router = useRouter()
     const bucketList = computed(() => {
       return data.tableData
     })
@@ -136,7 +150,7 @@ export default {
 
     const toBucket = (b) => {
       router.push({
-        path: '/main/bucket/' + b.name,
+        path: '/main/bucket/' + b,
       })
     }
 
