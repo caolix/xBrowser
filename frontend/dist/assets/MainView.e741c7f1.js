@@ -1,1 +1,0 @@
-import{_ as o,b as r,o as t,h as n}from"./index.3ac13683.js";const s={setup(){return{}}};function a(c,_,p,i,u,f){const e=r("router-view");return t(),n(e)}var d=o(s,[["render",a]]);export{d as default};

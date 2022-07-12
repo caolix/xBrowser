@@ -1,6 +1,7 @@
 package app
 
 import (
+	"sort"
 	"time"
 	"xBrowser/app/util"
 )
@@ -69,5 +70,8 @@ func (a *App) ListObjects(bucketName, marker, prefix string, maxKeys int64) List
 	for _, prefix := range out.CommonPrefixes {
 		res.Prefixes = append(res.Prefixes, *prefix.Prefix)
 	}
+	sort.Slice(res.Prefixes, func(i, j int) bool {
+		return res.Prefixes[i] < res.Prefixes[j]
+	})
 	return res
 }

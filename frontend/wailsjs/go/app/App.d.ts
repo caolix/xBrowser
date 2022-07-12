@@ -3,6 +3,12 @@
 import {db} from '../models';
 import {app} from '../models';
 
+export function Login(arg1:db.LoginInfo,arg2:boolean):Promise<string>;
+
+export function MakeBucket(arg1:string):Promise<string>;
+
+export function CheckDbError():Promise<string>;
+
 export function DeleteBucket(arg1:string):Promise<string>;
 
 export function ListAllLoginInfo():Promise<Array<db.LoginInfo>>;
@@ -12,9 +18,3 @@ export function ListBuckets():Promise<app.ListBucketResult>;
 export function ListObjects(arg1:string,arg2:string,arg3:string,arg4:number):Promise<app.ListObjectResult>;
 
 export function LoadLatestLoginInfo():Promise<db.LoginInfo>;
-
-export function Login(arg1:db.LoginInfo,arg2:boolean):Promise<string>;
-
-export function MakeBucket(arg1:string):Promise<string>;
-
-export function CheckDbError():Promise<string>;

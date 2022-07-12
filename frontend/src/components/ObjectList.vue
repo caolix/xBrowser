@@ -76,15 +76,20 @@ export default {
     const route = useRoute()
     const router = useRouter()
     const bucketName = route.params.bucketName
-    let prefix = ''
-    let showPath = ref('s3://' + bucketName + '/')
+    let prefix = ref('')
+    const basePath = 's3://' + bucketName + '/'
+    let showPath = computed(() => {
+      return basePath + prefix.value
+    })
 
     const backward = () => {
-      if (prefix === '') {
+      if (prefix.value === '') {
         router.push('/main')
       } else {
-
-        listObjects(bucketName, '', prefix, 100)
+        var p = prefix.value
+        var i = p.slice(0, p.length - 1).lastIndexOf('/')
+        prefix.value = p.slice(0, i+1)
+        listObjects(bucketName, '', prefix.value, 100)
       }
     }
 
@@ -97,7 +102,7 @@ export default {
     })
 
     onMounted(() => {
-      listObjects(bucketName, '', prefix, 100)
+      listObjects(bucketName, '', prefix.value, 100)
     })
 
     const listObjects = (bucketName, marker, prefix, maxKey) => {
@@ -149,23 +154,16 @@ export default {
     }
 
     const deleteObject = (str) => {
-      var s = 'aaaa/bbbb/cccc/'
-      var o = s + 'ooo'
-      var a = s.lastIndexOf('/')
-      var ss = o.slice(0, s.length - 1)
-      console.log(s)
-      console.log(a)
-      console.log(o)
+
 
     }
 
     const toPreview = (data) => {
       if (data.type === 'Folder') {
-        prefix += data.key
-        showPath.value += data.key
-        listObjects(bucketName, '', prefix, 100)
+        prefix.value += data.key
+        listObjects(bucketName, '', prefix.value, 100)
       } else {
-        console.log(prefix, data.key)
+        console.log(prefix.value, data.key)
       }
     }
 
@@ -178,6 +176,7 @@ export default {
       toPreview,
       backward,
       objectList,
+      prefix,
       showPath,
       bucketName
     }
