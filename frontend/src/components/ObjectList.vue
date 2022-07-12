@@ -26,6 +26,7 @@
         :data="objectList"
         max-height="800"
         class="table"
+        v-loading="loading"
     >
       <el-table-column prop="key" label="Name" width="400">
         <template #default="scope">
@@ -68,13 +69,14 @@
 
 import {useRoute, useRouter} from "vue-router";
 import {computed, onMounted, reactive, ref, toRefs} from "vue"
-import {ListObjects} from "../../wailsjs/go/app/App";
+import {DeleteObject, GetObject, ListObjects} from "../../wailsjs/go/app/App";
 import {ElMessage} from "element-plus";
 
 export default {
   setup() {
     const route = useRoute()
     const router = useRouter()
+    const loading = ref(true)
     const bucketName = route.params.bucketName
     let prefix = ref('')
     const basePath = 's3://' + bucketName + '/'
@@ -108,6 +110,7 @@ export default {
     const listObjects = (bucketName, marker, prefix, maxKey) => {
       data.tableData = []
       ListObjects(bucketName, marker, prefix, maxKey).then(res => {
+        loading.value = true
         if (res.err !== '') {
           ElMessage.error(res)
         } else {
@@ -142,6 +145,7 @@ export default {
             })
           }
         }
+        loading.value = false
       })
     }
 
@@ -149,13 +153,25 @@ export default {
 
     }
 
-    const getObject = () => {
-
+    const getObject = (key) => {
+      console.log("getObject: " + prefix.value + key)
+      GetObject(bucketName, prefix.value + key, true).then(res => {
+        if (res.err !== '' ){
+          ElMessage.error("delete object failed: ", res.err)
+        }
+        // TODO: add to process bar
+      })
     }
 
-    const deleteObject = (str) => {
-
-
+    const deleteObject = (key) => {
+      console.log("deleteObject: " + prefix.value + key)
+      DeleteObject(bucketName, prefix.value + key).then(res => {
+        if (res.err !== '' ){
+          ElMessage.error("delete object failed: ", res.err)
+        } else {
+          listObjects(bucketName, '', prefix.value, 100)
+        }
+      })
     }
 
     const toPreview = (data) => {
@@ -175,6 +191,7 @@ export default {
       deleteObject,
       toPreview,
       backward,
+      loading,
       objectList,
       prefix,
       showPath,

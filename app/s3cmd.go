@@ -1,6 +1,9 @@
 package app
 
 import (
+	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"io"
+	"os"
 	"sort"
 	"time"
 	"xBrowser/app/util"
@@ -74,4 +77,57 @@ func (a *App) ListObjects(bucketName, marker, prefix string, maxKeys int64) List
 		return res.Prefixes[i] < res.Prefixes[j]
 	})
 	return res
+}
+
+type ObjectHandlerResult struct {
+	Err string `json:"err"`
+}
+
+func (a *App) GetObject(bucketName, key string, override bool) ObjectHandlerResult {
+
+	path, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{})
+	if err != nil {
+		return ObjectHandlerResult{Err: err.Error()}
+	}
+	out, err := a.S3Client.GetObjectOutPut(bucketName, key)
+	if err != nil {
+		return ObjectHandlerResult{Err: err.Error()}
+	}
+	filePath := path + string(os.PathSeparator) + key
+	fileExist, err := PathExists(filePath)
+	if err != nil {
+		return ObjectHandlerResult{Err: err.Error()}
+	}
+	if fileExist {
+		return ObjectHandlerResult{Err: "File already exists."}
+	}
+	f, err := os.Create(filePath)
+	if err != nil {
+		return ObjectHandlerResult{Err: err.Error()}
+	}
+	_, err = io.Copy(f, out.Body)
+	if err != nil {
+		delErr := os.Remove(filePath)
+		return ObjectHandlerResult{Err: err.Error() + delErr.Error()}
+	}
+	return ObjectHandlerResult{}
+}
+
+func PathExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
+}
+
+func (a *App) DeleteObject(bucketName, key string) ObjectHandlerResult {
+	err := a.S3Client.DeleteObject(bucketName, key)
+	if err != nil {
+		return ObjectHandlerResult{Err: err.Error()}
+	}
+	return ObjectHandlerResult{}
 }

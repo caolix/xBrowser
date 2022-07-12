@@ -35,6 +35,7 @@
         :data="bucketList"
         max-height="800"
         class="table"
+        v-loading="loading"
     >
       <!--      <el-table-column type="index" label="#" width="100"/>-->
       <el-table-column prop="name" label="BucketName" width="200">
@@ -87,6 +88,7 @@ import {useRouter} from "vue-router"
 
 export default {
   setup() {
+    const loading = ref(true)
     let form = reactive({
       bucketname: '',
     })
@@ -108,6 +110,7 @@ export default {
 
     const listBuckets = () => {
       ListBuckets().then(res => {
+        loading.value = true
         if (res.err !== '') {
           ElMessage.error(res)
         } else {
@@ -118,6 +121,7 @@ export default {
             data.tableData.push(bucketInfo)
           })
         }
+        loading.value = false
       })
     }
 
@@ -164,6 +168,7 @@ export default {
       dialogFormVisible,
       ...toRefs(data),
       form,
+      loading,
       toCreateBucket,
       toDeleteBucket,
       toBucket,
