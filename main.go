@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"fmt"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/logger"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -17,18 +18,20 @@ var icon []byte
 
 func main() {
 	// Create an instance of the app structure
+	fmt.Println("starting app...")
 	app := app.NewApp()
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:      "xBrowser",
-		Width:      1024,
-		Height:     1024,
-		Assets:     assets,
-		OnStartup:  app.Startup,
-		OnDomReady: app.DomReady,
-		OnShutdown: app.Shutdown,
-		LogLevel:   logger.DEBUG,
+		Title:         "xBrowser",
+		Width:         1024,
+		Height:        1024,
+		Assets:        assets,
+		OnStartup:     app.Startup,
+		OnDomReady:    app.DomReady,
+		OnShutdown:    app.Shutdown,
+		OnBeforeClose: app.BeforeClose,
+		LogLevel:      logger.DEBUG,
 		Bind: []interface{}{
 			app,
 		},
@@ -38,14 +41,14 @@ func main() {
 			//WebviewIsTransparent: true,
 			//WindowIsTranslucent:  true,
 			About: &mac.AboutInfo{
-				Title:   "Wails Template Vue",
-				Message: "A Wails template based on Vue and Vue-Router",
+				Title:   "xBrowser",
+				Message: "A oss browser written by wails.",
 				Icon:    icon,
 			},
 		},
 	})
 
 	if err != nil {
-		println("Error:", err)
+		fmt.Println("Error:", err)
 	}
 }

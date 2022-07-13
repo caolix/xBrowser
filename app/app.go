@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"xBrowser/app/db"
@@ -28,7 +29,13 @@ type AppConfig struct {
 
 // NewApp creates a new App application struct
 func NewApp() *App {
-	dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
+	fmt.Println("NewApp", os.Args[0], filepath.Dir(os.Args[0]))
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+	fmt.Println(dir)
 	DefaultConfig := &AppConfig{
 		DbType:  db.TYPE_SQLITE,
 		Address: dir,
@@ -43,6 +50,7 @@ func NewApp() *App {
 func (a *App) Startup(ctx context.Context) {
 	// Perform your setup here
 	// 在这里执行初始化设置
+	fmt.Println("Startup")
 	a.ctx = ctx
 	// TODO: use OS_ENV to choose db config, load it and then set db type
 	switch a.Config.DbType {
@@ -58,11 +66,13 @@ func (a *App) Startup(ctx context.Context) {
 func (a *App) DomReady(ctx context.Context) {
 	// Add your action here
 	// 在这里添加你的操作
+	fmt.Println("DomReady")
 	if a.DB != nil {
 		a.LoadDbErr = a.DB.Init(a.Config.Address)
 		if a.LoadDbErr != nil {
 			a.DB = nil
 		}
+		fmt.Println(a.LoadDbErr)
 	}
 }
 
@@ -71,7 +81,23 @@ func (a *App) DomReady(ctx context.Context) {
 func (a *App) Shutdown(ctx context.Context) {
 	// Perform your teardown here
 	// 在此处做一些资源释放的操作
-	if a.DB != nil {
-		a.DB.Close()
-	}
+	//if a.DB != nil {
+	//	a.DB.Close()
+	//}
+}
+
+func (a *App) BeforeClose(ctx context.Context) bool {
+	//dialog, err := runtime.MessageDialog(ctx, runtime.MessageDialogOptions{
+	//	Type:          runtime.QuestionDialog,
+	//	Title:         "Quit?",
+	//	Message:       "Are you sure you want to quit?",
+	//	Buttons:       []string{"No", "Yes"},
+	//	DefaultButton: "Yes",
+	//})
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return false
+	//}
+	//return dialog != "Yes"
+	return false
 }

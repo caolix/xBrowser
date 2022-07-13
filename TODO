@@ -1,6 +1,6 @@
 # Frontend
-- [ ] Support progress bar when upload
 - [ ] Support multiple tabs to show different client
+- [ ] Support prefix
 
 # Backend
 - [ ] Support create muti-type-oss-client
