@@ -1,30 +1,30 @@
 package s3lib
 
 import (
-	"bytes"
 	"github.com/journeymidnight/aws-sdk-go/aws"
 	"github.com/journeymidnight/aws-sdk-go/service/s3"
+	"github.com/journeymidnight/aws-sdk-go/service/s3/s3manager"
+	"io"
 )
 
-func (s3client *S3Client) PutObjectWithOpt(bucketName, key, value string, options ...PutObjectOption) (err error) {
-	params := &s3.PutObjectInput{
+func (s3client *S3Client) PutObjectWithOpt(bucketName, key string, body io.Reader, options ...PutObjectOption) (err error) {
+	params := &s3manager.UploadInput{
+		Body:   body,
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(key),
-		Body:   bytes.NewReader([]byte(value)),
 	}
 	for _, o := range options {
 		o(params)
 	}
-	if _, err = s3client.Client.PutObject(params); err != nil {
-		return err
-	}
-	return
+	_, err = s3client.Uploader.Upload(params)
+	return err
 }
 
-type PutObjectOption func(p *s3.PutObjectInput)
+type PutObjectOption func(p *s3manager.UploadInput)
 
+// TODO: implement other options
 func WithContentType(contentType string) PutObjectOption {
-	return func(p *s3.PutObjectInput) {
+	return func(p *s3manager.UploadInput) {
 		p.ContentType = aws.String(contentType)
 	}
 }

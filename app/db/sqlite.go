@@ -33,12 +33,13 @@ func (s *AppSqlite) Close() {
 }
 
 func (s *AppSqlite) UpsertLoginInfo(l *LoginInfo) (err error) {
-	query := &LoginInfo{
+	query := LoginInfo{
 		Endpoint:  l.Endpoint,
 		AccessKey: l.AccessKey,
 		SecretKey: l.SecretKey,
 	}
-	res := s.DB.First(&query)
+	info := LoginInfo{}
+	res := s.DB.Where(&query).First(&info)
 	if res.Error != nil {
 		// Insert login info if not exist
 		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
@@ -51,11 +52,11 @@ func (s *AppSqlite) UpsertLoginInfo(l *LoginInfo) (err error) {
 		return res.Error
 	}
 	// Update login time if login info exist
-	query.LoginTime = time.Now().Local()
-	query.Remark = l.Remark
-	query.Prepath = l.Prepath
+	info.LoginTime = time.Now().Local()
+	info.Remark = l.Remark
+	info.Prepath = l.Prepath
 	res = s.DB.Where("access_key = ? AND secret_key = ? AND endpoint = ?",
-		query.AccessKey, query.SecretKey, query.Endpoint).Save(&query)
+		l.AccessKey, l.SecretKey, l.Endpoint).Save(&info)
 	if res.Error != nil {
 		return res.Error
 	}

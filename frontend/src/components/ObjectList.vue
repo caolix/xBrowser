@@ -21,6 +21,21 @@
     </el-col>
   </el-row>
 
+  <!--Dialog-->
+  <el-dialog v-model="dialogFormVisible" title="Progress">
+    <el-progress type="dashboard" :percentage="percentage" :color="colors">
+      <template #default="{ percentage }">
+        <span class="percentage-value">{{ percentage }}%</span>
+        <span class="percentage-label">{{ percentageLabel }}</span>
+      </template>
+    </el-progress>
+    <template #footer>
+      <span class="dialog-footer">
+        <el-button @click="dialogFormVisible = false">Cancel</el-button>
+      </span>
+    </template>
+  </el-dialog>
+
   <div class="container">
     <el-table
         :data="objectList"
@@ -53,12 +68,23 @@
           <el-button size="small" @click="getObject(tableData[scope.$index].key)">
             Download
           </el-button>
-          <el-button
-              size="small"
-              type="danger"
-              @click="deleteObject(tableData[scope.$index].key)">
-            Remove
-          </el-button>
+          <el-popconfirm
+              confirm-button-text="Yes"
+              cancel-button-text="No"
+              :icon="QuestionFilled"
+              icon-color="#FF0000"
+              title="Are you sure to delete this object?"
+              @confirm="deleteObject(tableData[scope.$index].key)"
+          >
+            <template #reference>
+              <el-button
+                  size="small"
+                  type="danger"
+              >
+                Remove
+              </el-button>
+            </template>
+          </el-popconfirm>
         </template>
       </el-table-column>
     </el-table>
@@ -69,13 +95,15 @@
 
 import {useRoute, useRouter} from "vue-router";
 import {computed, onMounted, reactive, ref, toRefs} from "vue"
-import {DeleteObject, GetObject, ListObjects} from "../../wailsjs/go/app/App";
+import {DeleteObject, GetObject, ListObjects, PutObject} from "../../wailsjs/go/app/App";
 import {ElMessage} from "element-plus";
+import {EventsOn} from "../../wailsjs/runtime";
 
 export default {
   setup() {
     const route = useRoute()
     const router = useRouter()
+    var dialogFormVisible = ref(false)
     const loading = ref(true)
     const bucketName = route.params.bucketName
     let prefix = ref('')
@@ -83,6 +111,13 @@ export default {
     let showPath = computed(() => {
       return basePath + prefix.value
     })
+    const percentage = ref(0)
+    const percentageLabel = ref('')
+
+    const colors = [
+      { color: '#1989fa', percentage: 100 },
+      { color: '#5cb87a', percentage: 101 },
+    ]
 
     const backward = () => {
       if (prefix.value === '') {
@@ -90,7 +125,7 @@ export default {
       } else {
         var p = prefix.value
         var i = p.slice(0, p.length - 1).lastIndexOf('/')
-        prefix.value = p.slice(0, i+1)
+        prefix.value = p.slice(0, i + 1)
         listObjects(bucketName, '', prefix.value, 100)
       }
     }
@@ -150,23 +185,56 @@ export default {
     }
 
     const putObject = () => {
-
+      var eventDialog = "uploadDialog"
+      var eventProgress = "u" + prefix.value + Math.random()
+      percentageLabel.value = 'Uploading...'
+      EventsOn(eventDialog, () => {
+        dialogFormVisible.value = true
+      })
+      percentage.value = 0
+      EventsOn(eventProgress, (data) => {
+        percentage.value = data
+      })
+      PutObject(bucketName, prefix.value, eventDialog, eventProgress).then(res => {
+        if (res.err !== '') {
+          ElMessage.error(res.err)
+          percentageLabel.value = 'Failed'
+        } else {
+          percentage.value = 100
+          listObjects(bucketName, '', prefix.value, 100)
+          percentageLabel.value = 'Finished'
+        }
+      })
     }
 
     const getObject = (key) => {
-      console.log("getObject: " + prefix.value + key)
-      GetObject(bucketName, prefix.value + key, true).then(res => {
-        if (res.err !== '' ){
-          ElMessage.error("delete object failed: ", res.err)
+      var eventDialog = "downloadDialog"
+      var eventProgress = "d" + prefix.value + key + Math.random()
+      percentageLabel.value = 'Downloading...'
+      EventsOn(eventDialog, () => {
+        dialogFormVisible.value = true
+      })
+      // FIXME: fix range download
+      percentage.value = 0
+      EventsOn(eventProgress, (data) => {
+        percentage.value = data
+      })
+
+      GetObject(bucketName, prefix.value + key, true, eventDialog, eventProgress).then(res => {
+        if (res.err !== '') {
+          ElMessage.error(res.err)
+          percentageLabel.value = 'Failed'
+        } else {
+          percentage.value = 100
+          percentageLabel.value = 'Finished'
         }
-        // TODO: add to process bar
       })
     }
 
     const deleteObject = (key) => {
       console.log("deleteObject: " + prefix.value + key)
       DeleteObject(bucketName, prefix.value + key).then(res => {
-        if (res.err !== '' ){
+        if (res.err !== '') {
           ElMessage.error("delete object failed: ", res.err)
         } else {
           listObjects(bucketName, '', prefix.value, 100)
@@ -191,11 +259,15 @@ export default {
       deleteObject,
       toPreview,
       backward,
+      dialogFormVisible,
       loading,
       objectList,
       prefix,
       showPath,
-      bucketName
+      bucketName,
+      percentage,
+      percentageLabel,
+      colors
     }
   }
 }
@@ -209,4 +281,17 @@ export default {
   border: 1px solid #EEE;
   min-height: 600px;
 }
+
+.percentage-value {
+  display: block;
+  margin-top: 10px;
+  font-size: 28px;
+}
+
+.percentage-label {
+  display: block;
+  margin-top: 10px;
+  font-size: 12px;
+}
+
 </style>

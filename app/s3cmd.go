@@ -1,10 +1,12 @@
 package app
 
 import (
+	"fmt"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"io"
 	"os"
 	"sort"
+	"strings"
 	"time"
 	"xBrowser/app/util"
 )
@@ -83,8 +85,64 @@ type ObjectHandlerResult struct {
 	Err string `json:"err"`
 }
 
-func (a *App) GetObject(bucketName, key string, override bool) ObjectHandlerResult {
+func getFileName(key string) string {
+	sp := strings.Split(key, "/")
+	return sp[len(sp)-1]
+}
 
+func (a *App) PutObject(bucketName, prefix, eventDialog, eventProgress string) ObjectHandlerResult {
+	filePaths, err := runtime.OpenMultipleFilesDialog(a.ctx, runtime.OpenDialogOptions{})
+	if err != nil {
+		return ObjectHandlerResult{Err: err.Error()}
+	}
+	// TODO: Support mutifile upload
+	if len(filePaths) == 0 {
+		return ObjectHandlerResult{}
+	}
+	fp := filePaths[0]
+	key := prefix + getFileName(fp)
+	f, err := os.Open(fp)
+	fInfo, err := f.Stat()
+	if err != nil {
+		return ObjectHandlerResult{Err: err.Error()}
+	}
+	p := &Progress{}
+	p.TotalBytes = fInfo.Size()
+	r := NewProgressReader(f, p)
+
+	if err != nil {
+		return ObjectHandlerResult{Err: err.Error()}
+	}
+
+	// open dialog
+	runtime.EventsEmit(a.ctx, eventDialog, true)
+	cancelCh := make(chan bool)
+	// emit progress data
+	go func(ch chan bool) {
+		for {
+			select {
+			case <-cancelCh:
+				return
+			default:
+				if r.p.State() < 100 {
+					runtime.EventsEmit(a.ctx, eventProgress, r.p.State())
+				}
+				time.Sleep(10 * time.Millisecond)
+			}
+		}
+	}(cancelCh)
+	defer func() {
+		cancelCh <- true
+	}()
+
+	err = a.S3Client.PutObjectWithOpt(bucketName, key, r)
+	if err != nil {
+		return ObjectHandlerResult{Err: err.Error()}
+	}
+	return ObjectHandlerResult{}
+}
+
+func (a *App) GetObject(bucketName, key string, override bool, eventDialog string, eventProgress string) ObjectHandlerResult {
 	path, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{})
 	if err != nil {
 		return ObjectHandlerResult{Err: err.Error()}
@@ -93,7 +151,9 @@ func (a *App) GetObject(bucketName, key string, override bool) ObjectHandlerResu
 	if err != nil {
 		return ObjectHandlerResult{Err: err.Error()}
 	}
-	filePath := path + string(os.PathSeparator) + key
+
+	fName := getFileName(key)
+	filePath := path + string(os.PathSeparator) + fName
 	fileExist, err := PathExists(filePath)
 	if err != nil {
 		return ObjectHandlerResult{Err: err.Error()}
@@ -102,14 +162,43 @@ func (a *App) GetObject(bucketName, key string, override bool) ObjectHandlerResu
 		return ObjectHandlerResult{Err: "File already exists."}
 	}
 	f, err := os.Create(filePath)
+	fmt.Println("GetObject:" + filePath)
 	if err != nil {
 		return ObjectHandlerResult{Err: err.Error()}
 	}
-	_, err = io.Copy(f, out.Body)
+
+	p := &Progress{}
+	if out.ContentLength != nil {
+		p.TotalBytes = *out.ContentLength
+	}
+
+	r := NewProgressReader(out.Body, p)
+
+	// open dialog
+	runtime.EventsEmit(a.ctx, eventDialog, true)
+
+	cancelCh := make(chan bool)
+	// emit progress data
+	go func(ch chan bool) {
+		for {
+			select {
+			case <-cancelCh:
+				return
+			default:
+				runtime.EventsEmit(a.ctx, eventProgress, r.p.State())
+				time.Sleep(10 * time.Millisecond)
+			}
+		}
+	}(cancelCh)
+	defer func() {
+		cancelCh <- true
+	}()
+	_, err = io.Copy(f, r)
 	if err != nil {
 		delErr := os.Remove(filePath)
 		return ObjectHandlerResult{Err: err.Error() + delErr.Error()}
 	}
+	runtime.EventsEmit(a.ctx, eventProgress, 100)
 	return ObjectHandlerResult{}
 }
 
