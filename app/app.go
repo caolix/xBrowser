@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"os"
 	"path/filepath"
 	"xBrowser/app/db"
@@ -87,17 +88,15 @@ func (a *App) Shutdown(ctx context.Context) {
 }
 
 func (a *App) BeforeClose(ctx context.Context) bool {
-	//dialog, err := runtime.MessageDialog(ctx, runtime.MessageDialogOptions{
-	//	Type:          runtime.QuestionDialog,
-	//	Title:         "Quit?",
-	//	Message:       "Are you sure you want to quit?",
-	//	Buttons:       []string{"No", "Yes"},
-	//	DefaultButton: "Yes",
-	//})
-	//if err != nil {
-	//	fmt.Println(err)
-	//	return false
-	//}
-	//return dialog != "Yes"
-	return false
+	dialog, err := runtime.MessageDialog(ctx, runtime.MessageDialogOptions{
+		Type:          runtime.QuestionDialog,
+		Title:         "Quit?",
+		Message:       "Are you sure you want to quit?",
+		Buttons:       []string{"No", "Yes"},
+		DefaultButton: "Yes",
+	})
+	if err != nil {
+		return false
+	}
+	return dialog != "Yes"
 }
