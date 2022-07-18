@@ -4,9 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/wailsapp/wails/v2/pkg/menu"
+	"github.com/wailsapp/wails/v2/pkg/menu/keys"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"os"
 	"path/filepath"
+	os_runtime "runtime"
+	"time"
 	"xBrowser/app/db"
 	"xBrowser/app/s3lib"
 )
@@ -30,7 +34,6 @@ type AppConfig struct {
 
 // NewApp creates a new App application struct
 func NewApp() *App {
-	fmt.Println("NewApp", os.Args[0], filepath.Dir(os.Args[0]))
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
 		fmt.Println(err)
@@ -51,7 +54,6 @@ func NewApp() *App {
 func (a *App) Startup(ctx context.Context) {
 	// Perform your setup here
 	// 在这里执行初始化设置
-	fmt.Println("Startup")
 	a.ctx = ctx
 	// TODO: use OS_ENV to choose db config, load it and then set db type
 	switch a.Config.DbType {
@@ -60,6 +62,58 @@ func (a *App) Startup(ctx context.Context) {
 	default:
 		a.LoadDbErr = errors.New("db type not supported")
 	}
+
+	AppMenu := menu.NewMenu()
+	if os_runtime.GOOS == "darwin" {
+		AppMenu.Append(menu.AppMenu())
+		AppMenu.Append(menu.EditMenu()) // on macos platform, we should append EditMenu to enable Cmd+C,Cmd+V,Cmd+Z... shortcut
+	}
+	FileMenu := AppMenu.AddSubmenu("File")
+	FileMenu.AddText("WindowSetTitle", keys.CmdOrCtrl("1"), func(_ *menu.CallbackData) {
+		runtime.WindowSetTitle(ctx, time.Now().Local().String())
+	})
+	FileMenu.AddSeparator()
+	FileMenu.AddText("WindowCenter", keys.CmdOrCtrl("2"), func(_ *menu.CallbackData) {
+		runtime.WindowCenter(ctx)
+	})
+	FileMenu.AddSeparator()
+	FileMenu.AddText("WindowSetLightTheme", keys.CmdOrCtrl("3"), func(_ *menu.CallbackData) {
+		runtime.WindowSetLightTheme(ctx)
+	})
+	FileMenu.AddText("WindowSetDarkTheme", keys.CmdOrCtrl("4"), func(_ *menu.CallbackData) {
+		runtime.WindowSetDarkTheme(ctx)
+	})
+	FileMenu.AddSeparator()
+	FileMenu.AddText("WindowGetSize", keys.CmdOrCtrl("5"), func(_ *menu.CallbackData) {
+		fmt.Println(runtime.WindowGetSize(ctx))
+	})
+	FileMenu.AddSeparator()
+	FileMenu.AddText("WindowGetPosition", keys.CmdOrCtrl("5"), func(_ *menu.CallbackData) {
+		fmt.Println(runtime.WindowGetPosition(ctx))
+	})
+	FileMenu.AddSeparator()
+	FileMenu.AddText("WindowSetAlwaysOnTop", keys.CmdOrCtrl("5"), func(_ *menu.CallbackData) {
+		runtime.WindowSetAlwaysOnTop(ctx, true)
+	})
+	FileMenu.AddSeparator()
+	FileMenu.AddText("WindowMaximise", keys.CmdOrCtrl("5"), func(_ *menu.CallbackData) {
+		runtime.WindowMaximise(ctx)
+	})
+	FileMenu.AddSeparator()
+	FileMenu.AddText("WindowUnMaximise", keys.CmdOrCtrl("5"), func(_ *menu.CallbackData) {
+		runtime.WindowUnmaximise(ctx)
+	})
+
+	FileMenu.AddSeparator()
+	FileMenu.AddText("WindowMinimise", keys.CmdOrCtrl("5"), func(_ *menu.CallbackData) {
+		runtime.WindowMinimise(ctx)
+	})
+	FileMenu.AddSeparator()
+	FileMenu.AddText("WindowUnminimise", keys.CmdOrCtrl("5"), func(_ *menu.CallbackData) {
+		runtime.WindowUnminimise(ctx)
+	})
+
+	runtime.MenuSetApplicationMenu(ctx, AppMenu)
 }
 
 // domReady is called after the front-end dom has been loaded
@@ -67,7 +121,6 @@ func (a *App) Startup(ctx context.Context) {
 func (a *App) DomReady(ctx context.Context) {
 	// Add your action here
 	// 在这里添加你的操作
-	fmt.Println("DomReady")
 	if a.DB != nil {
 		a.LoadDbErr = a.DB.Init(a.Config.Address)
 		if a.LoadDbErr != nil {

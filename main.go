@@ -7,6 +7,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/logger"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
+	"github.com/wailsapp/wails/v2/pkg/options/windows"
 	"xBrowser/app"
 )
 
@@ -18,14 +19,17 @@ var icon []byte
 
 func main() {
 	// Create an instance of the app structure
-	fmt.Println("starting app...")
+	w, h := getWindowSize()
 	app := app.NewApp()
-
 	// Create application with options
 	err := wails.Run(&options.App{
 		Title:         "xBrowser",
-		Width:         1024,
-		Height:        1024,
+		Width:         w * 4 / 5,
+		Height:        h * 4 / 5,
+		MaxWidth:      w,
+		MaxHeight:     h,
+		MinWidth:      w / 2,
+		MinHeight:     h / 2,
 		Assets:        assets,
 		OnStartup:     app.Startup,
 		OnDomReady:    app.DomReady,
@@ -35,6 +39,8 @@ func main() {
 		Bind: []interface{}{
 			app,
 		},
+
+		Windows: &windows.Options{},
 
 		Mac: &mac.Options{
 			//TitleBar:             mac.TitleBarHiddenInset(),
