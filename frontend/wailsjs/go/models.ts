@@ -1,5 +1,31 @@
 export namespace app {
 	
+	export class ObjectHandlerResult {
+	    err: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ObjectHandlerResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.err = source["err"];
+	    }
+	}
+	export class ListBucketResult {
+	    buckets: string[];
+	    err: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ListBucketResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.buckets = source["buckets"];
+	        this.err = source["err"];
+	    }
+	}
 	export class Object {
 	    key: string;
 	    size: number;
@@ -143,32 +169,6 @@ export namespace app {
 		    }
 		    return a;
 		}
-	}
-	export class ObjectHandlerResult {
-	    err: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new ObjectHandlerResult(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.err = source["err"];
-	    }
-	}
-	export class ListBucketResult {
-	    buckets: string[];
-	    err: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new ListBucketResult(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.buckets = source["buckets"];
-	        this.err = source["err"];
-	    }
 	}
 
 }
