@@ -77,10 +77,10 @@ func (a *App) Startup(ctx context.Context) {
 		runtime.WindowCenter(ctx)
 	})
 	FileMenu.AddSeparator()
-	FileMenu.AddText("WindowSetLightTheme", keys.CmdOrCtrl("3"), func(_ *menu.CallbackData) {
-		runtime.WindowSetLightTheme(ctx)
+	FileMenu.AddText("1", keys.CmdOrCtrl("3"), func(_ *menu.CallbackData) {
+		runtime.OpenDirectoryDialog(ctx, runtime.OpenDialogOptions{})
 	})
-	FileMenu.AddText("WindowSetDarkTheme", keys.CmdOrCtrl("4"), func(_ *menu.CallbackData) {
+	FileMenu.AddText("2", keys.CmdOrCtrl("4"), func(_ *menu.CallbackData) {
 		runtime.WindowSetDarkTheme(ctx)
 	})
 	FileMenu.AddSeparator()

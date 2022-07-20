@@ -1,12 +1,17 @@
 <template>
-  <router-view/>
+  <MainMenu/>
+  <TaskList/>
+  <div style="margin-top: 10px">
+    <router-view/>
+  </div>
 </template>
 
 <script>
+import MainMenu from  "./MainMenu.vue"
+import TaskList from "./TaskList.vue";
+
 export default {
-  setup() {
-    return {}
-  }
+  components: {MainMenu, TaskList},
 }
 </script>
 

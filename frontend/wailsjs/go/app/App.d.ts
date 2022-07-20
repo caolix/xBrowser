@@ -12,6 +12,8 @@ export function DeleteBucket(arg1:string):Promise<string>;
 
 export function DeleteObject(arg1:string,arg2:string):Promise<app.ObjectHandlerResult>;
 
+export function DoPutObject(arg1:string,arg2:string,arg3:string,arg4:string):Promise<app.ObjectHandlerResult>;
+
 export function GetObject(arg1:string,arg2:string,arg3:boolean,arg4:string,arg5:string):Promise<app.ObjectHandlerResult>;
 
 export function ListAllLoginInfo():Promise<Array<db.LoginInfo>>;
@@ -26,4 +28,6 @@ export function Login(arg1:db.LoginInfo,arg2:boolean):Promise<string>;
 
 export function MakeBucket(arg1:string):Promise<string>;
 
-export function PutObject(arg1:string,arg2:string,arg3:string,arg4:string):Promise<app.ObjectHandlerResult>;
+export function PutObject(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string):Promise<app.ObjectHandlerResult>;
+
+export function SelectFiles(arg1:string):Promise<app.SelectFilesResult>;

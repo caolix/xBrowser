@@ -1,7 +1,7 @@
 <template>
   <el-row>
     <el-col :span=4>
-      <el-button type="primary" @click="putObject">
+      <el-button type="primary" @click="selectObjects">
         <el-icon>
           <UploadFilled/>
         </el-icon>
@@ -94,15 +94,18 @@
 <script>
 
 import {useRoute, useRouter} from "vue-router";
-import {computed, onMounted, reactive, ref, toRefs} from "vue"
-import {DeleteObject, GetObject, ListObjects, PutObject} from "../../wailsjs/go/app/App";
+import {computed, onMounted, reactive, ref, toRefs} from "vue";
+import {DeleteObject, GetObject, ListObjects, DoPutObject, SelectFiles} from "../../wailsjs/go/app/App";
 import {ElMessage} from "element-plus";
 import {EventsOn} from "../../wailsjs/runtime";
+import {useStore} from "vuex";
+
 
 export default {
   setup() {
     const route = useRoute()
     const router = useRouter()
+    const store = useStore()
     var dialogFormVisible = ref(false)
     const loading = ref(true)
     const bucketName = route.params.bucketName
@@ -115,8 +118,8 @@ export default {
     const percentageLabel = ref('')
 
     const colors = [
-      { color: '#1989fa', percentage: 100 },
-      { color: '#5cb87a', percentage: 101 },
+      {color: '#1989fa', percentage: 100},
+      {color: '#5cb87a', percentage: 101},
     ]
 
     const backward = () => {
@@ -181,6 +184,53 @@ export default {
           }
         }
         loading.value = false
+      })
+    }
+
+    const selectObjects = () => {
+      SelectFiles(prefix.value).then(res => {
+        if (res.err !== '') {
+          ElMessage.error(res.err)
+        } else {
+          res.files.forEach((fp, i) => {
+            var eventProgress = "u" + fp.key + Math.random()
+            const file = {
+              name: fp.name,
+              key: fp.key,
+              source: fp.source,
+              size: fp.size,
+              human_size: fp.human_size,
+              progress: eventProgress
+            }
+            const payload = {
+              file: file,
+              progress: eventProgress
+            }
+            store.commit('addToUploadList', payload)
+
+            // begin to upload
+            EventsOn(eventProgress, (data) => {
+              const payload = {
+                data: data,
+                progress: eventProgress
+              }
+              store.commit('updateProgress', payload)
+            })
+
+            DoPutObject(bucketName, fp.key, fp.source, eventProgress).then(res => {
+              if (res.err !== '') {
+                ElMessage.error(res.err)
+              } else {
+                const payload = {
+                  data: 100,
+                  progress: eventProgress
+                }
+                store.commit('updateProgress', payload)
+                listObjects(bucketName, '', prefix.value, 100)
+              }
+            })
+          })
+        }
       })
     }
 
@@ -259,6 +309,7 @@ export default {
       deleteObject,
       toPreview,
       backward,
+      selectObjects,
       dialogFormVisible,
       loading,
       objectList,
@@ -275,11 +326,10 @@ export default {
 
 <style scoped>
 .container {
-  width: 1000px;
+  width: 90%;
   text-align: left;
   margin: 50px auto 20px auto;
   border: 1px solid #EEE;
-  min-height: 600px;
 }
 
 .percentage-value {

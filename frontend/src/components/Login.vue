@@ -1,54 +1,54 @@
 <template>
   <main>
     <img id="logo" alt="Wails logo" src="../assets/images/comeon.gif"/>
+    <img id="logo2" alt="Wails logo" src="../assets/images/logo1.jpeg"/>
     <div class="container">
       <div class="input">
-            <span style="color: #ff0000"> * </span><span class="demo-input-label">Endpoint:</span>
-            <el-row :gutter="10">
-              <el-input
-                  v-model="data.endpoint"
-                  placeholder="ENDPOINT"
-              />
-            </el-row>
-            <span style="color: #ff0000"> * </span><span class="demo-input-label">AccessKey:</span>
-            <el-row :gutter="10">
-              <el-input
-                  v-model="data.ak"
-                  placeholder="ACCESS_KEY"
-              />
-            </el-row>
-            <span style="color: #ff0000"> * </span><span class="demo-input-label">SecretKey:</span>
-            <el-row :gutter="10">
-              <el-input
-                  v-model="data.sk"
-                  placeholder="SECRET_KEY"
-              />
-            </el-row>
-            <span class="demo-input-label">Preset Path:</span>
-            <el-row :gutter="10">
-              <el-input
-                  v-model="data.prepath"
-                  placeholder="Optional. format: s3://bucket/dir/"
-              />
-            </el-row>
-            <span class="demo-input-label">Description:</span>
-            <el-row :gutter="10">
-              <el-input
-                  v-model="data.remark"
-                  placeholder="Optional. Up to 30 words."
-              />
-            </el-row>
-            <el-row :gutter="10">
-              <el-col :span="16">
-                <div class="demo-input-label">
-                  <el-checkbox v-model="data.save" label="Remember" size="large"/>
-                </div>
-              </el-col>
-            </el-row>
-
-            <el-button type="primary" class="submit" @click="login">Login</el-button>
-          </div>
-        </div>
+        <span style="color: #ff0000"> * </span><span class="demo-input-label">Endpoint:</span>
+        <el-row :gutter="10">
+          <el-input
+              v-model="data.endpoint"
+              placeholder="ENDPOINT"
+          />
+        </el-row>
+        <span style="color: #ff0000"> * </span><span class="demo-input-label">AccessKey:</span>
+        <el-row :gutter="10">
+          <el-input
+              v-model="data.ak"
+              placeholder="ACCESS_KEY"
+          />
+        </el-row>
+        <span style="color: #ff0000"> * </span><span class="demo-input-label">SecretKey:</span>
+        <el-row :gutter="10">
+          <el-input
+              v-model="data.sk"
+              placeholder="SECRET_KEY"
+          />
+        </el-row>
+        <span class="demo-input-label">Preset Path:</span>
+        <el-row :gutter="10">
+          <el-input
+              v-model="data.prepath"
+              placeholder="Optional. format: s3://bucket/dir/"
+          />
+        </el-row>
+        <span class="demo-input-label">Description:</span>
+        <el-row :gutter="10">
+          <el-input
+              v-model="data.remark"
+              placeholder="Optional. Up to 30 words."
+          />
+        </el-row>
+        <el-row :gutter="10">
+          <el-col :span="16">
+            <div class="demo-input-label">
+              <el-checkbox v-model="data.save" label="Remember" size="large"/>
+            </div>
+          </el-col>
+        </el-row>
+        <el-button type="primary" class="submit" @click="login">Login</el-button>
+      </div>
+    </div>
   </main>
 </template>
 
@@ -62,7 +62,7 @@ import {db} from '../../wailsjs/go/models'
 import {ElLoading, ElMessage} from 'element-plus'
 
 export default {
-  setup () {
+  setup() {
     // NOTE: this code MUST before than ElLoading
     const router = useRouter()
     const loading = ElLoading.service({
@@ -135,10 +135,10 @@ export default {
 }
 
 .submit {
-  margin-top: 40px;
-  margin-left: -10px;
-  margin-right: -10px;
-  width: 340px;
+  margin: 0 auto;
+  display: flex;
+  width: 40%;
+  height:40px;
 }
 
 .demo-input-label {
@@ -149,7 +149,7 @@ export default {
 }
 
 .container {
-  width: 420px;
+  width: 40%;
   text-align: left;
   margin: 50px auto 20px auto;
   border: 1px solid #EEE;

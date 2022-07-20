@@ -86,22 +86,57 @@ type ObjectHandlerResult struct {
 }
 
 func getFileName(key string) string {
-	sp := strings.Split(key, "/")
+	sp := strings.Split(key, string(os.PathSeparator))
 	return sp[len(sp)-1]
 }
 
-func (a *App) PutObject(bucketName, prefix, eventDialog, eventProgress string) ObjectHandlerResult {
+type SelectedFile struct {
+	Object
+	SourcePath string `json:"source"`
+	Name       string `json:"name"`
+}
+
+type SelectFilesResult struct {
+	SelectedFile []SelectedFile `json:"files"`
+	Err          string         `json:"err"`
+}
+
+func (a *App) SelectFiles(prefix string) SelectFilesResult {
 	filePaths, err := runtime.OpenMultipleFilesDialog(a.ctx, runtime.OpenDialogOptions{})
 	if err != nil {
-		return ObjectHandlerResult{Err: err.Error()}
+		return SelectFilesResult{Err: err.Error()}
 	}
-	// TODO: Support mutifile upload
 	if len(filePaths) == 0 {
-		return ObjectHandlerResult{}
+		return SelectFilesResult{}
 	}
-	fp := filePaths[0]
-	key := prefix + getFileName(fp)
-	f, err := os.Open(fp)
+
+	var res SelectFilesResult
+	for _, fp := range filePaths {
+		f, err := os.Open(fp)
+		if err != nil {
+			return SelectFilesResult{Err: err.Error()}
+		}
+		fInfo, err := f.Stat()
+		if err != nil {
+			return SelectFilesResult{Err: err.Error()}
+		}
+
+		fName := getFileName(fp)
+		var sf = SelectedFile{
+			SourcePath: fp,
+			Name:       fName,
+		}
+		sf.Key = prefix + getFileName(fp)
+		sf.Size = fInfo.Size()
+		sf.HumanSize = util.IBytes(uint64(fInfo.Size()))
+
+		res.SelectedFile = append(res.SelectedFile, sf)
+	}
+	return res
+}
+
+func (a *App) DoPutObject(bucketName, key, filePath, eventProgress string) ObjectHandlerResult {
+	f, err := os.Open(filePath)
 	fInfo, err := f.Stat()
 	if err != nil {
 		return ObjectHandlerResult{Err: err.Error()}
@@ -109,10 +144,41 @@ func (a *App) PutObject(bucketName, prefix, eventDialog, eventProgress string) O
 	p := &Progress{}
 	p.TotalBytes = fInfo.Size()
 	r := NewProgressReader(f, p)
-
+	cancelCh := make(chan bool)
+	// emit progress data
+	go func(ch chan bool) {
+		for {
+			select {
+			case <-cancelCh:
+				return
+			default:
+				if r.p.State() < 100 {
+					runtime.EventsEmit(a.ctx, eventProgress, r.p.State())
+				}
+				time.Sleep(10 * time.Millisecond)
+			}
+		}
+	}(cancelCh)
+	defer func() {
+		cancelCh <- true
+	}()
+	err = a.S3Client.PutObjectWithOpt(bucketName, key, r)
 	if err != nil {
 		return ObjectHandlerResult{Err: err.Error()}
 	}
+	return ObjectHandlerResult{}
+}
+
+func (a *App) PutObject(bucketName, filePath, prefix, eventDialog, eventProgress string) ObjectHandlerResult {
+	key := prefix + getFileName(filePath)
+	f, err := os.Open(filePath)
+	fInfo, err := f.Stat()
+	if err != nil {
+		return ObjectHandlerResult{Err: err.Error()}
+	}
+	p := &Progress{}
+	p.TotalBytes = fInfo.Size()
+	r := NewProgressReader(f, p)
 
 	// open dialog
 	runtime.EventsEmit(a.ctx, eventDialog, true)

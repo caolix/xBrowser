@@ -2,15 +2,9 @@
 
   <el-row>
     <el-col :span=4>
-      <el-button type="primary" @click="dialogFormVisible = true">Create Bucket
-      </el-button>
-    </el-col>
-    <el-col :span=4>
-      <el-button plain type="danger" @click="logout">
-        <el-icon style="padding-right: 6px">
-          <SwitchButton/>
-        </el-icon>
-        Logout
+      <el-button type="primary" @click="dialogFormVisible = true">
+        <el-icon style="padding-right: 6px"><Plus/></el-icon>
+        Create Bucket
       </el-button>
     </el-col>
   </el-row>
@@ -158,12 +152,6 @@ export default {
       })
     }
 
-    const logout = () => {
-      router.push({
-        path: '/'
-      })
-    }
-
     return {
       dialogFormVisible,
       ...toRefs(data),
@@ -173,7 +161,6 @@ export default {
       toDeleteBucket,
       toBucket,
       listBuckets,
-      logout,
       bucketList,
     }
 
@@ -185,11 +172,10 @@ export default {
 
 <style scoped>
 .container {
-  width: 1000px;
+  width: 90%;
   text-align: left;
   margin: 50px auto 20px auto;
   border: 1px solid #EEE;
-  min-height: 600px;
 }
 
 .el-link {

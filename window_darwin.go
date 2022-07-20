@@ -3,5 +3,5 @@
 package main
 
 func getWindowSize() (width, height int) {
-	return 1080, 1080
+	return 1920, 1340
 }
