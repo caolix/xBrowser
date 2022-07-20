@@ -13,6 +13,6 @@ func getWindowSize() (width, height int) {
 	//w, _, _ := syscall.NewLazyDLL(`User32.dll`).NewProc(`GetSystemMetrics`).Call(SM_CXSCREEN)
 	h, _, _ := syscall.NewLazyDLL(`User32.dll`).NewProc(`GetSystemMetrics`).Call(SM_CYSCREEN)
 
-	w = h * 4 / 3
-	return int(w * 2 / 3), int(h * 2 / 3)
+	w := h * 4 / 3
+	return int(w * 93 / 100), int(h * 93 / 100)
 }

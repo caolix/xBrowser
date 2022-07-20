@@ -1,7 +1,9 @@
 <template>
   <main>
-    <img id="logo" alt="Wails logo" src="../assets/images/comeon.gif"/>
-    <img id="logo2" alt="Wails logo" src="../assets/images/logo1.jpeg"/>
+    <div style="display: flex;">
+      <img id="logo" alt="Wails logo" src="../assets/images/comeon.gif"/>
+      <img id="logo2" alt="Wails logo" src="../assets/images/logo1.jpeg"/>
+    </div>
     <div class="container">
       <div class="input">
         <span style="color: #ff0000"> * </span><span class="demo-input-label">Endpoint:</span>
@@ -138,32 +140,34 @@ export default {
   margin: 0 auto;
   display: flex;
   width: 40%;
-  height:40px;
+  height: 10%;
 }
 
 .demo-input-label {
   display: inline-block;
-  width: 130px;
-  margin-top: 20px;
+  width: 75%;
+  margin-top: 2%;
   color: #000000;
+  height: 2%;
+  font-size: 85%;
 }
 
 .container {
-  width: 40%;
+  width: 75%;
   text-align: left;
-  margin: 50px auto 20px auto;
+  margin: 1% auto 2% auto;
   border: 1px solid #EEE;
-  min-height: 600px;
 }
 
 .input {
-  margin: 0 50px;
+  margin: 0 2%;
+  padding-bottom: 5%;
 }
 
 .input-box .btn {
-  width: 60px;
-  height: 30px;
-  line-height: 30px;
+  width: 60%;
+  height: 3%;
+  line-height: 3%;
   border-radius: 3px;
   border: none;
   margin: 0 0 0 20px;
@@ -180,9 +184,9 @@ export default {
   border: none;
   border-radius: 3px;
   outline: none;
-  height: 30px;
-  line-height: 30px;
-  padding: 0 10px;
+  height: 3px;
+  line-height: 3px;
+  padding: 0 1px;
   background-color: rgba(240, 240, 240, 1);
   -webkit-font-smoothing: antialiased;
 }

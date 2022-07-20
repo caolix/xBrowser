@@ -145,7 +145,18 @@ export default {
       listObjects(bucketName, '', prefix.value, 100)
     })
 
+    var listLock = false
+
+    var lockedList = (bucketName, marker, prefix, maxKey) => {
+      if (listLock) {
+        setTimeout(lockedList, 10)
+      } else {
+        listObjects(bucketName, marker, prefix, maxKey)
+      }
+    }
+
     const listObjects = (bucketName, marker, prefix, maxKey) => {
+      listLock = true
       data.tableData = []
       ListObjects(bucketName, marker, prefix, maxKey).then(res => {
         loading.value = true
@@ -185,6 +196,7 @@ export default {
         }
         loading.value = false
       })
+      listLock = false
     }
 
     const selectObjects = () => {
@@ -226,7 +238,7 @@ export default {
                   progress: eventProgress
                 }
                 store.commit('updateProgress', payload)
-                listObjects(bucketName, '', prefix.value, 100)
+                lockedList(bucketName, '', prefix.value, 100)
               }
             })
           })
