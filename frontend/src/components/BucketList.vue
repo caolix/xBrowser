@@ -1,13 +1,13 @@
 <template>
-
-  <el-row>
-    <el-col :span=4>
+  <div class="buttons">
+    <el-space>
       <el-button type="primary" @click="dialogFormVisible = true">
         <el-icon style="padding-right: 6px"><Plus/></el-icon>
         Create Bucket
       </el-button>
-    </el-col>
-  </el-row>
+    </el-space>
+  </div>
+
 
   <!--  Create Bucket Dialog-->
   <el-dialog v-model="dialogFormVisible" title="Create Bucket" destroy-on-close>
@@ -46,7 +46,7 @@
             </el-button>
         </template>
       </el-table-column>
-      <el-table-column label="Operations">
+      <el-table-column label="Operations" align="right">
         <template #default="scope">
           <el-popconfirm
               confirm-button-text="Yes"
@@ -174,9 +174,10 @@ export default {
 .container {
   width: 90%;
   text-align: left;
-  margin: 10px auto 2% auto;
+  margin: 6px auto 1% auto;
   border: 1px solid #EEE;
 }
+
 
 .el-link {
   margin-right: 8px;

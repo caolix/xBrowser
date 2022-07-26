@@ -1,10 +1,12 @@
 <template>
   <main>
     <div style="display: flex;">
-      <img id="logo" alt="Wails logo" src="../assets/images/comeon.gif"/>
+      <img id="logo" alt="Wails logo" src="../assets/images/bear_good.gif"/>
       <img id="logo2" alt="Wails logo" src="../assets/images/logo1.jpeg"/>
     </div>
-    <div class="container">
+    <div class="container" :style="{
+          boxShadow: `var(--el-box-shadow-light)`,
+        }">
       <div class="input">
         <span style="color: #ff0000"> * </span><span class="demo-input-label">Endpoint:</span>
         <el-row :gutter="10">
@@ -153,7 +155,7 @@ export default {
 }
 
 .container {
-  width: 75%;
+  width: 60%;
   text-align: left;
   margin: 1% auto 2% auto;
   border: 1px solid #EEE;

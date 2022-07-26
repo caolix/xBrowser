@@ -1,5 +1,5 @@
 <template>
-  <el-drawer v-model="taskDrawer" :show-close="false" size="40%">
+  <el-drawer v-model="props.visible" :show-close="false" size="40%" @close="closeDrawer">
     <template #default>
       <el-tabs v-model="activeName" class="demo-tabs" @tab-click="handleClick">
         <el-tab-pane label="Upload" name="upload">
@@ -22,27 +22,33 @@
     <template #footer>
       <div style="flex: auto">
         <el-button @click="cancelClick">cancel</el-button>
-        <el-button type="primary" @click="confirmClick">confirm</el-button>
       </div>
     </template>
   </el-drawer>
-
-  <el-button type="primary" class="task" @click="taskDrawer = true">Task</el-button>
 </template>
 
 <script>
-import {ref, computed, reactive} from 'vue'
+import {ref, computed} from 'vue'
 import {useStore} from "vuex";
 export default {
   name: "TaskList",
-  setup() {
+  props: {
+    visible: {
+      type: Boolean,
+      default: false,
+    }
+  },
+  setup(props, context) {
     const activeName = ref('upload')
-    const taskDrawer = ref(false)
     const store = useStore()
     const cancelClick = () => {
-      taskDrawer.value = false
+      context.emit('changeVisible', false)
     }
-    const confirmClick = () => {
+    const showDrawer = () => {
+      context.emit('changeVisible', true)
+    }
+    const closeDrawer = () => {
+      context.emit('changeVisible', false)
     }
 
     const uploadListData = computed(() => {
@@ -59,13 +65,14 @@ export default {
     })
 
     return{
+      props,
       colors,
       activeName,
-      taskDrawer,
       uploadListData,
       percentageMap,
       cancelClick,
-      confirmClick
+      showDrawer,
+      closeDrawer
     }
   }
 }

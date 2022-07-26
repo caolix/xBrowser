@@ -14,11 +14,18 @@
       <img src="../assets/images/logo4.png" style="width:150px; height:50px; margin-top:6px;"/>
     </el-menu-item>
     <div class="flex-grow"/>
-    <el-menu-item index="1">Settings</el-menu-item>
-    <el-menu-item index="2">About</el-menu-item>
-    <el-menu-item index="3" style="height:56px">
+    <el-menu-item index="1" @click="showDrawer">
+      <span>TaskList</span>
+      <el-badge :value="1" class="item">
+      </el-badge>
+    </el-menu-item>
+    <el-menu-item index="2">Settings</el-menu-item>
+    <el-menu-item index="3">About</el-menu-item>
+    <el-menu-item index="4" style="height:56px">
       <el-button link type="danger" @click="logout">
-        <el-icon style="padding-right: 1px"><SwitchButton/></el-icon>
+        <el-icon style="padding-right: 1px">
+          <SwitchButton/>
+        </el-icon>
         Logout
       </el-button>
     </el-menu-item>
@@ -31,14 +38,18 @@ import {useRouter} from "vue-router";
 export default {
   name: "MainMenu",
 
-  setup() {
+  setup(props, context) {
     const router = useRouter()
     const logout = () => {
       router.push({
         path: '/'
       })
     }
+    const showDrawer = () => {
+      context.emit('changeVisible', true)
+    }
     return {
+      showDrawer,
       logout
     }
   }
@@ -48,5 +59,10 @@ export default {
 <style scoped>
 .flex-grow {
   flex-grow: 1;
+}
+
+
+.item {
+  vertical-align: top;
 }
 </style>

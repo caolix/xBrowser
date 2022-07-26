@@ -8,9 +8,9 @@
 <style>
 #logo {
   display: block;
-  width: 20%;
-  height: 20%;
-  margin: 3% 1% auto auto;
+  width: 10%;
+  height: 10%;
+  margin: 4% 1% auto auto;
   padding: 0% 0 0;
   background-position: center;
   background-repeat: no-repeat;

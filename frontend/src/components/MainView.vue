@@ -1,17 +1,28 @@
 <template>
-  <MainMenu/>
-  <TaskList/>
+  <MainMenu @changeVisible="changeVisible"/>
+  <TaskList :visible="visible" @changeVisible="changeVisible"/>
   <div style="margin-top: 10px">
-    <router-view/>
+    <router-view @changeVisible="changeVisible"/>
   </div>
 </template>
 
 <script>
 import MainMenu from  "./MainMenu.vue"
 import TaskList from "./TaskList.vue";
+import {ref} from "vue";
 
 export default {
   components: {MainMenu, TaskList},
+  setup() {
+    const visible = ref(false)
+    const changeVisible = (bool) => {
+      visible.value = bool
+    }
+    return {
+      visible,
+      changeVisible
+    }
+  }
 }
 </script>
 

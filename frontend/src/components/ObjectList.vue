@@ -1,41 +1,34 @@
 <template>
-  <el-row>
-    <el-col :span=4>
+  <div class="container">
+    <el-space :size="20" alignment="start">
       <el-button type="primary" @click="selectObjects">
         <el-icon style="padding-right: 6px">
           <UploadFilled/>
         </el-icon>
         Upload
       </el-button>
-    </el-col>
-    <el-col :span=4>
       <el-button type="primary" @click="dialogCreateDirVisible = true">
         <el-icon style="padding-right: 6px">
           <FolderAdd/>
         </el-icon>
         Create Folder
       </el-button>
-    </el-col>
-    <el-col :span=4>
-      <el-button plain type="danger" @click="deleteObjects" :disabled="disableDeleteButton">
+      <el-button plain type="danger" @click="confirmDeleteObjects" :disabled="disableDeleteButton">
         <el-icon style="padding-right: 6px">
           <Delete/>
         </el-icon>
         Delete
       </el-button>
-    </el-col>
-    <el-col :span=4>
-      <el-button plain type="info" @click="backward">
-        <el-icon style="padding-right: 6px">
-          <Top/>
-        </el-icon>
-        Backward
-      </el-button>
-    </el-col>
-    <el-col :span=4>
-      <el-input v-model="showPath"></el-input>
-    </el-col>
-  </el-row>
+      <el-space :size="1">
+        <el-button type="primary" @click="backward">
+          <el-icon>
+            <Top/>
+          </el-icon>
+        </el-button>
+        <el-input v-model="showPath"></el-input>
+      </el-space>
+    </el-space>
+  </div>
 
   <!--Dir Dialog-->
   <el-dialog v-model="dialogCreateDirVisible" title="Create Directory">
@@ -94,7 +87,7 @@
         @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55"/>
-      <el-table-column prop="key" label="Name" width="400">
+      <el-table-column prop="key" label="Name" width="400" show-overflow-tooltip="true">
         <template #default="scope">
           <el-icon style="padding-right: 2px; padding-top: 2px" v-if="tableData[scope.$index].type==='Folder'">
             <FolderOpened/>
@@ -114,9 +107,10 @@
       </el-table-column>
       <el-table-column prop="type" label="Type" width="200"></el-table-column>
       <el-table-column prop="size" label="Size" width="200"></el-table-column>
-      <el-table-column label="Operations">
+      <el-table-column label="Operations" fixed="right" align="right">
         <template #default="scope">
-          <el-button size="small" @click="getObject(tableData[scope.$index].key)">
+          <el-button size="small" @click="getObject(tableData[scope.$index].key)"
+                     v-if="tableData[scope.$index].type==='Object'">
             Download
           </el-button>
           <el-popconfirm
@@ -140,6 +134,12 @@
       </el-table-column>
     </el-table>
   </div>
+  <el-button-group>
+    <el-button type="primary" :icon="ArrowLeft">Previous Page</el-button>
+    <el-button type="primary">
+      Next Page<el-icon class="el-icon--right"><ArrowRight /></el-icon>
+    </el-button>
+  </el-button-group>
 </template>
 
 <script lang="ts">
@@ -155,7 +155,7 @@ import {
   PutDir,
   SelectFiles
 } from "../../wailsjs/go/app/App";
-import {ElMessage, ElTable} from "element-plus";
+import {ElMessage, ElMessageBox, ElTable} from "element-plus";
 import {EventsOn} from "../../wailsjs/runtime";
 import {useStore} from "vuex";
 import {app} from "../../wailsjs/go/models";
@@ -163,7 +163,7 @@ import DeleteKey = app.DeleteKey;
 
 
 export default {
-  setup() {
+  setup(props, context) {
     const TypeFolder = 'Folder'
     const TypeObject = 'Object'
     const route = useRoute()
@@ -327,6 +327,7 @@ export default {
               }
               store.commit('updateProgress', payload)
             })
+            context.emit('changeVisible', true)
             DoPutObject(<string>bucketName, fp.key, fp.source, eventProgress).then(res => {
               if (res.err !== '') {
                 ElMessage.error(res.err)
@@ -391,6 +392,27 @@ export default {
           })
     }
 
+    const confirmDeleteObjects = () => {
+      ElMessageBox.confirm(
+          'xBrowser will permanently delete these files. Continue?',
+          'Warning',
+          {
+            confirmButtonText: 'Delete',
+            cancelButtonText: 'Cancel',
+            type: 'warning',
+          }
+      )
+          .then(() => {
+            deleteObjects()
+          })
+          .catch(() => {
+            ElMessage({
+              type: 'info',
+              message: 'Delete canceled',
+            })
+          })
+    }
+
     // delete multiple objects
     const deleteObjects = () => {
       var deleteKeys = []
@@ -436,6 +458,7 @@ export default {
       listObjects,
       getObject,
       deleteObject,
+      confirmDeleteObjects,
       deleteObjects,
       createDir,
       toPreview,
@@ -467,7 +490,7 @@ export default {
 .container {
   width: 90%;
   text-align: left;
-  margin: 10px auto 2% auto;
+  margin: 6px auto 1% auto;
   border: 1px solid #EEE;
 }
 
