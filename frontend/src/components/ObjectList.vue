@@ -2,15 +2,31 @@
   <el-row>
     <el-col :span=4>
       <el-button type="primary" @click="selectObjects">
-        <el-icon>
+        <el-icon style="padding-right: 6px">
           <UploadFilled/>
         </el-icon>
         Upload
       </el-button>
     </el-col>
     <el-col :span=4>
-      <el-button plain type="danger" @click="backward">
-        <el-icon>
+      <el-button type="primary" @click="dialogCreateDirVisible = true">
+        <el-icon style="padding-right: 6px">
+          <FolderAdd/>
+        </el-icon>
+        Create Folder
+      </el-button>
+    </el-col>
+    <el-col :span=4>
+      <el-button plain type="danger" @click="deleteObjects" :disabled="disableDeleteButton">
+        <el-icon style="padding-right: 6px">
+          <Delete/>
+        </el-icon>
+        Delete
+      </el-button>
+    </el-col>
+    <el-col :span=4>
+      <el-button plain type="info" @click="backward">
+        <el-icon style="padding-right: 6px">
           <Top/>
         </el-icon>
         Backward
@@ -21,7 +37,21 @@
     </el-col>
   </el-row>
 
-  <!--Dialog-->
+  <!--Dir Dialog-->
+  <el-dialog v-model="dialogCreateDirVisible" title="Create Directory">
+    <span>Folder Name:</span>
+    <el-input v-model="newFolderName" autocomplete="off"/>
+    <template #footer>
+      <span class="dialog-footer">
+         <el-button type="primary" @click="createDir"
+         >Create</el-button
+         >
+        <el-button @click="dialogCreateDirVisible = false">Cancel</el-button>
+      </span>
+    </template>
+  </el-dialog>
+
+  <!--GetObject Dialog-->
   <el-dialog v-model="dialogFormVisible" title="Progress">
     <el-progress type="dashboard" :percentage="percentage" :color="colors">
       <template #default="{ percentage }">
@@ -36,13 +66,34 @@
     </template>
   </el-dialog>
 
+  <!--Delete Dialog-->
+  <el-dialog v-model="dialogDeleteVisible" title="Delete">
+    <span>Delete Process:</span>
+    <el-progress
+        :text-inside="true"
+        :stroke-width="20"
+        :percentage="deletePercentage"
+        :color="colors"
+    >
+      <span>{{ deletePercentageLabel }} </span>
+    </el-progress>
+    <template #footer>
+      <span class="dialog-footer">
+        <el-button @click="dialogDeleteVisible = false">Cancel</el-button>
+      </span>
+    </template>
+  </el-dialog>
+
   <div class="container">
     <el-table
         :data="objectList"
         max-height="800"
         class="table"
         v-loading="loading"
+        ref="multipleTableRef"
+        @selection-change="handleSelectionChange"
     >
+      <el-table-column type="selection" width="55"/>
       <el-table-column prop="key" label="Name" width="400">
         <template #default="scope">
           <el-icon style="padding-right: 2px; padding-top: 2px" v-if="tableData[scope.$index].type==='Folder'">
@@ -74,7 +125,7 @@
               :icon="QuestionFilled"
               icon-color="#FF0000"
               title="Are you sure to delete this object?"
-              @confirm="deleteObject(tableData[scope.$index].key)"
+              @confirm="deleteObject(tableData[scope.$index].key, tableData[scope.$index].type)"
           >
             <template #reference>
               <el-button
@@ -91,22 +142,36 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 
 import {useRoute, useRouter} from "vue-router";
 import {computed, onMounted, reactive, ref, toRefs} from "vue";
-import {DeleteObject, GetObject, ListObjects, DoPutObject, SelectFiles} from "../../wailsjs/go/app/App";
-import {ElMessage} from "element-plus";
+import {
+  DeleteObject,
+  DeleteObjects,
+  DoPutObject,
+  GetObject,
+  ListObjects,
+  PutDir,
+  SelectFiles
+} from "../../wailsjs/go/app/App";
+import {ElMessage, ElTable} from "element-plus";
 import {EventsOn} from "../../wailsjs/runtime";
 import {useStore} from "vuex";
+import {app} from "../../wailsjs/go/models";
+import DeleteKey = app.DeleteKey;
 
 
 export default {
   setup() {
+    const TypeFolder = 'Folder'
+    const TypeObject = 'Object'
     const route = useRoute()
     const router = useRouter()
     const store = useStore()
     var dialogFormVisible = ref(false)
+    var dialogCreateDirVisible = ref(false)
+    var dialogDeleteVisible = ref(false)
     const loading = ref(true)
     const bucketName = route.params.bucketName
     let prefix = ref('')
@@ -116,11 +181,45 @@ export default {
     })
     const percentage = ref(0)
     const percentageLabel = ref('')
+    const newFolderName = ref('')
+    const disableDeleteButton = ref(true)
+
+    const deleteData = reactive({
+          count: 0,
+          success: 0
+        }
+    )
+    const deletePercentage = computed(() => {
+      if (deleteData.count === 0) {
+        return 0
+      } else {
+        return (deleteData.success * 100 / deleteData.count)
+      }
+    })
+    const deletePercentageLabel = computed(() => {
+      return deleteData.success + " / " + deleteData.count
+    })
 
     const colors = [
       {color: '#1989fa', percentage: 100},
       {color: '#5cb87a', percentage: 101},
     ]
+
+    interface SelectedObject {
+      type: string
+      key: string
+      last_modified: string
+      size: string
+    }
+
+    const multipleTableRef = ref<InstanceType<typeof ElTable>>()
+    const multipleSelection = ref<SelectedObject[]>([])
+
+    const handleSelectionChange = (val: SelectedObject[]) => {
+      disableDeleteButton.value = val.length === 0;
+      multipleSelection.value = val
+      console.log(multipleSelection.value)
+    }
 
     const backward = () => {
       if (prefix.value === '') {
@@ -145,19 +244,8 @@ export default {
       listObjects(bucketName, '', prefix.value, 100)
     })
 
-    var listLock = false
-
-    var lockedList = (bucketName, marker, prefix, maxKey) => {
-      if (listLock) {
-        setTimeout(lockedList, 10)
-      } else {
-        listObjects(bucketName, marker, prefix, maxKey)
-      }
-    }
-
-    const listObjects = (bucketName, marker, prefix, maxKey) => {
-      listLock = true
-      data.tableData = []
+    const listObjects = async (bucketName, marker, prefix, maxKey) => {
+      var tableData = []
       ListObjects(bucketName, marker, prefix, maxKey).then(res => {
         loading.value = true
         if (res.err !== '') {
@@ -171,10 +259,10 @@ export default {
                 k = '/'
               }
               const folderInfo = {
-                type: 'Folder',
+                type: TypeFolder,
                 key: k,
               }
-              data.tableData.push(folderInfo)
+              tableData.push(folderInfo)
             })
           }
 
@@ -184,19 +272,31 @@ export default {
               k = k.slice(prefix.length, c.key.length)
               if (k !== '') {
                 const objectInfo = {
-                  type: 'Object',
+                  type: TypeObject,
                   key: k,
                   last_modified: c.last_modified,
                   size: c.human_size,
                 }
-                data.tableData.push(objectInfo)
+                tableData.push(objectInfo)
               }
             })
           }
+          data.tableData = tableData
         }
         loading.value = false
       })
-      listLock = false
+    }
+
+    const createDir = () => {
+      PutDir(<string>bucketName, newFolderName.value, prefix.value).then(res => {
+        if (res.err !== '') {
+          ElMessage.error(res.err)
+        } else {
+          dialogCreateDirVisible.value = false
+          listObjects(bucketName, '', prefix.value, 100)
+          newFolderName.value = ''
+        }
+      })
     }
 
     const selectObjects = () => {
@@ -219,7 +319,6 @@ export default {
               progress: eventProgress
             }
             store.commit('addToUploadList', payload)
-
             // begin to upload
             EventsOn(eventProgress, (data) => {
               const payload = {
@@ -228,8 +327,7 @@ export default {
               }
               store.commit('updateProgress', payload)
             })
-
-            DoPutObject(bucketName, fp.key, fp.source, eventProgress).then(res => {
+            DoPutObject(<string>bucketName, fp.key, fp.source, eventProgress).then(res => {
               if (res.err !== '') {
                 ElMessage.error(res.err)
               } else {
@@ -238,33 +336,10 @@ export default {
                   progress: eventProgress
                 }
                 store.commit('updateProgress', payload)
-                lockedList(bucketName, '', prefix.value, 100)
+                listObjects(bucketName, '', prefix.value, 100)
               }
             })
           })
-        }
-      })
-    }
-
-    const putObject = () => {
-      var eventDialog = "uploadDialog"
-      var eventProgress = "u" + prefix.value + Math.random()
-      percentageLabel.value = 'Uploading...'
-      EventsOn(eventDialog, () => {
-        dialogFormVisible.value = true
-      })
-      percentage.value = 0
-      EventsOn(eventProgress, (data) => {
-        percentage.value = data
-      })
-      PutObject(bucketName, prefix.value, eventDialog, eventProgress).then(res => {
-        if (res.err !== '') {
-          ElMessage.error(res.err)
-          percentageLabel.value = 'Failed'
-        } else {
-          percentage.value = 100
-          listObjects(bucketName, '', prefix.value, 100)
-          percentageLabel.value = 'Finished'
         }
       })
     }
@@ -282,7 +357,7 @@ export default {
         percentage.value = data
       })
 
-      GetObject(bucketName, prefix.value + key, true, eventDialog, eventProgress).then(res => {
+      GetObject(<string>bucketName, prefix.value + key, true, eventDialog, eventProgress).then(res => {
         if (res.err !== '') {
           ElMessage.error(res.err)
           percentageLabel.value = 'Failed'
@@ -293,19 +368,62 @@ export default {
       })
     }
 
-    const deleteObject = (key) => {
-      console.log("deleteObject: " + prefix.value + key)
-      DeleteObject(bucketName, prefix.value + key).then(res => {
-        if (res.err !== '') {
-          ElMessage.error("delete object failed: ", res.err)
-        } else {
-          listObjects(bucketName, '', prefix.value, 100)
-        }
+    // delete single object
+    const deleteObject = (key, keyType) => {
+      var eventDeleteCount = "r" + Math.random()
+      var eventDeleteSuccess = eventDeleteCount + "_success"
+      deleteData.count = 0
+      deleteData.success = 0
+      EventsOn(eventDeleteCount, (data) => {
+        deleteData.count = data
       })
+      EventsOn(eventDeleteSuccess, (data) => {
+        deleteData.success = data
+      })
+      dialogDeleteVisible.value = true
+      DeleteObject(<string>bucketName, prefix.value + key, keyType, eventDeleteSuccess, eventDeleteCount)
+          .then(res => {
+            if (res.err !== '') {
+              ElMessage.error("delete object failed")
+            } else {
+              listObjects(bucketName, '', prefix.value, 100)
+            }
+          })
     }
 
+    // delete multiple objects
+    const deleteObjects = () => {
+      var deleteKeys = []
+      var eventDeleteCount = "r" + Math.random()
+      var eventDeleteSuccess = eventDeleteCount + "_success"
+      deleteData.count = 0
+      deleteData.success = 0
+      EventsOn(eventDeleteCount, (data) => {
+        deleteData.count = data
+      })
+      EventsOn(eventDeleteSuccess, (data) => {
+        deleteData.success = data
+      })
+      dialogDeleteVisible.value = true
+      multipleSelection.value.forEach((v, i) => {
+        var k = new DeleteKey()
+        k.key = prefix.value + v.key
+        k.keyType = v.type
+        deleteKeys.push(k)
+      })
+      DeleteObjects(<string>bucketName, deleteKeys, eventDeleteSuccess, eventDeleteCount)
+          .then(res => {
+            if (res.err !== '') {
+              ElMessage.error("delete objects failed")
+            } else {
+              listObjects(bucketName, '', prefix.value, 100)
+            }
+          })
+    }
+
+    // into `Folder`, otherwise preview the object
     const toPreview = (data) => {
-      if (data.type === 'Folder') {
+      if (data.type === TypeFolder) {
         prefix.value += data.key
         listObjects(bucketName, '', prefix.value, 100)
       } else {
@@ -316,13 +434,20 @@ export default {
     return {
       ...toRefs(data),
       listObjects,
-      putObject,
       getObject,
       deleteObject,
+      deleteObjects,
+      createDir,
       toPreview,
       backward,
       selectObjects,
+      handleSelectionChange,
+      disableDeleteButton,
+      newFolderName,
+      multipleTableRef,
       dialogFormVisible,
+      dialogCreateDirVisible,
+      dialogDeleteVisible,
       loading,
       objectList,
       prefix,
@@ -330,6 +455,8 @@ export default {
       bucketName,
       percentage,
       percentageLabel,
+      deletePercentage,
+      deletePercentageLabel,
       colors
     }
   }
@@ -340,7 +467,7 @@ export default {
 .container {
   width: 90%;
   text-align: left;
-  margin: 50px auto 20px auto;
+  margin: 10px auto 2% auto;
   border: 1px solid #EEE;
 }
 

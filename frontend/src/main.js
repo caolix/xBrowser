@@ -16,6 +16,7 @@ const store = createStore({
         uploadList: [],
         uploadProgress: {},
         downloadList: [],
+        listTask: false
     },
     mutations: {
         addToUploadList(state, payload) {
@@ -24,7 +25,7 @@ const store = createStore({
         },
         updateProgress(state, payload) {
             state.uploadProgress[payload.progress] = payload.data
-        }
+        },
     }
 })
 

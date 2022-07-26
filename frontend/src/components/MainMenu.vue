@@ -18,7 +18,7 @@
     <el-menu-item index="2">About</el-menu-item>
     <el-menu-item index="3" style="height:56px">
       <el-button link type="danger" @click="logout">
-        <el-icon style="padding-right: 6px"><SwitchButton/></el-icon>
+        <el-icon style="padding-right: 1px"><SwitchButton/></el-icon>
         Logout
       </el-button>
     </el-menu-item>

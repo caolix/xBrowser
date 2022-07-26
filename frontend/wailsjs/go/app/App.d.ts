@@ -10,7 +10,9 @@ export function CheckDbError():Promise<string>;
 
 export function DeleteBucket(arg1:string):Promise<string>;
 
-export function DeleteObject(arg1:string,arg2:string):Promise<app.ObjectHandlerResult>;
+export function DeleteObject(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string):Promise<app.ObjectHandlerResult>;
+
+export function DeleteObjects(arg1:string,arg2:Array<app.DeleteKey>,arg3:string,arg4:string):Promise<app.ObjectHandlerResult>;
 
 export function DoPutObject(arg1:string,arg2:string,arg3:string,arg4:string):Promise<app.ObjectHandlerResult>;
 
@@ -28,6 +30,6 @@ export function Login(arg1:db.LoginInfo,arg2:boolean):Promise<string>;
 
 export function MakeBucket(arg1:string):Promise<string>;
 
-export function PutObject(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string):Promise<app.ObjectHandlerResult>;
+export function PutDir(arg1:string,arg2:string,arg3:string):Promise<app.ObjectHandlerResult>;
 
 export function SelectFiles(arg1:string):Promise<app.SelectFilesResult>;

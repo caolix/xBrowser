@@ -48,13 +48,13 @@ func (s3client *S3Client) ListBuckets() (buckets []string, err error) {
 	return
 }
 
-func (s3client *S3Client) ListObjects(bucketName, marker, prefix string, maxKeys int64) (*s3.ListObjectsOutput, error) {
+func (s3client *S3Client) ListObjects(bucketName, marker, prefix string, maxKeys int64, delemiter string) (*s3.ListObjectsOutput, error) {
 	params := &s3.ListObjectsInput{
 		Bucket:    aws.String(bucketName),
 		Marker:    aws.String(marker),
 		MaxKeys:   aws.Int64(maxKeys),
 		Prefix:    aws.String(prefix),
-		Delimiter: aws.String("/"),
+		Delimiter: aws.String(delemiter),
 	}
 	return s3client.Client.ListObjects(params)
 }

@@ -14,8 +14,12 @@ export function DeleteBucket(arg1) {
   return window['go']['app']['App']['DeleteBucket'](arg1);
 }
 
-export function DeleteObject(arg1, arg2) {
-  return window['go']['app']['App']['DeleteObject'](arg1, arg2);
+export function DeleteObject(arg1, arg2, arg3, arg4, arg5) {
+  return window['go']['app']['App']['DeleteObject'](arg1, arg2, arg3, arg4, arg5);
+}
+
+export function DeleteObjects(arg1, arg2, arg3, arg4) {
+  return window['go']['app']['App']['DeleteObjects'](arg1, arg2, arg3, arg4);
 }
 
 export function DoPutObject(arg1, arg2, arg3, arg4) {
@@ -50,8 +54,8 @@ export function MakeBucket(arg1) {
   return window['go']['app']['App']['MakeBucket'](arg1);
 }
 
-export function PutObject(arg1, arg2, arg3, arg4, arg5) {
-  return window['go']['app']['App']['PutObject'](arg1, arg2, arg3, arg4, arg5);
+export function PutDir(arg1, arg2, arg3) {
+  return window['go']['app']['App']['PutDir'](arg1, arg2, arg3);
 }
 
 export function SelectFiles(arg1) {

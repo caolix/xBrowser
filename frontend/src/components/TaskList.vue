@@ -43,7 +43,6 @@ export default {
       taskDrawer.value = false
     }
     const confirmClick = () => {
-      console.log(store.state.uploadProgress)
     }
 
     const uploadListData = computed(() => {

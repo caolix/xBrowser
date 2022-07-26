@@ -43,10 +43,7 @@ func (s3client *S3Client) DeleteObject(bucketName, key string) (err error) {
 		Key:    aws.String(key),
 	}
 	_, err = s3client.Client.DeleteObject(params)
-	if err != nil {
-		return err
-	}
-	return
+	return err
 }
 
 func (s3client *S3Client) DeleteObjects(bucketName string, keys map[string]string) (err error) {

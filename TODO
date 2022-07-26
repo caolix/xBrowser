@@ -1,7 +1,19 @@
 # Frontend
-- [ ] Support multiple tabs to show different client
-- [ ] Support prefix
-- [ ] Settings
+- 多选下载
+- 自动打开任务列表
+- ListObject分页, prefix搜索, marker
+- 下载进度列表
+- 历史记录
+- 设置界面 (线程数， 分片大小)
+- 多登录Client间切换
+- 预签名下载
+- 任务列表角钉
+- 支持多版本操作
+- 预览效果
+- 界面优化
+- PresetPath
 
 # Backend
-- [ ] Support create muti-type-oss-client
+- 暂停上传/下载，续上传下载
+- 支持多版本操作
+- 支持多厂商类型对象

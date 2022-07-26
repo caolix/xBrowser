@@ -1,12 +1,14 @@
 package app
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"io"
 	"os"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 	"xBrowser/app/util"
 )
@@ -57,7 +59,7 @@ type ListObjectResult struct {
 }
 
 func (a *App) ListObjects(bucketName, marker, prefix string, maxKeys int64) ListObjectResult {
-	out, err := a.S3Client.ListObjects(bucketName, marker, prefix, maxKeys)
+	out, err := a.S3Client.ListObjects(bucketName, marker, prefix, maxKeys, "/")
 	if err != nil {
 		return ListObjectResult{Err: err.Error()}
 	}
@@ -169,39 +171,9 @@ func (a *App) DoPutObject(bucketName, key, filePath, eventProgress string) Objec
 	return ObjectHandlerResult{}
 }
 
-func (a *App) PutObject(bucketName, filePath, prefix, eventDialog, eventProgress string) ObjectHandlerResult {
-	key := prefix + getFileName(filePath)
-	f, err := os.Open(filePath)
-	fInfo, err := f.Stat()
-	if err != nil {
-		return ObjectHandlerResult{Err: err.Error()}
-	}
-	p := &Progress{}
-	p.TotalBytes = fInfo.Size()
-	r := NewProgressReader(f, p)
-
-	// open dialog
-	runtime.EventsEmit(a.ctx, eventDialog, true)
-	cancelCh := make(chan bool)
-	// emit progress data
-	go func(ch chan bool) {
-		for {
-			select {
-			case <-cancelCh:
-				return
-			default:
-				if r.p.State() < 100 {
-					runtime.EventsEmit(a.ctx, eventProgress, r.p.State())
-				}
-				time.Sleep(10 * time.Millisecond)
-			}
-		}
-	}(cancelCh)
-	defer func() {
-		cancelCh <- true
-	}()
-
-	err = a.S3Client.PutObjectWithOpt(bucketName, key, r)
+func (a *App) PutDir(bucketName, dirName, prefix string) ObjectHandlerResult {
+	key := prefix + dirName + "/"
+	err := a.S3Client.PutObjectWithOpt(bucketName, key, bytes.NewReader([]byte{}))
 	if err != nil {
 		return ObjectHandlerResult{Err: err.Error()}
 	}
@@ -279,10 +251,45 @@ func PathExists(path string) (bool, error) {
 	return false, err
 }
 
-func (a *App) DeleteObject(bucketName, key string) ObjectHandlerResult {
-	err := a.S3Client.DeleteObject(bucketName, key)
-	if err != nil {
-		return ObjectHandlerResult{Err: err.Error()}
+func (a *App) DeleteObject(bucketName, key string, selectedType string,
+	eventDeleteSuccess, eventDeleteCount string) ObjectHandlerResult {
+	task := &DeleteTask{
+		a:                  a,
+		bucketName:         bucketName,
+		eventDeleteSuccess: eventDeleteSuccess,
+		eventDeleteCount:   eventDeleteCount,
+		delCh:              make(chan DeleteKey, 100),
+		keys: []DeleteKey{
+			{
+				Key:     key,
+				KeyType: selectedType,
+			},
+		},
+		wg: &sync.WaitGroup{},
 	}
+	task.Start()
+	task.wg.Wait()
+	return ObjectHandlerResult{}
+}
+
+type SelectedObject struct {
+	Type string
+	Key  string
+}
+
+func (a *App) DeleteObjects(bucketName string, keys []DeleteKey,
+	eventDeleteSuccess, eventDeleteCount string) ObjectHandlerResult {
+	task := &DeleteTask{
+		a:                  a,
+		bucketName:         bucketName,
+		eventDeleteSuccess: eventDeleteSuccess,
+		eventDeleteCount:   eventDeleteCount,
+		delCh:              make(chan DeleteKey, 100),
+		keys:               keys,
+		wg:                 &sync.WaitGroup{},
+	}
+
+	task.Start()
+	task.wg.Wait()
 	return ObjectHandlerResult{}
 }

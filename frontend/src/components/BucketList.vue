@@ -174,7 +174,7 @@ export default {
 .container {
   width: 90%;
   text-align: left;
-  margin: 5% auto 2% auto;
+  margin: 10px auto 2% auto;
   border: 1px solid #EEE;
 }
 

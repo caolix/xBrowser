@@ -68,7 +68,7 @@ func (a *App) Startup(ctx context.Context) {
 		AppMenu.Append(menu.AppMenu())
 		AppMenu.Append(menu.EditMenu()) // on macos platform, we should append EditMenu to enable Cmd+C,Cmd+V,Cmd+Z... shortcut
 	}
-	FileMenu := AppMenu.AddSubmenu("File")
+	FileMenu := AppMenu.AddSubmenu("Debug")
 	FileMenu.AddText("WindowSetTitle", keys.CmdOrCtrl("1"), func(_ *menu.CallbackData) {
 		runtime.WindowSetTitle(ctx, time.Now().Local().String())
 	})
