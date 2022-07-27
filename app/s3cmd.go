@@ -2,7 +2,6 @@ package app
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"io"
 	"os"
@@ -22,16 +21,19 @@ func (a *App) ListBuckets() ListBucketResult {
 	res := ListBucketResult{}
 	buckets, err := a.S3Client.ListBuckets()
 	if err != nil {
+		runtime.LogErrorf(a.ctx, "ListBuckets err: %s ", err)
 		res.Err = err.Error()
 		return res
 	}
 	res.Buckets = buckets
+	runtime.LogDebug(a.ctx, "ListBuckets success.")
 	return res
 }
 
 func (a *App) MakeBucket(bucket string) string {
 	err := a.S3Client.MakeBucket(bucket)
 	if err != nil {
+		runtime.LogErrorf(a.ctx, "MakeBucket %s err: %s ", bucket, err)
 		return err.Error()
 	}
 	return ""
@@ -40,6 +42,7 @@ func (a *App) MakeBucket(bucket string) string {
 func (a *App) DeleteBucket(bucket string) string {
 	err := a.S3Client.DeleteBucket(bucket)
 	if err != nil {
+		runtime.LogErrorf(a.ctx, "DeleteBucket %s err: %s ", bucket, err)
 		return err.Error()
 	}
 	return ""
@@ -61,6 +64,7 @@ type ListObjectResult struct {
 func (a *App) ListObjects(bucketName, marker, prefix string, maxKeys int64) ListObjectResult {
 	out, err := a.S3Client.ListObjects(bucketName, marker, prefix, maxKeys, "/")
 	if err != nil {
+		runtime.LogErrorf(a.ctx, "ListObjects %s %s %s %s %d %s err: %s ", bucketName, marker, prefix, maxKeys, "/", err)
 		return ListObjectResult{Err: err.Error()}
 	}
 	res := ListObjectResult{}
@@ -116,10 +120,12 @@ func (a *App) SelectFiles(prefix string) SelectFilesResult {
 	for _, fp := range filePaths {
 		f, err := os.Open(fp)
 		if err != nil {
+			runtime.LogErrorf(a.ctx, "Open file %s err: %s ", fp, err)
 			return SelectFilesResult{Err: err.Error()}
 		}
 		fInfo, err := f.Stat()
 		if err != nil {
+			runtime.LogErrorf(a.ctx, "Stat file %s err: %s ", fp, err)
 			return SelectFilesResult{Err: err.Error()}
 		}
 
@@ -139,8 +145,13 @@ func (a *App) SelectFiles(prefix string) SelectFilesResult {
 
 func (a *App) DoPutObject(bucketName, key, filePath, eventProgress string) ObjectHandlerResult {
 	f, err := os.Open(filePath)
+	if err != nil {
+		runtime.LogErrorf(a.ctx, "Open file %s err: %s ", filePath, err)
+		return ObjectHandlerResult{Err: err.Error()}
+	}
 	fInfo, err := f.Stat()
 	if err != nil {
+		runtime.LogErrorf(a.ctx, "Stat file %s err: %s ", filePath, err)
 		return ObjectHandlerResult{Err: err.Error()}
 	}
 	p := &Progress{}
@@ -175,6 +186,7 @@ func (a *App) PutDir(bucketName, dirName, prefix string) ObjectHandlerResult {
 	key := prefix + dirName + "/"
 	err := a.S3Client.PutObjectWithOpt(bucketName, key, bytes.NewReader([]byte{}))
 	if err != nil {
+		runtime.LogErrorf(a.ctx, "PutDir %s in bucket %s err: %s ", key, bucketName, err)
 		return ObjectHandlerResult{Err: err.Error()}
 	}
 	return ObjectHandlerResult{}
@@ -183,10 +195,12 @@ func (a *App) PutDir(bucketName, dirName, prefix string) ObjectHandlerResult {
 func (a *App) GetObject(bucketName, key string, override bool, eventDialog string, eventProgress string) ObjectHandlerResult {
 	path, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{})
 	if err != nil {
+		runtime.LogErrorf(a.ctx, "OpenDirectoryDialog err: %s ", err)
 		return ObjectHandlerResult{Err: err.Error()}
 	}
 	out, err := a.S3Client.GetObjectOutPut(bucketName, key)
 	if err != nil {
+		runtime.LogErrorf(a.ctx, "GetObject %s in bucket %s err: %s ", key, bucketName, err)
 		return ObjectHandlerResult{Err: err.Error()}
 	}
 
@@ -196,12 +210,13 @@ func (a *App) GetObject(bucketName, key string, override bool, eventDialog strin
 	if err != nil {
 		return ObjectHandlerResult{Err: err.Error()}
 	}
+	// TODO: implement override
 	if fileExist {
 		return ObjectHandlerResult{Err: "File already exists."}
 	}
 	f, err := os.Create(filePath)
-	fmt.Println("GetObject:" + filePath)
 	if err != nil {
+		runtime.LogErrorf(a.ctx, "Create file %s err: %s ", filePath, err)
 		return ObjectHandlerResult{Err: err.Error()}
 	}
 
@@ -233,8 +248,12 @@ func (a *App) GetObject(bucketName, key string, override bool, eventDialog strin
 	}()
 	_, err = io.Copy(f, r)
 	if err != nil {
+		runtime.LogErrorf(a.ctx, "Download file %s err: %s ", filePath, err)
 		delErr := os.Remove(filePath)
-		return ObjectHandlerResult{Err: err.Error() + delErr.Error()}
+		if delErr != nil {
+			runtime.LogErrorf(a.ctx, "Delete file %s err: %s ", filePath, err)
+		}
+		return ObjectHandlerResult{Err: err.Error()}
 	}
 	runtime.EventsEmit(a.ctx, eventProgress, 100)
 	return ObjectHandlerResult{}

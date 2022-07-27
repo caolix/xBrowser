@@ -1,6 +1,8 @@
 # Frontend
-- 多选下载
+- 加Log
+- 失败续传
 - ListObject分页, prefix搜索, marker
+- 多选下载
 - 下载进度列表
 - 任务列表角钉
 - 历史记录

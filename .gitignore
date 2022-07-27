@@ -5,3 +5,4 @@ frontend/wailsjs/go/models.ts
 .idea/
 build/bin/
 build/windows/installer/tmp/
+*.log

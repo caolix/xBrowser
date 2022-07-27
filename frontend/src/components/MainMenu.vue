@@ -16,8 +16,6 @@
     <div class="flex-grow"/>
     <el-menu-item index="1" @click="showDrawer">
       <span>TaskList</span>
-      <el-badge :value="1" class="item">
-      </el-badge>
     </el-menu-item>
     <el-menu-item index="2">Settings</el-menu-item>
     <el-menu-item index="3">About</el-menu-item>
@@ -59,10 +57,5 @@ export default {
 <style scoped>
 .flex-grow {
   flex-grow: 1;
-}
-
-
-.item {
-  vertical-align: top;
 }
 </style>

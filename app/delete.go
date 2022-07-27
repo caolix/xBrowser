@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"sync"
 	"sync/atomic"
@@ -34,8 +33,7 @@ func (t *DeleteTask) doDelete() {
 		case d := <-t.delCh:
 			err := t.a.S3Client.DeleteObject(t.bucketName, d.Key)
 			if err != nil {
-				// TODO: Log it
-				fmt.Println("delete: ", d, "err:", err)
+				runtime.LogErrorf(t.a.ctx, "DeleteObject %s in bucket %s err: %s ", d.Key, t.bucketName, err)
 				continue
 			}
 			atomic.AddInt64(&t.success, 1)
@@ -84,8 +82,7 @@ func (t *DeleteTask) Start() {
 		} else if k.KeyType == TypeFolder {
 			err := t.deleteFolder(&k)
 			if err != nil {
-				// TODO: Log it or retry
-				fmt.Println(err)
+				runtime.LogErrorf(t.a.ctx, "DeleteFolder %s in bucket %s err: %s ", k.Key, t.bucketName, err)
 			}
 		} else {
 			continue

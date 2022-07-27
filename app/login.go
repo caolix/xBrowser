@@ -1,8 +1,7 @@
 package app
 
 import (
-	"fmt"
-	"log"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"time"
 	"xBrowser/app/db"
 	"xBrowser/app/s3lib"
@@ -10,10 +9,11 @@ import (
 
 // Greet returns a greeting for the given name
 func (a *App) Login(l db.LoginInfo, needSave bool) string {
-	log.Println(l.Endpoint, l.AccessKey, l.SecretKey, needSave)
+	runtime.LogInfof(a.ctx, "Login info: %s %s %s %s", l.Endpoint, l.AccessKey, l.SecretKey, needSave)
 	a.S3Client = s3lib.NewS3(l.Endpoint, l.AccessKey, l.SecretKey)
 	_, err := a.S3Client.ListBuckets()
 	if err != nil {
+		runtime.LogErrorf(a.ctx, "Login failed. err: %s", err.Error())
 		return err.Error()
 	}
 	if needSave && a.DB != nil {
@@ -26,8 +26,7 @@ func (a *App) Login(l db.LoginInfo, needSave bool) string {
 			Prepath:   l.Prepath,
 			LoginTime: time.Now().Local(),
 		})
-		// TODO: handle error
-		fmt.Println("Insert err:", err)
+		runtime.LogWarningf(a.ctx, "Insert login info failed. err: %s", err.Error())
 	}
 	return ""
 }
