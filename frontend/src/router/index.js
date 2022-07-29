@@ -16,13 +16,15 @@ const routes = [
         component: main,
         children: [
             {
-                path: '',
+                path: "",
+                name: "BucketList",
                 components: {
                     default: bucketList
                 },
             },
             {
                 path: 'bucket/:bucketName',
+                name: "ObjectList",
                 component : objectList,
             }
         ]

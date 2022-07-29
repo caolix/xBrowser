@@ -113,8 +113,7 @@ export default {
       info.remark = data.remark
       Login(info, data.save).then((res) => {
         if (res === "") {
-          console.log(router)
-          router.push("/main")
+          router.push({path: '/main'})
         } else {
           ElMessage.error(res)
         }

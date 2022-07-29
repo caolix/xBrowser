@@ -42,13 +42,10 @@ export default {
     const activeName = ref('upload')
     const store = useStore()
     const cancelClick = () => {
-      context.emit('changeVisible', false)
-    }
-    const showDrawer = () => {
-      context.emit('changeVisible', true)
+      context.emit('cancelVisible', false)
     }
     const closeDrawer = () => {
-      context.emit('changeVisible', false)
+      context.emit('cancelVisible', false)
     }
 
     const uploadListData = computed(() => {
@@ -71,7 +68,6 @@ export default {
       uploadListData,
       percentageMap,
       cancelClick,
-      showDrawer,
       closeDrawer
     }
   }

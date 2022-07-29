@@ -49,20 +49,8 @@ func NewApp() *App {
 	}
 }
 
-// startup is called at application startup
-// startup 在应用程序启动时调用
-func (a *App) Startup(ctx context.Context) {
-	// Perform your setup here
-	// 在这里执行初始化设置
-	a.ctx = ctx
-	// TODO: use OS_ENV to choose db config, load it and then set db type
-	switch a.Config.DbType {
-	case db.TYPE_SQLITE:
-		a.DB = &db.AppSqlite{}
-	default:
-		a.LoadDbErr = errors.New("db type not supported")
-	}
-
+func (a *App) SetupMenu() {
+	ctx := a.ctx
 	AppMenu := menu.NewMenu()
 	if os_runtime.GOOS == "darwin" {
 		AppMenu.Append(menu.AppMenu())
@@ -116,6 +104,24 @@ func (a *App) Startup(ctx context.Context) {
 	runtime.MenuSetApplicationMenu(ctx, AppMenu)
 }
 
+// startup is called at application startup
+// startup 在应用程序启动时调用
+func (a *App) Startup(ctx context.Context) {
+	// Perform your setup here
+	// 在这里执行初始化设置
+	a.ctx = ctx
+	// TODO: use OS_ENV to choose db config, load it and then set db type
+	runtime.LogInfo(ctx, "Load db type:"+string(a.Config.DbType))
+	switch a.Config.DbType {
+	case db.TYPE_SQLITE:
+		a.DB = &db.AppSqlite{}
+	default:
+		runtime.LogError(ctx, "not supported:"+string(a.Config.DbType))
+		a.LoadDbErr = errors.New("db type not supported")
+	}
+	runtime.LogInfo(ctx, "Startup finished.")
+}
+
 // domReady is called after the front-end dom has been loaded
 // domReady 在前端Dom加载完毕后调用
 func (a *App) DomReady(ctx context.Context) {
@@ -126,8 +132,8 @@ func (a *App) DomReady(ctx context.Context) {
 		if a.LoadDbErr != nil {
 			a.DB = nil
 		}
-		fmt.Println(a.LoadDbErr)
 	}
+	runtime.LogInfo(ctx, "DomReady finished.")
 }
 
 // shutdown is called at application termination
@@ -138,6 +144,7 @@ func (a *App) Shutdown(ctx context.Context) {
 	//if a.DB != nil {
 	//	a.DB.Close()
 	//}
+	runtime.LogInfo(ctx, "Shutdown finished.")
 }
 
 func (a *App) BeforeClose(ctx context.Context) bool {

@@ -44,7 +44,7 @@ export default {
       })
     }
     const showDrawer = () => {
-      context.emit('changeVisible', true)
+      context.emit('drawerVisible', true)
     }
     return {
       showDrawer,

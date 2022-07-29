@@ -1,6 +1,6 @@
 <template>
-  <MainMenu @changeVisible="changeVisible"/>
-  <TaskList :visible="visible" @changeVisible="changeVisible"/>
+  <MainMenu @drawerVisible="changeVisible"/>
+  <TaskList :visible="visible" @cancelVisible="changeVisible"/>
   <div style="margin-top: 10px">
     <router-view @changeVisible="changeVisible"/>
   </div>

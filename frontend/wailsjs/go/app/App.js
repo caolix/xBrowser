@@ -61,3 +61,7 @@ export function PutDir(arg1, arg2, arg3) {
 export function SelectFiles(arg1) {
   return window['go']['app']['App']['SelectFiles'](arg1);
 }
+
+export function SetupMenu() {
+  return window['go']['app']['App']['SetupMenu']();
+}

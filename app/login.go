@@ -9,13 +9,14 @@ import (
 
 // Greet returns a greeting for the given name
 func (a *App) Login(l db.LoginInfo, needSave bool) string {
-	runtime.LogInfof(a.ctx, "Login info: %s %s %s %s", l.Endpoint, l.AccessKey, l.SecretKey, needSave)
+	runtime.LogInfof(a.ctx, "Login info: %s %s %s %v", l.Endpoint, l.AccessKey, l.SecretKey, needSave)
 	a.S3Client = s3lib.NewS3(l.Endpoint, l.AccessKey, l.SecretKey)
 	_, err := a.S3Client.ListBuckets()
 	if err != nil {
-		runtime.LogErrorf(a.ctx, "Login failed. err: %s", err.Error())
+		runtime.LogErrorf(a.ctx, "Login failed. err: %s", err)
 		return err.Error()
 	}
+	runtime.LogInfof(a.ctx, "Login success.")
 	if needSave && a.DB != nil {
 		// Update if the database has the same record, otherwise insert
 		err = a.DB.UpsertLoginInfo(&db.LoginInfo{
@@ -26,7 +27,9 @@ func (a *App) Login(l db.LoginInfo, needSave bool) string {
 			Prepath:   l.Prepath,
 			LoginTime: time.Now().Local(),
 		})
-		runtime.LogWarningf(a.ctx, "Insert login info failed. err: %s", err.Error())
+		if err != nil {
+			runtime.LogWarningf(a.ctx, "Insert login info failed. err: %s", err)
+		}
 	}
 	return ""
 }

@@ -33,3 +33,5 @@ export function MakeBucket(arg1:string):Promise<string>;
 export function PutDir(arg1:string,arg2:string,arg3:string):Promise<app.ObjectHandlerResult>;
 
 export function SelectFiles(arg1:string):Promise<app.SelectFilesResult>;
+
+export function SetupMenu():void;
