@@ -27,9 +27,9 @@ type App struct {
 }
 
 type AppConfig struct {
-	DbType  db.DB_TYPE
-	Address string
-	// TODO: add logger
+	DbType   db.DB_TYPE
+	Address  string
+	Settings *db.Settings
 }
 
 // NewApp creates a new App application struct
@@ -41,9 +41,11 @@ func NewApp() *App {
 	}
 	fmt.Println(dir)
 	DefaultConfig := &AppConfig{
-		DbType:  db.TYPE_SQLITE,
-		Address: dir,
+		DbType:   db.TYPE_SQLITE,
+		Address:  dir,
+		Settings: db.NewDefaultSettings(),
 	}
+
 	return &App{
 		Config: DefaultConfig,
 	}

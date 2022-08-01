@@ -4,10 +4,12 @@ import (
 	"github.com/journeymidnight/aws-sdk-go/aws"
 	"github.com/journeymidnight/aws-sdk-go/service/s3"
 	"github.com/journeymidnight/aws-sdk-go/service/s3/s3manager"
+
+	//"github.com/journeymidnight/aws-sdk-go/service/s3/s3manager"
 	"io"
 )
 
-func (s3client *S3Client) PutObjectWithOpt(bucketName, key string, body io.Reader, options ...PutObjectOption) (err error) {
+func (s3client *S3Client) PutObjectWithOpt(bucketName, key string, body io.Reader, options ...UploadOption) (err error) {
 	params := &s3manager.UploadInput{
 		Body:   body,
 		Bucket: aws.String(bucketName),
@@ -20,14 +22,7 @@ func (s3client *S3Client) PutObjectWithOpt(bucketName, key string, body io.Reade
 	return err
 }
 
-type PutObjectOption func(p *s3manager.UploadInput)
-
-// TODO: implement other options
-func WithContentType(contentType string) PutObjectOption {
-	return func(p *s3manager.UploadInput) {
-		p.ContentType = aws.String(contentType)
-	}
-}
+type UploadOption func(p *s3manager.UploadInput)
 
 func (s3client *S3Client) GetObjectOutPut(bucketName, key string) (out *s3.GetObjectOutput, err error) {
 	params := &s3.GetObjectInput{

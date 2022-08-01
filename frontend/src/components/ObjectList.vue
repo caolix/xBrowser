@@ -312,6 +312,7 @@ export default {
               source: fp.source,
               size: fp.size,
               human_size: fp.human_size,
+              isPending: false,
               progress: eventProgress
             }
             const payload = {
@@ -327,6 +328,8 @@ export default {
               }
               store.commit('updateProgress', payload)
             })
+
+            // open TaskList
             context.emit('changeVisible', true)
             DoPutObject(<string>bucketName, fp.key, fp.source, eventProgress).then(res => {
               if (res.err !== '') {

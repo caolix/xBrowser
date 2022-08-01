@@ -9,7 +9,7 @@ import (
 
 // Greet returns a greeting for the given name
 func (a *App) Login(l db.LoginInfo, needSave bool) string {
-	runtime.LogInfof(a.ctx, "Login info: %s %s %s %v", l.Endpoint, l.AccessKey, l.SecretKey, needSave)
+	runtime.LogDebugf(a.ctx, "Login info: %s %s %s %v", l.Endpoint, l.AccessKey, l.SecretKey, needSave)
 	a.S3Client = s3lib.NewS3(l.Endpoint, l.AccessKey, l.SecretKey)
 	_, err := a.S3Client.ListBuckets()
 	if err != nil {

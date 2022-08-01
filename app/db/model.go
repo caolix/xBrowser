@@ -10,3 +10,40 @@ type LoginInfo struct {
 	Prepath   string    `json:"prepath"`
 	LoginTime time.Time `json:"loginTime"`
 }
+
+// Unfinished Task
+type UploadTask struct {
+	Id           string `json:"id"`
+	Key          string `json:"key"`
+	Source       string `json:"source"`
+	Size         int    `json:"size"`
+	UploadedSize int    `json:"uploadedSize"`
+	UploadId     string `json:"uploadId"`
+	IsMultipart  bool   `json:"isMultipart"`
+}
+
+type Settings struct {
+	PartSizeMB             int `json:"partSize"`
+	UploadPartsConcurrency int `json:"uploadPartsConcurrency"`
+	UploadConcurrency      int `json:"uploadConcurrency"`
+	DownloadConcurrency    int `json:"downloadConcurrency"`
+}
+
+type SettingsOption func(settings *Settings)
+
+func NewSettings(opt ...SettingsOption) *Settings {
+	s := NewDefaultSettings()
+	for _, f := range opt {
+		f(s)
+	}
+	return s
+}
+
+func NewDefaultSettings() *Settings {
+	return &Settings{
+		PartSizeMB:             5,
+		UploadPartsConcurrency: 10,
+		UploadConcurrency:      10,
+		DownloadConcurrency:    10,
+	}
+}

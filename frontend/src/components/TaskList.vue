@@ -4,11 +4,44 @@
       <el-tabs v-model="activeName" class="demo-tabs" @tab-click="handleClick">
         <el-tab-pane label="Upload" name="upload">
           <el-table :data="uploadListData" style="width: 100%">
-            <el-table-column prop="key"  width="150" />
+
+            <el-table-column  width="250">
+              <template #default="scope">
+                <span>{{ scope.row.key }}</span>
+                <el-progress :percentage="percentageMap[scope.row.progress]" :color="colors" />
+              </template>
+            </el-table-column>
+
             <el-table-column prop="human_size"  width="100" />
+
             <el-table-column>
               <template #default="scope">
-                <el-progress :percentage="percentageMap[scope.row.progress]" :color="colors" />
+                <el-button
+                    type="success"
+                    @click=""
+                >
+                  <el-icon>
+                    <CaretRight/>
+                  </el-icon>
+                </el-button>
+                <el-button
+                    type="info"
+                    plain
+                    @click=""
+                >
+                  <el-icon>
+                    <CloseBold/>
+                  </el-icon>
+                </el-button>
+                <el-button
+                    type="danger"
+                    plain
+                    @click=""
+                >
+                  <el-icon>
+                    <Delete/>
+                  </el-icon>
+                </el-button>
               </template>
             </el-table-column>
           </el-table>
