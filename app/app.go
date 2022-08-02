@@ -19,17 +19,18 @@ import (
 type App struct {
 	ctx      context.Context
 	S3Client *s3lib.S3Client
-	DB       db.AppDB
 	Config   *AppConfig
 
+	UnfinishedUploadTask   int64
+	UnfinishedDownloadTask int64
 	// App setup status
 	LoadDbErr error
 }
 
 type AppConfig struct {
-	DbType   db.DB_TYPE
-	Address  string
-	Settings *db.Settings
+	DbType      db.DB_TYPE
+	Address     string
+	AppSettings *db.Settings
 }
 
 // NewApp creates a new App application struct
@@ -39,11 +40,10 @@ func NewApp() *App {
 		fmt.Println(err)
 		return nil
 	}
-	fmt.Println(dir)
 	DefaultConfig := &AppConfig{
-		DbType:   db.TYPE_SQLITE,
-		Address:  dir,
-		Settings: db.NewDefaultSettings(),
+		DbType:      db.TYPE_SQLITE,
+		Address:     dir,
+		AppSettings: db.NewSettings(),
 	}
 
 	return &App{
@@ -116,10 +116,11 @@ func (a *App) Startup(ctx context.Context) {
 	runtime.LogInfo(ctx, "Load db type:"+string(a.Config.DbType))
 	switch a.Config.DbType {
 	case db.TYPE_SQLITE:
-		a.DB = &db.AppSqlite{}
+		db.GlobalAppDB = &db.AppSqlite{}
 	default:
 		runtime.LogError(ctx, "not supported:"+string(a.Config.DbType))
 		a.LoadDbErr = errors.New("db type not supported")
+		db.GlobalAppDB = &db.AppMemory{}
 	}
 	runtime.LogInfo(ctx, "Startup finished.")
 }
@@ -129,12 +130,7 @@ func (a *App) Startup(ctx context.Context) {
 func (a *App) DomReady(ctx context.Context) {
 	// Add your action here
 	// 在这里添加你的操作
-	if a.DB != nil {
-		a.LoadDbErr = a.DB.Init(a.Config.Address)
-		if a.LoadDbErr != nil {
-			a.DB = nil
-		}
-	}
+	a.LoadDbErr = db.GlobalAppDB.Init(a.Config.Address)
 	runtime.LogInfo(ctx, "DomReady finished.")
 }
 

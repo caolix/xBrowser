@@ -16,6 +16,7 @@
 - PresetPath
 - 自动补全输入框
 - i18n
+- 授权码登录
 
 # Backend
 - 外置参数配置

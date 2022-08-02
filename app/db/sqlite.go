@@ -20,7 +20,7 @@ func (s *AppSqlite) Init(dir string) (err error) {
 		return err
 	}
 	s.Address = dbAddress
-	err = s.DB.AutoMigrate(&LoginInfo{})
+	err = s.DB.AutoMigrate(&LoginInfo{}, &UploadTask{}, &Settings{})
 	if err != nil {
 		s.DB = nil
 		return err
@@ -85,4 +85,46 @@ func (s *AppSqlite) ListAllLoginInfo() ([]LoginInfo, error) {
 		return nil, res.Error
 	}
 	return querys, nil
+}
+
+func (s *AppSqlite) ListAllUploadTasks(accountId int) ([]UploadTask, error) {
+	querys := []UploadTask{}
+	res := s.DB.Where("account_id = ?", accountId).Find(&querys)
+	if res.Error != nil {
+		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, res.Error
+	}
+	return querys, nil
+}
+
+func (s *AppSqlite) UpsertUploadTask(u *UploadTask) error {
+	query := UploadTask{
+		AccountId: u.AccountId,
+	}
+	task := UploadTask{}
+	res := s.DB.Where(&query).First(&task)
+	if res.Error != nil {
+		// Insert login info if not exist
+		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+			res = s.DB.Create(u)
+			if res.Error != nil {
+				return res.Error
+			}
+			return nil
+		}
+		return res.Error
+	}
+	// Update login time if login info exist
+	task.ModifiedTime = time.Now().Local()
+	task.Status = u.Status
+	task.UploadedSize = u.UploadedSize
+
+	res = s.DB.Where("status = ? AND uploaded_size = ? AND modified_time = ?",
+		u.Status, u.UploadedSize, u.ModifiedTime).Save(&task)
+	if res.Error != nil {
+		return res.Error
+	}
+	return nil
 }

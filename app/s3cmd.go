@@ -2,12 +2,14 @@ package app
 
 import (
 	"bytes"
+	"context"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"io"
 	"os"
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 	"xBrowser/app/util"
 )
@@ -143,6 +145,16 @@ func (a *App) SelectFiles(prefix string) SelectFilesResult {
 	return res
 }
 
+func (a *App) doPut(bucketName, key string, r io.Reader, resCh chan ObjectHandlerResult) {
+	// TODO: cancel Put
+	_, err := a.S3Client.PutObject(context.Background(), bucketName, key, r)
+	if err != nil {
+		resCh <- ObjectHandlerResult{Err: err.Error()}
+		return
+	}
+	resCh <- ObjectHandlerResult{}
+}
+
 func (a *App) DoPutObject(bucketName, key, filePath, eventProgress string) ObjectHandlerResult {
 	f, err := os.Open(filePath)
 	if err != nil {
@@ -154,37 +166,19 @@ func (a *App) DoPutObject(bucketName, key, filePath, eventProgress string) Objec
 		runtime.LogErrorf(a.ctx, "Stat file %s err: %s ", filePath, err)
 		return ObjectHandlerResult{Err: err.Error()}
 	}
-	p := &Progress{}
-	p.TotalBytes = fInfo.Size()
+
+	atomic.AddInt64(&a.UnfinishedUploadTask, 1)
+	p := NewProgress(a.ctx, eventProgress, fInfo.Size())
 	r := NewProgressReader(f, p)
-	cancelCh := make(chan bool)
-	// emit progress data
-	go func(ch chan bool) {
-		for {
-			select {
-			case <-cancelCh:
-				return
-			default:
-				if r.p.State() < 100 {
-					runtime.EventsEmit(a.ctx, eventProgress, r.p.State())
-				}
-				time.Sleep(10 * time.Millisecond)
-			}
-		}
-	}(cancelCh)
-	defer func() {
-		cancelCh <- true
-	}()
-	err = a.S3Client.PutObjectWithOpt(bucketName, key, r)
-	if err != nil {
-		return ObjectHandlerResult{Err: err.Error()}
-	}
-	return ObjectHandlerResult{}
+
+	resCh := make(chan ObjectHandlerResult)
+	go a.doPut(bucketName, key, r, resCh)
+	return <-resCh
 }
 
 func (a *App) PutDir(bucketName, dirName, prefix string) ObjectHandlerResult {
 	key := prefix + dirName + "/"
-	err := a.S3Client.PutObjectWithOpt(bucketName, key, bytes.NewReader([]byte{}))
+	_, err := a.S3Client.PutObject(context.Background(), bucketName, key, bytes.NewReader([]byte{}))
 	if err != nil {
 		runtime.LogErrorf(a.ctx, "PutDir %s in bucket %s err: %s ", key, bucketName, err)
 		return ObjectHandlerResult{Err: err.Error()}

@@ -1,17 +1,33 @@
 package app
 
 import (
+	"context"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"io"
 	"time"
 )
 
 type Progress struct {
+	ctx           context.Context
+	eventProgress string
+
 	CurrentBytes int64
 	TotalBytes   int64
 
 	// TODO: implement speed
+	IsCalc           bool
 	LastCheckedBytes int64
 	SpeedBytes       int64
+	closeCh          chan struct{}
+}
+
+func NewProgress(ctx context.Context, eventProgress string, total int64) *Progress {
+	return &Progress{
+		ctx:           ctx,
+		eventProgress: eventProgress,
+		TotalBytes:    total,
+		closeCh:       make(chan struct{}),
+	}
 }
 
 func (p *Progress) Add(num int64) {
@@ -29,21 +45,29 @@ func (p *Progress) State() int64 {
 	return p.CurrentBytes * 100 / p.TotalBytes
 }
 
-func (p *Progress) calcSpeed(close chan struct{}) {
+func (p *Progress) Speed() int64 {
+	return p.SpeedBytes
+}
+
+func (p *Progress) Current() int64 {
+	return p.CurrentBytes
+}
+
+func (p *Progress) calc() {
 	t := time.NewTicker(100 * time.Millisecond)
 	for {
 		select {
 		case <-t.C:
 			p.SpeedBytes = (p.CurrentBytes - p.LastCheckedBytes) / 10 // Bytes per 1s
 			p.LastCheckedBytes = p.CurrentBytes
-		case <-close:
+
+			if p.State() < 100 && p.eventProgress != "" {
+				runtime.EventsEmit(p.ctx, p.eventProgress, p.State())
+			}
+		case <-p.closeCh:
 			return
 		}
 	}
-}
-
-func (p *Progress) Speed() int64 {
-	return p.SpeedBytes
 }
 
 // Reader is the progressbar io.Reader struct
@@ -61,11 +85,14 @@ func NewProgressReader(r io.Reader, p *Progress) *Reader {
 
 // Read will read the data and add the number of bytes to the progressbar
 func (r *Reader) Read(p []byte) (n int, err error) {
-	if r.p.CurrentBytes == 0 {
-		c := make(chan struct{})
-		go r.p.calcSpeed(c)
+	if !r.p.IsCalc {
+		go r.p.calc()
+		r.p.IsCalc = true
 	}
 	n, err = r.Reader.Read(p)
+	if err != nil {
+		r.p.closeCh <- struct{}{}
+	}
 	r.p.Add(int64(n))
 	return
 }
