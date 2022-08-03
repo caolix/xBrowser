@@ -3,23 +3,29 @@ package s3lib
 import (
 	"github.com/journeymidnight/aws-sdk-go/aws"
 	"github.com/journeymidnight/aws-sdk-go/service/s3"
-	"github.com/journeymidnight/aws-sdk-go/service/s3/s3manager"
 	"io"
+	"xBrowser/app/db"
 )
 
-func (s3client *S3Client) PutObject(ctx aws.Context, bucketName, key string, body io.Reader, options ...UploadOption) (out *UploadOutput, err error) {
-	params := &s3manager.UploadInput{
-		Body:   body,
-		Bucket: aws.String(bucketName),
-		Key:    aws.String(key),
-	}
-	for _, o := range options {
-		o(params)
+func (s3client *S3Client) UploadObject(ctx aws.Context, bucketName, key string, body io.Reader, task *db.UploadTask) (out *UploadOutput, err error) {
+	params := &UploadInput{
+		Body:       body,
+		Bucket:     aws.String(bucketName),
+		Key:        aws.String(key),
+		UploadTask: task,
 	}
 	return s3client.Uploader.UploadWithContext(ctx, params)
 }
 
-type UploadOption func(p *s3manager.UploadInput)
+func (s3client *S3Client) PutObject(bucketName, key string, body io.ReadSeeker) (err error) {
+	params := &s3.PutObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(key),
+		Body:   body,
+	}
+	_, err = s3client.Client.PutObject(params)
+	return err
+}
 
 func (s3client *S3Client) GetObjectOutPut(bucketName, key string) (out *s3.GetObjectOutput, err error) {
 	params := &s3.GetObjectInput{

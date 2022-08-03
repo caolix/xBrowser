@@ -25,6 +25,7 @@ type App struct {
 	UnfinishedDownloadTask int64
 	// App setup status
 	LoadDbErr error
+	AccountId string
 }
 
 type AppConfig struct {

@@ -87,7 +87,7 @@ func (s *AppSqlite) ListAllLoginInfo() ([]LoginInfo, error) {
 	return querys, nil
 }
 
-func (s *AppSqlite) ListAllUploadTasks(accountId int) ([]UploadTask, error) {
+func (s *AppSqlite) ListAllUploadTasks(accountId string) ([]UploadTask, error) {
 	querys := []UploadTask{}
 	res := s.DB.Where("account_id = ?", accountId).Find(&querys)
 	if res.Error != nil {
@@ -127,4 +127,8 @@ func (s *AppSqlite) UpsertUploadTask(u *UploadTask) error {
 		return res.Error
 	}
 	return nil
+}
+
+func (s *AppSqlite) DeleteUploadTask(accountId string, taskId string) {
+	s.DB.Delete(&UploadTask{}, "account_id = ? AND task_id = ?", accountId, taskId)
 }

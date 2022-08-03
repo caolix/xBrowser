@@ -7,13 +7,13 @@ import (
 
 type AppMemory struct {
 	loginInfo       map[string]*LoginInfo
-	uploadTask      map[int]map[string]*UploadTask
+	uploadTask      map[string]map[string]*UploadTask
 	latestLoginInfo *LoginInfo
 }
 
 func (a *AppMemory) Init(addr string) (err error) {
 	a.loginInfo = make(map[string]*LoginInfo)
-	a.uploadTask = make(map[int]map[string]*UploadTask)
+	a.uploadTask = make(map[string]map[string]*UploadTask)
 	return nil
 }
 
@@ -51,7 +51,7 @@ func (a *AppMemory) ListAllLoginInfo() ([]LoginInfo, error) {
 	return infos, nil
 }
 
-func (a *AppMemory) ListAllUploadTasks(accountId int) ([]UploadTask, error) {
+func (a *AppMemory) ListAllUploadTasks(accountId string) ([]UploadTask, error) {
 	tasks := []UploadTask{}
 	for _, v := range a.uploadTask[accountId] {
 		tasks = append(tasks, *v)
@@ -77,4 +77,12 @@ func (a *AppMemory) UpsertUploadTask(u *UploadTask) error {
 	t.Status = u.Status
 	t.UploadedSize = u.UploadedSize
 	return nil
+}
+
+func (a *AppMemory) DeleteUploadTask(accountId string, taskId string) {
+	v, ok := a.uploadTask[accountId]
+	if !ok {
+		return
+	}
+	delete(v, taskId)
 }

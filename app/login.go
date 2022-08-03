@@ -5,6 +5,7 @@ import (
 	"time"
 	"xBrowser/app/db"
 	"xBrowser/app/s3lib"
+	"xBrowser/app/util"
 )
 
 // Greet returns a greeting for the given name
@@ -17,9 +18,9 @@ func (a *App) Login(l db.LoginInfo, needSave bool) string {
 		return err.Error()
 	}
 	runtime.LogInfof(a.ctx, "Login success.")
-	if needSave && a.DB != nil {
+	if needSave {
 		// Update if the database has the same record, otherwise insert
-		err = a.DB.UpsertLoginInfo(&db.LoginInfo{
+		err = db.GlobalAppDB.UpsertLoginInfo(&db.LoginInfo{
 			Endpoint:  l.Endpoint,
 			AccessKey: l.AccessKey,
 			SecretKey: l.SecretKey,
@@ -31,6 +32,8 @@ func (a *App) Login(l db.LoginInfo, needSave bool) string {
 			runtime.LogWarningf(a.ctx, "Insert login info failed. err: %s", err)
 		}
 	}
+	a.AccountId = util.GenAccountId(l.AccessKey, l.Endpoint)
+	runtime.LogDebugf(a.ctx, "Login account id: %s", a.AccountId)
 	return ""
 }
 
@@ -43,26 +46,21 @@ func (a *App) CheckDbError() string {
 
 func (a *App) LoadLatestLoginInfo() db.LoginInfo {
 	info := db.LoginInfo{}
-	if a.DB != nil {
-		res, err := a.DB.GetLatestLoginInfo()
-		if err != nil {
-			return info
-		}
-		if res != nil {
-			return *res
-		}
+	res, err := db.GlobalAppDB.GetLatestLoginInfo()
+	if err != nil {
+		return info
+	}
+	if res != nil {
+		return *res
 	}
 	return info
 }
 
 func (a *App) ListAllLoginInfo() []db.LoginInfo {
 	infos := []db.LoginInfo{}
-	if a.DB != nil {
-		res, err := a.DB.ListAllLoginInfo()
-		if err != nil {
-			return infos
-		}
-		return res
+	res, err := db.GlobalAppDB.ListAllLoginInfo()
+	if err != nil {
+		return infos
 	}
-	return infos
+	return res
 }

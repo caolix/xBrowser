@@ -11,6 +11,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"xBrowser/app/db"
 	"xBrowser/app/util"
 )
 
@@ -145,9 +146,9 @@ func (a *App) SelectFiles(prefix string) SelectFilesResult {
 	return res
 }
 
-func (a *App) doPut(bucketName, key string, r io.Reader, resCh chan ObjectHandlerResult) {
+func (a *App) doPut(bucketName, key string, r io.Reader, task *db.UploadTask, resCh chan ObjectHandlerResult) {
 	// TODO: cancel Put
-	_, err := a.S3Client.PutObject(context.Background(), bucketName, key, r)
+	_, err := a.S3Client.UploadObject(context.Background(), bucketName, key, r, task)
 	if err != nil {
 		resCh <- ObjectHandlerResult{Err: err.Error()}
 		return
@@ -167,18 +168,29 @@ func (a *App) DoPutObject(bucketName, key, filePath, eventProgress string) Objec
 		return ObjectHandlerResult{Err: err.Error()}
 	}
 
+	task := &db.UploadTask{
+		AccountId:    a.AccountId,
+		TaskId:       eventProgress,
+		Key:          key,
+		Source:       filePath,
+		Size:         fInfo.Size(),
+		Status:       db.PENDING,
+		ModifiedTime: time.Now().Local(),
+	}
+
 	atomic.AddInt64(&a.UnfinishedUploadTask, 1)
 	p := NewProgress(a.ctx, eventProgress, fInfo.Size())
 	r := NewProgressReader(f, p)
 
 	resCh := make(chan ObjectHandlerResult)
-	go a.doPut(bucketName, key, r, resCh)
+	go a.doPut(bucketName, key, r, task, resCh)
 	return <-resCh
 }
 
 func (a *App) PutDir(bucketName, dirName, prefix string) ObjectHandlerResult {
 	key := prefix + dirName + "/"
-	_, err := a.S3Client.PutObject(context.Background(), bucketName, key, bytes.NewReader([]byte{}))
+	r := bytes.NewReader([]byte(""))
+	err := a.S3Client.PutObject(bucketName, key, r)
 	if err != nil {
 		runtime.LogErrorf(a.ctx, "PutDir %s in bucket %s err: %s ", key, bucketName, err)
 		return ObjectHandlerResult{Err: err.Error()}

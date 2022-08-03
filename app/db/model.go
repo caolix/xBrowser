@@ -3,7 +3,7 @@ package db
 import "time"
 
 type LoginInfo struct {
-	AccountId int       `json:"account_id" gorm:"primaryKey,autoIncrement"`
+	AccountId string    `gorm:"primaryKey" json:"accountId"`
 	Endpoint  string    `json:"endpoint"`
 	AccessKey string    `json:"ak"`
 	SecretKey string    `json:"sk"`
@@ -19,14 +19,15 @@ const (
 
 // Unfinished Task
 type UploadTask struct {
-	AccountId    int       `json:"accountId"`
+	AccountId    string    `json:"accountId"`
 	TaskId       string    `json:"taskId"`
 	Key          string    `json:"key"`
 	Source       string    `json:"source"`
-	Size         int       `json:"size"`
+	Size         int64     `json:"size"`
 	UploadedSize int       `json:"uploadedSize"`
 	UploadId     string    `json:"uploadId"`
 	IsMultipart  bool      `json:"isMultipart"`
+	PartSize     int64     `json:"partSize"`
 	Status       int       `json:"status"`
 	ModifiedTime time.Time `json:"modifiedTime"`
 }
