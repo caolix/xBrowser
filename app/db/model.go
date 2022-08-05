@@ -1,6 +1,8 @@
 package db
 
-import "time"
+import (
+	"time"
+)
 
 type LoginInfo struct {
 	AccountId string    `gorm:"primaryKey" json:"accountId"`
@@ -19,17 +21,30 @@ const (
 
 // Unfinished Task
 type UploadTask struct {
-	AccountId    string    `json:"accountId"`
-	TaskId       string    `json:"taskId"`
-	Key          string    `json:"key"`
-	Source       string    `json:"source"`
-	Size         int64     `json:"size"`
-	UploadedSize int       `json:"uploadedSize"`
-	UploadId     string    `json:"uploadId"`
-	IsMultipart  bool      `json:"isMultipart"`
-	PartSize     int64     `json:"partSize"`
-	Status       int       `json:"status"`
-	ModifiedTime time.Time `json:"modifiedTime"`
+	AccountId     string           `json:"accountId"`
+	TaskId        string           `json:"taskId"`
+	Bucket        string           `json:"bucket"`
+	Key           string           `json:"key"`
+	Name          string           `json:"name"`
+	Source        string           `json:"source"`
+	Size          int64            `json:"size"`
+	HumanSize     string           `json:"humanSize"`
+	UploadedSize  int64            `json:"uploadedSize"`
+	UploadId      string           `json:"uploadId"`
+	IsMultipart   bool             `json:"isMultipart"`
+	PartSize      int64            `json:"partSize"`
+	Status        int              `json:"status"`
+	CompletedPart []*CompletedPart `json:"completedPart" gorm:"-"`
+	ModifiedTime  time.Time        `json:"modifiedTime"`
+}
+
+type CompletedPart struct {
+	// Entity tag returned when the part was uploaded.
+	ETag string `json:"etag"`
+
+	// Part number that identifies the part. This is a positive integer between
+	// 1 and 10,000.
+	PartNumber int64 `json:"partNumber"`
 }
 
 type Settings struct {

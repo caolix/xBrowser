@@ -5,20 +5,20 @@
         <el-tab-pane label="Upload" name="upload">
           <el-table :data="uploadListData" style="width: 100%">
 
-            <el-table-column  width="250">
+            <el-table-column width="250">
               <template #default="scope">
                 <span>{{ scope.row.key }}</span>
-                <el-progress :percentage="percentageMap[scope.row.progress]" :color="colors" />
+                <el-progress :percentage="percentageMap[scope.row.taskId]" :color="colors"/>
               </template>
             </el-table-column>
 
-            <el-table-column prop="human_size"  width="100" />
+            <el-table-column prop="humanSize" width="100"/>
 
             <el-table-column>
               <template #default="scope">
                 <el-button
                     type="success"
-                    @click=""
+                    @click="resumeUpload(uploadListData[scope.$index])"
                 >
                   <el-icon>
                     <CaretRight/>
@@ -36,7 +36,7 @@
                 <el-button
                     type="danger"
                     plain
-                    @click=""
+                    @click="cancelUpload(uploadListData[scope.$index], scope.$index)"
                 >
                   <el-icon>
                     <Delete/>
@@ -61,8 +61,12 @@
 </template>
 
 <script>
-import {ref, computed} from 'vue'
+import {computed, ref} from 'vue'
 import {useStore} from "vuex";
+import {CancelUploadTask, ResumeUploadTask} from "../../wailsjs/go/app/App";
+import {ElMessage} from "element-plus";
+import {db} from '../../wailsjs/go/models'
+
 export default {
   name: "TaskList",
   props: {
@@ -94,13 +98,76 @@ export default {
       return store.state.uploadProgress
     })
 
-    return{
+    const resumeUpload = (task) => {
+      var t = new db.UploadTask()
+      t.uploadedSize = task.uploadedSize
+      t.key = task.key
+      t.size = task.size
+      t.name = task.name
+      t.accountId = task.accountId
+      t.bucket = task.bucket
+      t.humanSize = task.humanSize
+      t.isMultipart = task.isMultipart
+      t.partSize = task.partSize
+      t.source = task.source
+      t.status = task.status
+      t.taskId = task.taskId
+      t.uploadId = task.uploadId
+      ResumeUploadTask(t).then((res) => {
+        if (res.err !== '') {
+          ElMessage.error(res.err)
+        } else {
+          const payload = {
+            data: 100,
+            progress: t.taskId
+          }
+          store.commit('updateProgress', payload)
+          listObjects(bucketName, '', prefix.value, 100)
+        }
+      })
+    }
+
+    const cancelUpload = (task, index) => {
+      console.log(task.taskId)
+      if (percentageMap[task.taskId] !== 100) {
+        var t = new db.UploadTask()
+        t.uploadedSize = task.uploadedSize
+        t.key = task.key
+        t.size = task.size
+        t.name = task.name
+        t.accountId = task.accountId
+        t.bucket = task.bucket
+        t.humanSize = task.humanSize
+        t.isMultipart = task.isMultipart
+        t.partSize = task.partSize
+        t.source = task.source
+        t.status = task.status
+        t.taskId = task.taskId
+        t.uploadId = task.uploadId
+        CancelUploadTask(t).then((res) => {
+          if (res.err !== '') {
+            ElMessage.error(res.err)
+          }
+        })
+      }
+
+      const payload = {
+        index: index,
+        progress: task.taskId
+      }
+      console.log("payload:" + payload.index + payload.progress)
+      store.commit('removeUploadListParam', payload)
+    }
+
+    return {
       props,
       colors,
       activeName,
       uploadListData,
       percentageMap,
+      cancelUpload,
       cancelClick,
+      resumeUpload,
       closeDrawer
     }
   }

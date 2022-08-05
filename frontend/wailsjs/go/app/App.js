@@ -6,6 +6,10 @@ export function BeforeClose(arg1) {
   return window['go']['app']['App']['BeforeClose'](arg1);
 }
 
+export function CancelUploadTask(arg1) {
+  return window['go']['app']['App']['CancelUploadTask'](arg1);
+}
+
 export function CheckDbError() {
   return window['go']['app']['App']['CheckDbError']();
 }
@@ -42,6 +46,10 @@ export function ListObjects(arg1, arg2, arg3, arg4) {
   return window['go']['app']['App']['ListObjects'](arg1, arg2, arg3, arg4);
 }
 
+export function LoadAllUploadTasks() {
+  return window['go']['app']['App']['LoadAllUploadTasks']();
+}
+
 export function LoadLatestLoginInfo() {
   return window['go']['app']['App']['LoadLatestLoginInfo']();
 }
@@ -56,6 +64,10 @@ export function MakeBucket(arg1) {
 
 export function PutDir(arg1, arg2, arg3) {
   return window['go']['app']['App']['PutDir'](arg1, arg2, arg3);
+}
+
+export function ResumeUploadTask(arg1) {
+  return window['go']['app']['App']['ResumeUploadTask'](arg1);
 }
 
 export function SelectFiles(arg1) {

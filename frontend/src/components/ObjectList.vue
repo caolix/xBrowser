@@ -307,13 +307,14 @@ export default {
           res.files.forEach((fp, i) => {
             var eventProgress = "u" + fp.key + Math.random()
             const file = {
+              bucket: bucketName,
               name: fp.name,
               key: fp.key,
               source: fp.source,
               size: fp.size,
               human_size: fp.human_size,
               isPending: false,
-              progress: eventProgress
+              taskId: eventProgress
             }
             const payload = {
               file: file,

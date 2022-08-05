@@ -13,8 +13,24 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 // 创建一个新的 store 实例
 const store = createStore({
     state: {
+        //uploadList param {
+        // name: task.name,
+        // bucket: task.bucket,
+        // key: task.key,
+        // source: task.source,
+        // uploadedSize: task.uploadedSize,
+        // size: task.size,
+        // humanSize: task.humanSize,
+        // isPending: true,
+        // progress: task.taskId,
+        // accountId:  task.accountId,
+        // isMultipart: task.isMultipart,
+        // partSize: task.partSize,
+        // taskId: task.taskId,
+        // uploadId: task.uploadId
+        //  }
         uploadList: [],
-        uploadProgress: {},
+        uploadProgress: {}, // eventProgressId -> value
         downloadList: [],
         listTask: false
     },
@@ -25,6 +41,10 @@ const store = createStore({
         },
         updateProgress(state, payload) {
             state.uploadProgress[payload.progress] = payload.data
+        },
+        removeUploadListParam(state, payload) {
+            state.uploadList.splice(payload.index, 1)
+            delete state.uploadProgress[payload.progress]
         },
     }
 })

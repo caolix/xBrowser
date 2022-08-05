@@ -70,13 +70,25 @@ func (p *Progress) calc() {
 	}
 }
 
-// Reader is the progressbar io.Reader struct
+// ReadSeeker is the progressbar io.Reader struct
+type ReadSeeker struct {
+	io.ReadSeeker
+	p *Progress
+}
+
 type Reader struct {
 	io.Reader
 	p *Progress
 }
 
-func NewProgressReader(r io.Reader, p *Progress) *Reader {
+func NewUploadProgressReader(rs io.ReadSeeker, p *Progress) *ReadSeeker {
+	return &ReadSeeker{
+		ReadSeeker: rs,
+		p:          p,
+	}
+}
+
+func NewDownloadProgressReader(r io.Reader, p *Progress) *Reader {
 	return &Reader{
 		Reader: r,
 		p:      p,
@@ -95,4 +107,24 @@ func (r *Reader) Read(p []byte) (n int, err error) {
 	}
 	r.p.Add(int64(n))
 	return
+}
+
+// Read will read the data and add the number of bytes to the progressbar
+func (r *ReadSeeker) Read(p []byte) (n int, err error) {
+	if !r.p.IsCalc {
+		go r.p.calc()
+		r.p.IsCalc = true
+	}
+	n, err = r.ReadSeeker.Read(p)
+	if err != nil {
+		r.p.closeCh <- struct{}{}
+	}
+	r.p.Add(int64(n))
+	return
+}
+
+func (r *ReadSeeker) Seek(offset int64, whence int) (n int64, err error) {
+	n, err = r.ReadSeeker.Seek(offset, io.SeekStart)
+	r.p.Set(offset)
+	return n, err
 }

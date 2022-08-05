@@ -3,12 +3,6 @@ package s3lib
 import (
 	"bytes"
 	"fmt"
-	"io"
-	"sort"
-	"sync"
-	"time"
-	"xBrowser/app/db"
-
 	"github.com/journeymidnight/aws-sdk-go/aws"
 	"github.com/journeymidnight/aws-sdk-go/aws/awserr"
 	"github.com/journeymidnight/aws-sdk-go/aws/awsutil"
@@ -17,6 +11,12 @@ import (
 	"github.com/journeymidnight/aws-sdk-go/aws/request"
 	"github.com/journeymidnight/aws-sdk-go/service/s3"
 	"github.com/journeymidnight/aws-sdk-go/service/s3/s3iface"
+	"io"
+	"sort"
+	"sync"
+	"time"
+	"xBrowser/app/db"
+	"xBrowser/app/logger"
 )
 
 // MaxUploadParts is the maximum allowed number of parts in a multi-part upload
@@ -393,10 +393,12 @@ func (u *uploader) upload() (*UploadOutput, error) {
 
 	// Do one read to determine if we have more than one part
 	reader, _, part, err := u.nextReader()
-	if err == io.EOF { // single part
-		return u.singlePart(reader)
-	} else if err != nil {
-		return nil, awserr.New("ReadRequestBody", "read upload data failed", err)
+	if !u.in.UploadTask.IsMultipart {
+		if err == io.EOF { // single part
+			return u.singlePart(reader)
+		} else if err != nil {
+			return nil, awserr.New("ReadRequestBody", "read upload data failed", err)
+		}
 	}
 
 	mu := multiuploader{uploader: u}
@@ -501,8 +503,10 @@ func (u *uploader) singlePart(buf io.ReadSeeker) (*UploadOutput, error) {
 	awsutil.Copy(params, u.in)
 	params.Body = buf
 
+	logger.GlobalLogger.Debug(fmt.Sprintf("UpsertUploadTask: %v", u.in.UploadTask))
 	err := db.GlobalAppDB.UpsertUploadTask(u.in.UploadTask)
 	if err != nil {
+		logger.GlobalLogger.Debug("UpsertUploadTask err: " + err.Error())
 		return nil, fmt.Errorf("UpsertUploadTask err: %s", err.Error())
 	}
 	// Need to use request form because URL generated in request is
@@ -514,7 +518,7 @@ func (u *uploader) singlePart(buf io.ReadSeeker) (*UploadOutput, error) {
 		return nil, err
 	}
 	db.GlobalAppDB.DeleteUploadTask(u.in.UploadTask.AccountId, u.in.UploadTask.TaskId)
-
+	logger.GlobalLogger.Debug(fmt.Sprintf("DeleteUploadTask: %s, %s", u.in.UploadTask.AccountId, u.in.UploadTask.TaskId))
 	url := req.HTTPRequest.URL.String()
 	return &UploadOutput{
 		Location:  url,
@@ -550,22 +554,38 @@ func (a completedParts) Less(i, j int) bool { return *a[i].PartNumber < *a[j].Pa
 // upload will perform a multipart upload using the firstBuf buffer containing
 // the first chunk of data.
 func (u *multiuploader) upload(firstBuf io.ReadSeeker, firstPart []byte) (*UploadOutput, error) {
-	params := &s3.CreateMultipartUploadInput{}
-	awsutil.Copy(params, u.in)
 
+	var err error
 	// Create the multipart
-	resp, err := u.cfg.S3.CreateMultipartUploadWithContext(u.ctx, params, u.cfg.RequestOptions...)
-	if err != nil {
-		return nil, err
-	}
-	u.uploadID = *resp.UploadId
+	var num int64 = 1
+	if u.in.UploadTask.UploadedSize == 0 && u.in.UploadTask.UploadId == "" {
+		params := &s3.CreateMultipartUploadInput{}
+		awsutil.Copy(params, u.in)
+		resp, err := u.cfg.S3.CreateMultipartUploadWithContext(u.ctx, params, u.cfg.RequestOptions...)
+		if err != nil {
+			return nil, err
+		}
+		u.uploadID = *resp.UploadId
+		u.in.UploadTask.UploadId = u.uploadID
+		u.in.UploadTask.IsMultipart = true
+		u.in.UploadTask.PartSize = u.cfg.PartSize
 
-	u.in.UploadTask.UploadId = u.uploadID
-	u.in.UploadTask.IsMultipart = true
-	u.in.UploadTask.PartSize = u.cfg.PartSize
-	err = db.GlobalAppDB.UpsertUploadTask(u.in.UploadTask)
-	if err != nil {
-		return nil, fmt.Errorf("UpsertUploadTask err: %s", err.Error())
+		logger.GlobalLogger.Debug(fmt.Sprintf("UpsertUploadTask: %v", u.in.UploadTask))
+		err = db.GlobalAppDB.UpsertUploadTask(u.in.UploadTask)
+		if err != nil {
+			logger.GlobalLogger.Debug("UpsertUploadTask err: " + err.Error())
+			return nil, fmt.Errorf("UpsertUploadTask err: %s", err.Error())
+		}
+	} else {
+		u.uploadID = u.in.UploadTask.UploadId
+		for _, p := range u.in.UploadTask.CompletedPart {
+			s3p := &s3.CompletedPart{
+				ETag:       aws.String(p.ETag),
+				PartNumber: aws.Int64(p.PartNumber),
+			}
+			u.parts = append(u.parts, s3p)
+			num = p.PartNumber
+		}
 	}
 
 	// Create the workers
@@ -576,7 +596,7 @@ func (u *multiuploader) upload(firstBuf io.ReadSeeker, firstPart []byte) (*Uploa
 	}
 
 	// Send part 1 to the workers
-	var num int64 = 1
+
 	ch <- chunk{buf: firstBuf, part: firstPart, num: num}
 
 	// Read and queue the rest of the parts
@@ -623,8 +643,9 @@ func (u *multiuploader) upload(firstBuf io.ReadSeeker, firstPart []byte) (*Uploa
 	close(ch)
 	u.wg.Wait()
 	complete := u.complete()
-
+	logger.GlobalLogger.Debug(fmt.Sprintf("Complete: %v", u.parts))
 	if err := u.geterr(); err != nil {
+		logger.GlobalLogger.Error(fmt.Sprintf("complete error: %v", err))
 		return nil, &multiUploadError{
 			awsError: awserr.New(
 				"MultipartUpload",
@@ -633,8 +654,9 @@ func (u *multiuploader) upload(firstBuf io.ReadSeeker, firstPart []byte) (*Uploa
 			uploadID: u.uploadID,
 		}
 	}
-	
+
 	db.GlobalAppDB.DeleteUploadTask(u.in.UploadTask.AccountId, u.in.UploadTask.TaskId)
+	logger.GlobalLogger.Debug(fmt.Sprintf("DeleteUploadTask: %s, %s", u.in.UploadTask.AccountId, u.in.UploadTask.TaskId))
 	// Create a presigned URL of the S3 Get Object in order to have parity with
 	// single part upload.
 	getReq, _ := u.cfg.S3.GetObjectRequest(&s3.GetObjectInput{

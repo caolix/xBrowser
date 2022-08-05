@@ -56,3 +56,14 @@ func (s3client *S3Client) AbortMultiPartUpload(bucketName, key, uploadId string)
 	_, err = s3client.Client.AbortMultipartUpload(params)
 	return
 }
+
+// FIXME: Resume multipart without override existing parts
+func (s3client *S3Client) ListMultipartUploadParts(bucketName, key, uploadId string, partNumberMarker int64) (*s3.ListPartsOutput, error) {
+	params := &s3.ListPartsInput{
+		Bucket:           aws.String(bucketName),
+		Key:              aws.String(key),
+		PartNumberMarker: aws.Int64(partNumberMarker),
+		UploadId:         aws.String(uploadId),
+	}
+	return s3client.Client.ListParts(params)
+}

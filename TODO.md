@@ -2,6 +2,7 @@
 - 失败续传
 - ListObject分页, prefix搜索, marker
 - 多选下载
+- 断点下载
 - 添加速率以及已上传大小
 - 下载进度列表
 - 任务列表角钉
@@ -16,7 +17,8 @@
 - PresetPath
 - 自动补全输入框
 - i18n
-- 授权码登录
+- 授权码token登录
+- multipart续传优化
 
 # Backend
 - 外置参数配置

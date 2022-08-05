@@ -146,13 +146,14 @@ func (a *App) SelectFiles(prefix string) SelectFilesResult {
 	return res
 }
 
-func (a *App) doPut(bucketName, key string, r io.Reader, task *db.UploadTask, resCh chan ObjectHandlerResult) {
+func (a *App) doPut(bucketName, key string, r io.ReadSeeker, task *db.UploadTask, resCh chan ObjectHandlerResult) {
 	// TODO: cancel Put
 	_, err := a.S3Client.UploadObject(context.Background(), bucketName, key, r, task)
 	if err != nil {
 		resCh <- ObjectHandlerResult{Err: err.Error()}
 		return
 	}
+	atomic.AddInt64(&a.UnfinishedUploadTask, -1)
 	resCh <- ObjectHandlerResult{}
 }
 
@@ -171,16 +172,19 @@ func (a *App) DoPutObject(bucketName, key, filePath, eventProgress string) Objec
 	task := &db.UploadTask{
 		AccountId:    a.AccountId,
 		TaskId:       eventProgress,
+		Bucket:       bucketName,
 		Key:          key,
+		Name:         getFileName(key),
 		Source:       filePath,
 		Size:         fInfo.Size(),
+		HumanSize:    util.IBytes(uint64(fInfo.Size())),
 		Status:       db.PENDING,
 		ModifiedTime: time.Now().Local(),
 	}
 
 	atomic.AddInt64(&a.UnfinishedUploadTask, 1)
 	p := NewProgress(a.ctx, eventProgress, fInfo.Size())
-	r := NewProgressReader(f, p)
+	r := NewUploadProgressReader(f, p)
 
 	resCh := make(chan ObjectHandlerResult)
 	go a.doPut(bucketName, key, r, task, resCh)
@@ -231,7 +235,7 @@ func (a *App) GetObject(bucketName, key string, override bool, eventDialog strin
 		p.TotalBytes = *out.ContentLength
 	}
 
-	r := NewProgressReader(out.Body, p)
+	r := NewDownloadProgressReader(out.Body, p)
 
 	// open dialog
 	runtime.EventsEmit(a.ctx, eventDialog, true)

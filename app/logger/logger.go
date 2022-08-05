@@ -2,13 +2,14 @@ package logger
 
 import (
 	"fmt"
-	"github.com/wailsapp/wails/v2/pkg/logger"
 	"io"
 	"log"
 	"os"
 	"runtime"
 	"strings"
 )
+
+var GlobalLogger *FileLogger
 
 type FileLogger struct {
 	out    io.WriteCloser
@@ -18,16 +19,15 @@ type FileLogger struct {
 var logFlags = log.Ldate | log.Ltime | log.Lmicroseconds
 
 // NewDefaultLogger creates a new Logger.
-func NewFileLogger(path string) logger.Logger {
+func NewGlobalLogger(path string) {
 	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		panic("Failed to open log file " + path)
 	}
-	l := &FileLogger{
+	GlobalLogger = &FileLogger{
 		out:    f,
 		logger: log.New(f, "", logFlags),
 	}
-	return l
 }
 
 func getCaller(skipCallDepth int) string {
