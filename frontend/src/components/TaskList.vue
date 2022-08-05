@@ -14,7 +14,7 @@
 
             <el-table-column prop="humanSize" width="100"/>
 
-            <el-table-column>
+            <el-table-column fixed="right" align="right">
               <template #default="scope">
                 <el-button
                     type="success"
@@ -22,15 +22,6 @@
                 >
                   <el-icon>
                     <CaretRight/>
-                  </el-icon>
-                </el-button>
-                <el-button
-                    type="info"
-                    plain
-                    @click=""
-                >
-                  <el-icon>
-                    <CloseBold/>
                   </el-icon>
                 </el-button>
                 <el-button

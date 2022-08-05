@@ -313,7 +313,7 @@ export default {
               source: fp.source,
               size: fp.size,
               human_size: fp.human_size,
-              isPending: false,
+              status: 0,  // 0-PENDING, 1-PAUSE, 2-ERROR, 3-FINISH
               taskId: eventProgress
             }
             const payload = {

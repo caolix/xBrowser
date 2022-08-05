@@ -16,7 +16,9 @@ type LoginInfo struct {
 
 const (
 	PENDING int = iota
+	PAUSE
 	ERROR
+	FINISH
 )
 
 // Unfinished Task

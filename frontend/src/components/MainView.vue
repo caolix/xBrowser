@@ -25,6 +25,9 @@ export default {
     LoadAllUploadTasks().then((tasks) => {
       if (tasks.length !== 0) {
         tasks.forEach((task, i) => {
+          if (task.status === 0) {
+            task.status = 1
+          }
           const file = {
             name: task.name,
             bucket: task.bucket,
