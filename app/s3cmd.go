@@ -59,9 +59,11 @@ type Object struct {
 }
 
 type ListObjectResult struct {
-	Contents []Object `json:"contents"`
-	Prefixes []string `json:"prefixes"`
-	Err      string   `json:"err"`
+	Contents    []Object `json:"contents"`
+	Prefixes    []string `json:"prefixes"`
+	NextMarker  string   `json:"nextMarker"`
+	IsTruncated bool     `json:"isTruncated"`
+	Err         string   `json:"err"`
 }
 
 func (a *App) ListObjects(bucketName, marker, prefix string, maxKeys int64) ListObjectResult {
@@ -87,6 +89,12 @@ func (a *App) ListObjects(bucketName, marker, prefix string, maxKeys int64) List
 	sort.Slice(res.Prefixes, func(i, j int) bool {
 		return res.Prefixes[i] < res.Prefixes[j]
 	})
+	if out.NextMarker != nil {
+		res.NextMarker = *out.NextMarker
+	}
+	if out.IsTruncated != nil {
+		res.IsTruncated = *out.IsTruncated
+	}
 	return res
 }
 

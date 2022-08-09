@@ -1,33 +1,47 @@
 <template>
-  <div class="container">
-    <el-space :size="20" alignment="start">
-      <el-button type="primary" @click="selectObjects">
-        <el-icon style="padding-right: 6px">
-          <UploadFilled/>
-        </el-icon>
-        Upload
-      </el-button>
-      <el-button type="primary" @click="dialogCreateDirVisible = true">
-        <el-icon style="padding-right: 6px">
-          <FolderAdd/>
-        </el-icon>
-        Create Folder
-      </el-button>
-      <el-button plain type="danger" @click="confirmDeleteObjects" :disabled="disableDeleteButton">
-        <el-icon style="padding-right: 6px">
-          <Delete/>
-        </el-icon>
-        Delete
-      </el-button>
-      <el-space :size="1">
-        <el-button type="primary" @click="backward">
-          <el-icon>
-            <Top/>
+  <div class="container2">
+    <div style="text-align: left; width: 50%">
+      <el-space :size="20" alignment="start">
+        <el-button type="primary" @click="selectObjects">
+          <el-icon style="padding-right: 6px">
+            <UploadFilled/>
           </el-icon>
+          Upload
         </el-button>
-        <el-input v-model="showPath"></el-input>
+        <el-button type="primary" @click="dialogCreateDirVisible = true">
+          <el-icon style="padding-right: 6px">
+            <FolderAdd/>
+          </el-icon>
+          Create Folder
+        </el-button>
+        <el-button plain type="danger" @click="confirmDeleteObjects" :disabled="disableDeleteButton">
+          <el-icon style="padding-right: 6px">
+            <Delete/>
+          </el-icon>
+          Delete
+        </el-button>
+        <el-space :size="1">
+          <el-button type="primary" @click="backward">
+            <el-icon>
+              <ArrowLeftBold/>
+            </el-icon>
+            Back
+          </el-button>
+          <el-input v-model="showPath"></el-input>
+        </el-space>
       </el-space>
-    </el-space>
+    </div>
+    <div style="text-align: right;  width: 50%">
+      <el-input class="input-with-select" placeholder="Search by prefix" v-model="subPrefix">
+        <template #append>
+          <el-button type="primary" @click="searchBySubPrefix">
+            <el-icon>
+              <Search/>
+            </el-icon>
+          </el-button>
+        </template>
+      </el-input>
+    </div>
   </div>
 
   <!--Dir Dialog-->
@@ -99,7 +113,7 @@
               link
               type="primary"
               size="small"
-              @click="toPreview(tableData[scope.$index])"
+              @click="clickKey(tableData[scope.$index])"
           >
             {{ tableData[scope.$index].key }}
           </el-button>
@@ -134,9 +148,11 @@
       </el-table-column>
     </el-table>
   </div>
+
+<!--  Page -->
   <el-button-group>
-    <el-button type="primary" :icon="ArrowLeft">Previous Page</el-button>
-    <el-button type="primary">
+    <el-button type="primary" :icon="ArrowLeft" :disabled="markerStack.length === 0" @click="toPreviousPage">Previous Page</el-button>
+    <el-button type="primary" :disabled="!isTruncate" @click="toNextPage">
       Next Page<el-icon class="el-icon--right"><ArrowRight /></el-icon>
     </el-button>
   </el-button-group>
@@ -175,6 +191,7 @@ export default {
     const loading = ref(true)
     const bucketName = route.params.bucketName
     let prefix = ref('')
+    const subPrefix = ref('')
     const basePath = 's3://' + bucketName + '/'
     let showPath = computed(() => {
       return basePath + prefix.value
@@ -183,6 +200,11 @@ export default {
     const percentageLabel = ref('')
     const newFolderName = ref('')
     const disableDeleteButton = ref(true)
+
+    var marker = ''
+    var nextMarker = ''
+    const isTruncate = ref(false)
+    const markerStack = ref([])
 
     const deleteData = reactive({
           count: 0,
@@ -228,7 +250,8 @@ export default {
         var p = prefix.value
         var i = p.slice(0, p.length - 1).lastIndexOf('/')
         prefix.value = p.slice(0, i + 1)
-        listObjects(bucketName, '', prefix.value, 100)
+        marker = ''
+        listObjects(bucketName, marker, prefix.value, 100)
       }
     }
 
@@ -241,11 +264,14 @@ export default {
     })
 
     onMounted(() => {
-      listObjects(bucketName, '', prefix.value, 100)
+      listObjects(bucketName, marker, prefix.value, 100)
     })
 
     const listObjects = async (bucketName, marker, prefix, maxKey) => {
       var tableData = []
+      var p = prefix
+      var i = p.lastIndexOf('/')
+      var folder = p.slice(0, i + 1)
       ListObjects(bucketName, marker, prefix, maxKey).then(res => {
         loading.value = true
         if (res.err !== '') {
@@ -254,7 +280,7 @@ export default {
           if (res.prefixes !== null) {
             res.prefixes.forEach((p, i) => {
               var k = p
-              k = k.slice(prefix.length, p.length)
+              k = k.slice(folder.length, p.length)
               if (k === '') {
                 k = '/'
               }
@@ -269,7 +295,7 @@ export default {
           if (res.contents !== null) {
             res.contents.forEach((c, i) => {
               var k = c.key
-              k = k.slice(prefix.length, c.key.length)
+              k = k.slice(folder.length, c.key.length)
               if (k !== '') {
                 const objectInfo = {
                   type: TypeObject,
@@ -281,10 +307,23 @@ export default {
               }
             })
           }
+          nextMarker = res.nextMarker
+          isTruncate.value = res.isTruncated
           data.tableData = tableData
         }
         loading.value = false
       })
+    }
+
+    const toPreviousPage = () => {
+      marker = markerStack.value.pop()
+      listObjects(bucketName, marker, prefix.value, 100)
+    }
+
+    const toNextPage = () => {
+      markerStack.value.push(marker)
+      marker = nextMarker
+      listObjects(bucketName, marker, prefix.value, 100)
     }
 
     const createDir = () => {
@@ -448,24 +487,36 @@ export default {
     }
 
     // into `Folder`, otherwise preview the object
-    const toPreview = (data) => {
+    const clickKey = (data) => {
       if (data.type === TypeFolder) {
         prefix.value += data.key
-        listObjects(bucketName, '', prefix.value, 100)
+        marker = ''
+        markerStack.value = []
+        listObjects(bucketName, marker, prefix.value, 100)
       } else {
+        // TODO: show preview dialog
         console.log(prefix.value, data.key)
       }
+    }
+
+    const searchBySubPrefix = () => {
+      marker = ''
+      markerStack.value = []
+      listObjects(bucketName, marker, prefix.value + subPrefix.value, 100)
     }
 
     return {
       ...toRefs(data),
       listObjects,
+      toPreviousPage,
+      toNextPage,
+      searchBySubPrefix,
       getObject,
       deleteObject,
       confirmDeleteObjects,
       deleteObjects,
       createDir,
-      toPreview,
+      clickKey,
       backward,
       selectObjects,
       handleSelectionChange,
@@ -478,13 +529,16 @@ export default {
       loading,
       objectList,
       prefix,
+      subPrefix,
       showPath,
       bucketName,
       percentage,
       percentageLabel,
       deletePercentage,
       deletePercentageLabel,
-      colors
+      colors,
+      markerStack,
+      isTruncate,
     }
   }
 }
@@ -498,6 +552,12 @@ export default {
   border: 1px solid #EEE;
 }
 
+.container2 {
+  width: 90%;
+  display: flex;
+  margin: 6px auto 1% auto;
+}
+
 .percentage-value {
   display: block;
   margin-top: 10px;
@@ -508,6 +568,11 @@ export default {
   display: block;
   margin-top: 10px;
   font-size: 12px;
+}
+
+.input-with-select {
+  width: 50%;
+  border-radius: 0;
 }
 
 </style>
