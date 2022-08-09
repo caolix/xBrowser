@@ -121,6 +121,32 @@ export namespace db {
 
 export namespace app {
 	
+	export class ObjectHandlerResult {
+	    err: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ObjectHandlerResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.err = source["err"];
+	    }
+	}
+	export class DeleteKey {
+	    key: string;
+	    keyType: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new DeleteKey(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.key = source["key"];
+	        this.keyType = source["keyType"];
+	    }
+	}
 	export class ListBucketResult {
 	    buckets: string[];
 	    err: string;
@@ -282,32 +308,6 @@ export namespace app {
 		    }
 		    return a;
 		}
-	}
-	export class ObjectHandlerResult {
-	    err: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new ObjectHandlerResult(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.err = source["err"];
-	    }
-	}
-	export class DeleteKey {
-	    key: string;
-	    keyType: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new DeleteKey(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.key = source["key"];
-	        this.keyType = source["keyType"];
-	    }
 	}
 
 }

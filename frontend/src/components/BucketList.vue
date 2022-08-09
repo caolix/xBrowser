@@ -1,5 +1,5 @@
 <template>
-  <div class="buttons">
+  <div class="container2">
     <el-space>
       <el-button type="primary" @click="dialogFormVisible = true">
         <el-icon style="padding-right: 6px"><Plus/></el-icon>
@@ -174,10 +174,15 @@ export default {
 .container {
   width: 90%;
   text-align: left;
-  margin: 6px auto 1% auto;
+  margin: 6px auto 3% auto;
   border: 1px solid #EEE;
 }
 
+.container2 {
+  width: 90%;
+  text-align: left;
+  margin: 6px auto 1% auto;
+}
 
 .el-link {
   margin-right: 8px;
