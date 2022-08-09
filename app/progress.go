@@ -102,10 +102,10 @@ func (r *Reader) Read(p []byte) (n int, err error) {
 		r.p.IsCalc = true
 	}
 	n, err = r.Reader.Read(p)
+	r.p.Add(int64(n))
 	if err != nil {
 		r.p.closeCh <- struct{}{}
 	}
-	r.p.Add(int64(n))
 	return
 }
 
@@ -124,7 +124,7 @@ func (r *ReadSeeker) Read(p []byte) (n int, err error) {
 }
 
 func (r *ReadSeeker) Seek(offset int64, whence int) (n int64, err error) {
-	n, err = r.ReadSeeker.Seek(offset, io.SeekStart)
+	n, err = r.ReadSeeker.Seek(offset, whence)
 	r.p.Set(offset)
 	return n, err
 }

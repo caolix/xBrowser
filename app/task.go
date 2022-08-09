@@ -2,7 +2,6 @@ package app
 
 import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
-	"io"
 	"os"
 	"xBrowser/app/db"
 )
@@ -40,7 +39,6 @@ func (a *App) ResumeUploadTask(u db.UploadTask) ObjectHandlerResult {
 		u.UploadedSize = maxPartNum * u.PartSize
 		u.CompletedPart = completePart
 		runtime.LogDebugf(a.ctx, "getMaxUploadedPartNumber: %d", maxPartNum)
-		_, err = r.Seek(u.UploadedSize, io.SeekStart)
 		if err != nil {
 			return ObjectHandlerResult{Err: err.Error()}
 		}
@@ -49,8 +47,12 @@ func (a *App) ResumeUploadTask(u db.UploadTask) ObjectHandlerResult {
 	return <-resCh
 }
 
-func (a *App) CancelUploadTask(u db.UploadTask) ObjectHandlerResult {
-	if u.IsMultipart {
+func (a *App) RemoveUploadTask(u db.UploadTask) ObjectHandlerResult {
+	defer func() {
+		runtime.LogDebugf(a.ctx, "CancelUploadTask to DeleteUploadTask: %s %s %s", u.Bucket, u.Key, u.UploadId)
+		db.GlobalAppDB.DeleteUploadTask(u.AccountId, u.TaskId)
+	}()
+	if u.IsMultipart && u.Status != db.FINISH {
 		runtime.LogDebugf(a.ctx, "AbortMultiPartUpload: %s %s %s", u.Bucket, u.Key, u.UploadId)
 		err := a.S3Client.AbortMultiPartUpload(u.Bucket, u.Key, u.UploadId)
 		if err != nil {
@@ -58,8 +60,6 @@ func (a *App) CancelUploadTask(u db.UploadTask) ObjectHandlerResult {
 			return ObjectHandlerResult{Err: err.Error()}
 		}
 	}
-	runtime.LogDebugf(a.ctx, "CancelUploadTask to DeleteUploadTask: %s %s %s", u.Bucket, u.Key, u.UploadId)
-	db.GlobalAppDB.DeleteUploadTask(u.AccountId, u.TaskId)
 	return ObjectHandlerResult{}
 }
 

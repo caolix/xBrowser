@@ -49,7 +49,7 @@ export default {
             progress: task.taskId
           }
 
-          LogDebug("Load task:" + file.bucket + "/" + file.key)
+          LogDebug("Load task:" + file.bucket + "/" + file.key + " status: " + file.status)
           store.commit('addToUploadList', payload)
 
           const progressPayload = {

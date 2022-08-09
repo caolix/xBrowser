@@ -39,6 +39,9 @@ const store = createStore({
             state.uploadList.push(payload.file)
             state.uploadProgress[payload.progress] = 0
         },
+        updateUploadStatus(state, payload) {
+            state.uploadList[payload.index].status = payload.status
+        },
         updateProgress(state, payload) {
             state.uploadProgress[payload.progress] = payload.data
         },

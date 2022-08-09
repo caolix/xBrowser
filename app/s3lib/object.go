@@ -7,7 +7,7 @@ import (
 	"xBrowser/app/db"
 )
 
-func (s3client *S3Client) UploadObject(ctx aws.Context, bucketName, key string, body io.Reader, task *db.UploadTask) (out *UploadOutput, err error) {
+func (s3client *S3Client) UploadObject(ctx aws.Context, bucketName, key string, body io.ReadSeeker, task *db.UploadTask) (out *UploadOutput, err error) {
 	params := &UploadInput{
 		Body:       body,
 		Bucket:     aws.String(bucketName),

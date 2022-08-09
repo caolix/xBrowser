@@ -68,7 +68,7 @@ type UploadInput struct {
 	ACL *string `location:"header" locationName:"x-amz-acl" type:"string" enum:"ObjectCannedACL"`
 
 	// The readable body payload to send to S3.
-	Body io.Reader
+	Body io.ReadSeeker
 
 	// Name of the bucket to which the PUT operation was initiated.
 	//
@@ -392,6 +392,15 @@ func (u *uploader) upload() (*UploadOutput, error) {
 	}
 
 	// Do one read to determine if we have more than one part
+	if u.in.UploadTask.UploadId != "" && u.in.UploadTask.IsMultipart {
+		// Resume upload
+		offset := u.in.UploadTask.PartSize * int64(len(u.in.UploadTask.CompletedPart))
+		n, err := u.in.Body.Seek(offset, io.SeekStart)
+		logger.GlobalLogger.Debug(fmt.Sprintf("Seek to %d", n))
+		if err != nil {
+			return nil, awserr.New("SeekError", "", err)
+		}
+	}
 	reader, _, part, err := u.nextReader()
 	if !u.in.UploadTask.IsMultipart {
 		if err == io.EOF { // single part
@@ -421,8 +430,8 @@ func (u *uploader) init() {
 		New: func() interface{} { return make([]byte, u.cfg.PartSize) },
 	}
 
-	// Try to get the total size for some optimizations
-	u.initSize()
+	// TODO: Try to get the total size for some optimizations
+	//u.initSize()
 }
 
 // initSize tries to detect the total stream size, setting u.totalSize. If
@@ -460,7 +469,6 @@ func (u *uploader) nextReader() (io.ReadSeeker, int, []byte, error) {
 	switch r := u.in.Body.(type) {
 	case readerAtSeeker:
 		var err error
-
 		n := u.cfg.PartSize
 		if u.totalSize >= 0 {
 			bytesLeft := u.totalSize - u.readerPos
@@ -584,7 +592,7 @@ func (u *multiuploader) upload(firstBuf io.ReadSeeker, firstPart []byte) (*Uploa
 				PartNumber: aws.Int64(p.PartNumber),
 			}
 			u.parts = append(u.parts, s3p)
-			num = p.PartNumber
+			num = p.PartNumber + 1
 		}
 	}
 

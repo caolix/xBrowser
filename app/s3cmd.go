@@ -230,7 +230,7 @@ func (a *App) GetObject(bucketName, key string, override bool, eventDialog strin
 		return ObjectHandlerResult{Err: err.Error()}
 	}
 
-	p := &Progress{}
+	p := NewProgress(a.ctx, eventProgress, -1)
 	if out.ContentLength != nil {
 		p.TotalBytes = *out.ContentLength
 	}
@@ -239,23 +239,6 @@ func (a *App) GetObject(bucketName, key string, override bool, eventDialog strin
 
 	// open dialog
 	runtime.EventsEmit(a.ctx, eventDialog, true)
-
-	cancelCh := make(chan bool)
-	// emit progress data
-	go func(ch chan bool) {
-		for {
-			select {
-			case <-cancelCh:
-				return
-			default:
-				runtime.EventsEmit(a.ctx, eventProgress, r.p.State())
-				time.Sleep(10 * time.Millisecond)
-			}
-		}
-	}(cancelCh)
-	defer func() {
-		cancelCh <- true
-	}()
 	_, err = io.Copy(f, r)
 	if err != nil {
 		runtime.LogErrorf(a.ctx, "Download file %s err: %s ", filePath, err)
@@ -265,7 +248,6 @@ func (a *App) GetObject(bucketName, key string, override bool, eventDialog strin
 		}
 		return ObjectHandlerResult{Err: err.Error()}
 	}
-	runtime.EventsEmit(a.ctx, eventProgress, 100)
 	return ObjectHandlerResult{}
 }
 

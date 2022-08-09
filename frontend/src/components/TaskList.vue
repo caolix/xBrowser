@@ -17,8 +17,9 @@
             <el-table-column fixed="right" align="right">
               <template #default="scope">
                 <el-button
+                    v-if="uploadListData[scope.$index].status===1"
                     type="success"
-                    @click="resumeUpload(uploadListData[scope.$index])"
+                    @click="resumeUpload(uploadListData[scope.$index], scope.$index)"
                 >
                   <el-icon>
                     <CaretRight/>
@@ -27,7 +28,7 @@
                 <el-button
                     type="danger"
                     plain
-                    @click="cancelUpload(uploadListData[scope.$index], scope.$index)"
+                    @click="removeUpload(uploadListData[scope.$index], scope.$index)"
                 >
                   <el-icon>
                     <Delete/>
@@ -54,7 +55,7 @@
 <script>
 import {computed, ref} from 'vue'
 import {useStore} from "vuex";
-import {CancelUploadTask, ResumeUploadTask} from "../../wailsjs/go/app/App";
+import {RemoveUploadTask, ResumeUploadTask} from "../../wailsjs/go/app/App";
 import {ElMessage} from "element-plus";
 import {db} from '../../wailsjs/go/models'
 
@@ -89,7 +90,7 @@ export default {
       return store.state.uploadProgress
     })
 
-    const resumeUpload = (task) => {
+    const resumeUpload = (task, index) => {
       var t = new db.UploadTask()
       t.uploadedSize = task.uploadedSize
       t.key = task.key
@@ -105,6 +106,7 @@ export default {
       t.taskId = task.taskId
       t.uploadId = task.uploadId
       ResumeUploadTask(t).then((res) => {
+        console.log(t.status)
         if (res.err !== '') {
           ElMessage.error(res.err)
         } else {
@@ -113,12 +115,17 @@ export default {
             progress: t.taskId
           }
           store.commit('updateProgress', payload)
+          const statusPayload = {
+            index: index,
+            status: 3, // finish
+          }
+          store.commit('updateUploadStatus', statusPayload)
           listObjects(bucketName, '', prefix.value, 100)
         }
       })
     }
 
-    const cancelUpload = (task, index) => {
+    const removeUpload = (task, index) => {
       console.log(task.taskId)
       if (percentageMap[task.taskId] !== 100) {
         var t = new db.UploadTask()
@@ -135,7 +142,7 @@ export default {
         t.status = task.status
         t.taskId = task.taskId
         t.uploadId = task.uploadId
-        CancelUploadTask(t).then((res) => {
+        RemoveUploadTask(t).then((res) => {
           if (res.err !== '') {
             ElMessage.error(res.err)
           }
@@ -156,7 +163,7 @@ export default {
       activeName,
       uploadListData,
       percentageMap,
-      cancelUpload,
+      removeUpload,
       cancelClick,
       resumeUpload,
       closeDrawer
