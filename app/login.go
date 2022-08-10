@@ -9,9 +9,9 @@ import (
 )
 
 // Greet returns a greeting for the given name
-func (a *App) Login(l db.LoginInfo, needSave bool) string {
-	runtime.LogDebugf(a.ctx, "Login info: %s %s %s %v", l.Endpoint, l.AccessKey, l.SecretKey, needSave)
-	a.S3Client = s3lib.NewS3(l.Endpoint, l.AccessKey, l.SecretKey)
+func (a *App) Login(l db.LoginInfo, needSave bool, isHttps bool) string {
+	runtime.LogDebugf(a.ctx, "Login info: %s %s %s %v %v", l.Endpoint, l.AccessKey, l.SecretKey, needSave, isHttps)
+	a.S3Client = s3lib.NewS3(l.Endpoint, l.AccessKey, l.SecretKey, isHttps)
 	_, err := a.S3Client.ListBuckets()
 	if err != nil {
 		runtime.LogErrorf(a.ctx, "Login failed. err: %s", err)
@@ -27,6 +27,7 @@ func (a *App) Login(l db.LoginInfo, needSave bool) string {
 			Remark:    l.Remark,
 			Prepath:   l.Prepath,
 			LoginTime: time.Now().Local(),
+			UseSSL:    isHttps,
 		})
 		if err != nil {
 			runtime.LogWarningf(a.ctx, "Insert login info failed. err: %s", err)

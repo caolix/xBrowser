@@ -55,6 +55,7 @@ func (s *AppSqlite) UpsertLoginInfo(l *LoginInfo) (err error) {
 	info.LoginTime = time.Now().Local()
 	info.Remark = l.Remark
 	info.Prepath = l.Prepath
+	info.UseSSL = l.UseSSL
 	res = s.DB.Where("access_key = ? AND secret_key = ? AND endpoint = ?",
 		l.AccessKey, l.SecretKey, l.Endpoint).Save(&info)
 	if res.Error != nil {

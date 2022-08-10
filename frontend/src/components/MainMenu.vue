@@ -10,6 +10,7 @@
       @select="handleSelect"
   >
     <el-menu-item index="0">
+<!--            <img src="../assets/images/uni2.png" style="width:140px; height:50px; margin-top:6px;"/>-->
       <img src="../assets/images/bear.gif" style="width:50px; height:50px; margin-top:6px;"/>
       <img src="../assets/images/logo4.png" style="width:150px; height:50px; margin-top:6px;"/>
     </el-menu-item>

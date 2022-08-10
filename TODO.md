@@ -1,6 +1,4 @@
 # Frontend
-- ListObject分页, marker
-- prefix搜索
 - 多选下载
 - 断点下载
 - 添加速率以及已上传大小

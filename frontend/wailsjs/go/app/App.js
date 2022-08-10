@@ -50,8 +50,8 @@ export function LoadLatestLoginInfo() {
   return window['go']['app']['App']['LoadLatestLoginInfo']();
 }
 
-export function Login(arg1, arg2) {
-  return window['go']['app']['App']['Login'](arg1, arg2);
+export function Login(arg1, arg2, arg3) {
+  return window['go']['app']['App']['Login'](arg1, arg2, arg3);
 }
 
 export function MakeBucket(arg1) {

@@ -566,13 +566,16 @@ func (u *multiuploader) upload(firstBuf io.ReadSeeker, firstPart []byte) (*Uploa
 	var err error
 	// Create the multipart
 	var num int64 = 1
+	logger.GlobalLogger.Debug(fmt.Sprintf("UploadedSize: %d, UploadId: %s", u.in.UploadTask.UploadedSize, u.in.UploadTask.UploadId))
 	if u.in.UploadTask.UploadedSize == 0 && u.in.UploadTask.UploadId == "" {
 		params := &s3.CreateMultipartUploadInput{}
 		awsutil.Copy(params, u.in)
 		resp, err := u.cfg.S3.CreateMultipartUploadWithContext(u.ctx, params, u.cfg.RequestOptions...)
 		if err != nil {
+			logger.GlobalLogger.Debug("CreateMultipartUploadWithContext err: " + err.Error())
 			return nil, err
 		}
+		logger.GlobalLogger.Debug("CreateMultipartUploadWithContext uploadId: " + *resp.UploadId)
 		u.uploadID = *resp.UploadId
 		u.in.UploadTask.UploadId = u.uploadID
 		u.in.UploadTask.IsMultipart = true

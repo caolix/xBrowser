@@ -28,7 +28,7 @@ export function LoadAllUploadTasks():Promise<Array<db.UploadTask>>;
 
 export function LoadLatestLoginInfo():Promise<db.LoginInfo>;
 
-export function Login(arg1:db.LoginInfo,arg2:boolean):Promise<string>;
+export function Login(arg1:db.LoginInfo,arg2:boolean,arg3:boolean):Promise<string>;
 
 export function MakeBucket(arg1:string):Promise<string>;
 

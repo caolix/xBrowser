@@ -12,12 +12,12 @@ type S3Client struct {
 	Uploader *Uploader
 }
 
-func NewS3(Endpoint, AccessKey, SecretKey string) *S3Client {
+func NewS3(Endpoint, AccessKey, SecretKey string, UseSSL bool) *S3Client {
 	creds := credentials.NewStaticCredentials(AccessKey, SecretKey, "")
 	sess := session.Must(session.NewSession(
 		&aws.Config{
 			Credentials: creds,
-			DisableSSL:  aws.Bool(true),
+			DisableSSL:  aws.Bool(!UseSSL),
 			Endpoint:    aws.String(Endpoint),
 			Region:      aws.String("none"),
 		},

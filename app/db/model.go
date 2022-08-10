@@ -12,6 +12,7 @@ type LoginInfo struct {
 	Remark    string    `json:"remark"`
 	Prepath   string    `json:"prepath"`
 	LoginTime time.Time `json:"loginTime"`
+	UseSSL    bool      `json:"useSSL"`
 }
 
 const (

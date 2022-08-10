@@ -1,5 +1,8 @@
 <template>
   <main>
+    <!--    <div>-->
+    <!--      <img id="logo" alt="Wails logo" src="../assets/images/uni2.png"/>-->
+    <!--    </div>-->
     <div style="display: flex;">
       <img id="logo" alt="Wails logo" src="../assets/images/bear_good.gif"/>
       <img id="logo2" alt="Wails logo" src="../assets/images/logo1.jpeg"/>
@@ -13,7 +16,9 @@
           <el-input
               v-model="data.endpoint"
               placeholder="ENDPOINT"
+              class="endpoint-input"
           />
+          <el-checkbox v-model="data.usessl" label="HTTPS" size="large"/>
         </el-row>
         <span style="color: #ff0000"> * </span><span class="demo-input-label">AccessKey:</span>
         <el-row :gutter="10">
@@ -82,6 +87,7 @@ export default {
       prepath: "",
       remark: "",
       save: false,
+      usessl: false,
     })
 
     CheckDbError().then(err => {
@@ -100,6 +106,7 @@ export default {
           data.endpoint = info.endpoint
           data.prepath = info.prepath
           data.remark = info.remark
+          data.usessl = info.useSSL
           loading.close()
         }
     )
@@ -111,7 +118,7 @@ export default {
       info.sk = data.sk
       info.prepath = data.prepath
       info.remark = data.remark
-      Login(info, data.save).then((res) => {
+      Login(info, data.save, data.usessl).then((res) => {
         if (res === "") {
           router.push({path: '/main'})
         } else {
@@ -158,6 +165,11 @@ export default {
   text-align: left;
   margin: 1% auto 2% auto;
   border: 1px solid #EEE;
+}
+
+.endpoint-input {
+  width: 80%;
+  margin-right: 2%;
 }
 
 .input {
