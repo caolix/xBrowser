@@ -70,8 +70,12 @@ export function ResumeUploadTask(arg1) {
   return window['go']['app']['App']['ResumeUploadTask'](arg1);
 }
 
-export function SelectFiles(arg1) {
-  return window['go']['app']['App']['SelectFiles'](arg1);
+export function SelectDownloadPath() {
+  return window['go']['app']['App']['SelectDownloadPath']();
+}
+
+export function SelectUploadFiles(arg1) {
+  return window['go']['app']['App']['SelectUploadFiles'](arg1);
 }
 
 export function SetupMenu() {

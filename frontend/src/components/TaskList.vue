@@ -1,14 +1,13 @@
 <template>
   <el-drawer v-model="props.visible" :show-close="false" size="40%" @close="closeDrawer">
     <template #default>
-      <el-tabs v-model="activeName" class="demo-tabs" @tab-click="handleClick">
+      <el-tabs v-model="props.tabName" class="demo-tabs" @tab-click="handleClick">
         <el-tab-pane label="Upload" name="upload">
           <el-table :data="uploadListData" style="width: 100%">
-
             <el-table-column width="250">
               <template #default="scope">
                 <span>{{ scope.row.key }}</span>
-                <el-progress :percentage="percentageMap[scope.row.taskId]" :color="colors"/>
+                <el-progress :percentage="uploadPercentageMap[scope.row.taskId]" :color="colors"/>
               </template>
             </el-table-column>
 
@@ -38,8 +37,17 @@
             </el-table-column>
           </el-table>
         </el-tab-pane>
-        <el-tab-pane label="Download" name="download">
 
+        <el-tab-pane label="Download" name="download">
+          <el-table :data="downloadListData" style="width: 100%">
+            <el-table-column width="250">
+              <template #default="scope">
+                <span>{{ scope.row.key }}</span>
+                <el-progress :percentage="downloadPercentageMap[scope.row.taskId]" :color="colors"/>
+              </template>
+            </el-table-column>
+            <el-table-column prop="humanSize" width="100"/>
+          </el-table>
         </el-tab-pane>
       </el-tabs>
 
@@ -53,7 +61,7 @@
 </template>
 
 <script>
-import {computed, ref} from 'vue'
+import {computed} from 'vue'
 import {useStore} from "vuex";
 import {RemoveUploadTask, ResumeUploadTask} from "../../wailsjs/go/app/App";
 import {ElMessage} from "element-plus";
@@ -65,10 +73,13 @@ export default {
     visible: {
       type: Boolean,
       default: false,
+    },
+    tabName: {
+      type: String,
+      default: "upload",
     }
   },
   setup(props, context) {
-    const activeName = ref('upload')
     const store = useStore()
     const cancelClick = () => {
       context.emit('cancelVisible', false)
@@ -81,13 +92,21 @@ export default {
       return store.state.uploadList
     })
 
+    const downloadListData = computed(() => {
+      return store.state.download
+    })
+
     const colors = [
       {color: '#1989fa', percentage: 100},
       {color: '#5cb87a', percentage: 101},
     ]
 
-    const percentageMap = computed(() => {
+    const uploadPercentageMap = computed(() => {
       return store.state.uploadProgress
+    })
+
+    const downloadPercentageMap = computed(() => {
+      return store.state.downloadProgress
     })
 
     const resumeUpload = (task, index) => {
@@ -114,7 +133,7 @@ export default {
             data: 100,
             progress: t.taskId
           }
-          store.commit('updateProgress', payload)
+          store.commit('updateUploadProgress', payload)
           const statusPayload = {
             index: index,
             status: 3, // finish
@@ -125,9 +144,13 @@ export default {
       })
     }
 
+    const resumeDownload = (task, index) => {
+
+    }
+
     const removeUpload = (task, index) => {
       console.log(task.taskId)
-      if (percentageMap[task.taskId] !== 100) {
+      if (uploadPercentageMap[task.taskId] !== 100) {
         var t = new db.UploadTask()
         t.uploadedSize = task.uploadedSize
         t.key = task.key
@@ -157,15 +180,22 @@ export default {
       store.commit('removeUploadListParam', payload)
     }
 
+    const removeDownload = (task, index) => {
+
+    }
+
     return {
       props,
       colors,
-      activeName,
       uploadListData,
-      percentageMap,
+      downloadListData,
+      uploadPercentageMap,
+      downloadPercentageMap,
       removeUpload,
+      removeDownload,
       cancelClick,
       resumeUpload,
+      resumeDownload,
       closeDrawer
     }
   }

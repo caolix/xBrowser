@@ -1,8 +1,8 @@
 <template>
   <MainMenu @drawerVisible="changeVisible"/>
-  <TaskList :visible="visible" @cancelVisible="changeVisible"/>
+  <TaskList :visible="visible" @cancelVisible="changeVisible" :tabName="tabName"/>
   <div style="margin-top: 10px">
-    <router-view @changeVisible="changeVisible"/>
+    <router-view @changeVisible="changeVisible" @setTaskTabName="setTaskTabName"/>
   </div>
 </template>
 
@@ -20,6 +20,10 @@ export default {
     const visible = ref(false)
     const changeVisible = (bool) => {
       visible.value = bool
+    }
+    const tabName = ref("upload")
+    const setTaskTabName = (name) => {
+      tabName.value = name
     }
     const store = useStore()
     LoadAllUploadTasks().then((tasks) => {
@@ -56,14 +60,14 @@ export default {
             data: task.uploadedSize,
             progress: task.taskId
           }
-          store.commit('updateProgress', progressPayload)
+          store.commit('updateUploadProgress', progressPayload)
 
           EventsOn(task.taskId, (data) => {
             const progressPayload = {
               data: data,
               progress: task.taskId
             }
-            store.commit('updateProgress', progressPayload)
+            store.commit('updateUploadProgress', progressPayload)
           })
 
         })
@@ -73,7 +77,9 @@ export default {
     })
     return {
       visible,
-      changeVisible
+      tabName,
+      changeVisible,
+      setTaskTabName
     }
   }
 }

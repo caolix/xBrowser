@@ -2,7 +2,7 @@
   <div class="container2">
     <div style="text-align: left; width: 50%">
       <el-space :size="20" alignment="start">
-        <el-button type="primary" @click="selectObjects">
+        <el-button type="primary" @click="selectUploadObjects">
           <el-icon style="padding-right: 6px">
             <UploadFilled/>
           </el-icon>
@@ -19,6 +19,12 @@
             <Delete/>
           </el-icon>
           Delete
+        </el-button>
+        <el-button plain type="info" @click="selectDownloadDir" :disabled="disableDeleteButton">
+          <el-icon style="padding-right: 6px">
+            <Delete/>
+          </el-icon>
+          Download
         </el-button>
         <el-space :size="1">
           <el-button type="primary" @click="backward">
@@ -91,6 +97,7 @@
     </template>
   </el-dialog>
 
+<!-- Table Data -->
   <div class="container">
     <el-table
         :data="objectList"
@@ -120,7 +127,7 @@
         </template>
       </el-table-column>
       <el-table-column prop="type" label="Type" width="200"></el-table-column>
-      <el-table-column prop="size" label="Size" width="200"></el-table-column>
+      <el-table-column prop="human_size" label="Size" width="200"></el-table-column>
       <el-table-column label="Operations" fixed="right" align="right">
         <template #default="scope">
           <el-button size="small" @click="getObject(tableData[scope.$index].key)"
@@ -169,7 +176,8 @@ import {
   GetObject,
   ListObjects,
   PutDir,
-  SelectFiles
+  SelectUploadFiles,
+  SelectDownloadPath
 } from "../../wailsjs/go/app/App";
 import {ElMessage, ElMessageBox, ElTable} from "element-plus";
 import {EventsOn} from "../../wailsjs/runtime";
@@ -232,6 +240,7 @@ export default {
       key: string
       last_modified: string
       size: string
+      human_size: string
     }
 
     const multipleTableRef = ref<InstanceType<typeof ElTable>>()
@@ -301,7 +310,8 @@ export default {
                   type: TypeObject,
                   key: k,
                   last_modified: c.last_modified,
-                  size: c.human_size,
+                  size: c.size,
+                  human_size: c.human_size
                 }
                 tableData.push(objectInfo)
               }
@@ -338,8 +348,8 @@ export default {
       })
     }
 
-    const selectObjects = () => {
-      SelectFiles(prefix.value).then(res => {
+    const selectUploadObjects = () => {
+      SelectUploadFiles(prefix.value).then(res => {
         if (res.err !== '') {
           ElMessage.error(res.err)
         } else {
@@ -366,7 +376,7 @@ export default {
                 data: data,
                 progress: eventProgress
               }
-              store.commit('updateProgress', payload)
+              store.commit('updateUploadProgress', payload)
             })
 
             // open TaskList
@@ -379,10 +389,47 @@ export default {
                   data: 100,
                   progress: eventProgress
                 }
-                store.commit('updateProgress', payload)
+                store.commit('updateUploadProgress', payload)
                 listObjects(bucketName, '', prefix.value, 100)
               }
             })
+          })
+        }
+      })
+    }
+
+    const selectDownloadDir = () => {
+      SelectDownloadPath().then((res) => {
+        if (res.err !== '') {
+          ElMessage.error(res.err)
+        } else {
+          multipleSelection.value.forEach((v, i) => {
+            var eventProgress = "d" + prefix.value + v.key + Math.random()
+            const downloadTask = {
+              bucket: bucketName,
+              key: v.key,
+              size: v.size,
+              human_size: v.human_size,
+              status: 0,  // 0-PENDING, 1-PAUSE, 2-ERROR, 3-FINISH
+              taskId: eventProgress
+            }
+            const payload = {
+              file: downloadTask,
+              progress: eventProgress
+            }
+            store.commit('addToDownloadList', payload)
+            // begin to download
+            EventsOn(eventProgress, (data) => {
+              const payload = {
+                data: data,
+                progress: eventProgress
+              }
+              store.commit('updateDownloadProgress', payload)
+            })
+
+            // open TaskList and download label
+            context.emit('changeVisible', true)
+            context.emit('setTaskTabName', "download")
           })
         }
       })
@@ -518,7 +565,8 @@ export default {
       createDir,
       clickKey,
       backward,
-      selectObjects,
+      selectUploadObjects,
+      selectDownloadDir,
       handleSelectionChange,
       disableDeleteButton,
       newFolderName,

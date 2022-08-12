@@ -31,8 +31,9 @@ const store = createStore({
         //  }
         uploadList: [],
         uploadProgress: {}, // eventProgressId -> value
+
         downloadList: [],
-        listTask: false
+        downloadProgress: {}, // eventProgressId -> value
     },
     mutations: {
         addToUploadList(state, payload) {
@@ -42,12 +43,27 @@ const store = createStore({
         updateUploadStatus(state, payload) {
             state.uploadList[payload.index].status = payload.status
         },
-        updateProgress(state, payload) {
+        updateUploadProgress(state, payload) {
             state.uploadProgress[payload.progress] = payload.data
         },
         removeUploadListParam(state, payload) {
             state.uploadList.splice(payload.index, 1)
             delete state.uploadProgress[payload.progress]
+        },
+
+        addToDownloadList(state, payload) {
+            state.downloadList.push(payload.file)
+            state.downloadProgress[payload.progress] = 0
+        },
+        updateDownloadStatus(state, payload) {
+            state.downloadList[payload.index].status = payload.status
+        },
+        updateDownloadProgress(state, payload) {
+            state.downloadProgress[payload.progress] = payload.data
+        },
+        removeDownloadListParam(state, payload) {
+            state.downloadList.splice(payload.index, 1)
+            delete state.downloadProgress[payload.progress]
         },
     }
 })

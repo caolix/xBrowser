@@ -1,5 +1,31 @@
 export namespace app {
 	
+	export class ObjectHandlerResult {
+	    err: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ObjectHandlerResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.err = source["err"];
+	    }
+	}
+	export class DeleteKey {
+	    key: string;
+	    keyType: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new DeleteKey(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.key = source["key"];
+	        this.keyType = source["keyType"];
+	    }
+	}
 	export class ListBucketResult {
 	    buckets: string[];
 	    err: string;
@@ -89,7 +115,21 @@ export namespace app {
 		    return a;
 		}
 	}
-	export class SelectedFile {
+	export class SelectDownloadPathResult {
+	    path: string;
+	    err: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SelectDownloadPathResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.path = source["path"];
+	        this.err = source["err"];
+	    }
+	}
+	export class SelectedUploadFile {
 	    key: string;
 	    size: number;
 	    human_size: string;
@@ -99,7 +139,7 @@ export namespace app {
 	    name: string;
 	
 	    static createFrom(source: any = {}) {
-	        return new SelectedFile(source);
+	        return new SelectedUploadFile(source);
 	    }
 	
 	    constructor(source: any = {}) {
@@ -130,17 +170,17 @@ export namespace app {
 		    return a;
 		}
 	}
-	export class SelectFilesResult {
-	    files: SelectedFile[];
+	export class SelectUploadFilesResult {
+	    files: SelectedUploadFile[];
 	    err: string;
 	
 	    static createFrom(source: any = {}) {
-	        return new SelectFilesResult(source);
+	        return new SelectUploadFilesResult(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.files = this.convertValues(source["files"], SelectedFile);
+	        this.files = this.convertValues(source["files"], SelectedUploadFile);
 	        this.err = source["err"];
 	    }
 	
@@ -161,32 +201,6 @@ export namespace app {
 		    }
 		    return a;
 		}
-	}
-	export class ObjectHandlerResult {
-	    err: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new ObjectHandlerResult(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.err = source["err"];
-	    }
-	}
-	export class DeleteKey {
-	    key: string;
-	    keyType: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new DeleteKey(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.key = source["key"];
-	        this.keyType = source["keyType"];
-	    }
 	}
 
 }

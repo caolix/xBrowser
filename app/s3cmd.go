@@ -107,41 +107,41 @@ func getFileName(key string) string {
 	return sp[len(sp)-1]
 }
 
-type SelectedFile struct {
+type SelectedUploadFile struct {
 	Object
 	SourcePath string `json:"source"`
 	Name       string `json:"name"`
 }
 
-type SelectFilesResult struct {
-	SelectedFile []SelectedFile `json:"files"`
-	Err          string         `json:"err"`
+type SelectUploadFilesResult struct {
+	SelectedFile []SelectedUploadFile `json:"files"`
+	Err          string               `json:"err"`
 }
 
-func (a *App) SelectFiles(prefix string) SelectFilesResult {
+func (a *App) SelectUploadFiles(prefix string) SelectUploadFilesResult {
 	filePaths, err := runtime.OpenMultipleFilesDialog(a.ctx, runtime.OpenDialogOptions{})
 	if err != nil {
-		return SelectFilesResult{Err: err.Error()}
+		return SelectUploadFilesResult{Err: err.Error()}
 	}
 	if len(filePaths) == 0 {
-		return SelectFilesResult{}
+		return SelectUploadFilesResult{}
 	}
 
-	var res SelectFilesResult
+	var res SelectUploadFilesResult
 	for _, fp := range filePaths {
 		f, err := os.Open(fp)
 		if err != nil {
 			runtime.LogErrorf(a.ctx, "Open file %s err: %s ", fp, err)
-			return SelectFilesResult{Err: err.Error()}
+			return SelectUploadFilesResult{Err: err.Error()}
 		}
 		fInfo, err := f.Stat()
 		if err != nil {
 			runtime.LogErrorf(a.ctx, "Stat file %s err: %s ", fp, err)
-			return SelectFilesResult{Err: err.Error()}
+			return SelectUploadFilesResult{Err: err.Error()}
 		}
 
 		fName := getFileName(fp)
-		var sf = SelectedFile{
+		var sf = SelectedUploadFile{
 			SourcePath: fp,
 			Name:       fName,
 		}
@@ -208,6 +208,22 @@ func (a *App) PutDir(bucketName, dirName, prefix string) ObjectHandlerResult {
 		return ObjectHandlerResult{Err: err.Error()}
 	}
 	return ObjectHandlerResult{}
+}
+
+type SelectDownloadPathResult struct {
+	Path string `json:"path"`
+	Err  string `json:"err"`
+}
+
+func (a *App) SelectDownloadPath() SelectDownloadPathResult {
+	path, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{})
+	if err != nil {
+		runtime.LogErrorf(a.ctx, "OpenDirectoryDialog err: %s ", err)
+		return SelectDownloadPathResult{Err: err.Error()}
+	}
+	return SelectDownloadPathResult{
+		Path: path,
+	}
 }
 
 func (a *App) GetObject(bucketName, key string, override bool, eventDialog string, eventProgress string) ObjectHandlerResult {

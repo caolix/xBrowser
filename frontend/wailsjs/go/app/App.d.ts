@@ -38,6 +38,8 @@ export function RemoveUploadTask(arg1:db.UploadTask):Promise<app.ObjectHandlerRe
 
 export function ResumeUploadTask(arg1:db.UploadTask):Promise<app.ObjectHandlerResult>;
 
-export function SelectFiles(arg1:string):Promise<app.SelectFilesResult>;
+export function SelectDownloadPath():Promise<app.SelectDownloadPathResult>;
+
+export function SelectUploadFiles(arg1:string):Promise<app.SelectUploadFilesResult>;
 
 export function SetupMenu():void;
