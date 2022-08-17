@@ -2,6 +2,7 @@
   <el-drawer v-model="props.visible" :show-close="false" size="40%" @close="closeDrawer">
     <template #default>
       <el-tabs v-model="props.tabName" class="demo-tabs" @tab-click="handleClick">
+<!--        upload pane -->
         <el-tab-pane label="Upload" name="upload">
           <el-table :data="uploadListData" style="width: 100%">
             <el-table-column width="250">
@@ -38,6 +39,7 @@
           </el-table>
         </el-tab-pane>
 
+        <!--        download pane -->
         <el-tab-pane label="Download" name="download">
           <el-table :data="downloadListData" style="width: 100%">
             <el-table-column width="250">
@@ -93,7 +95,7 @@ export default {
     })
 
     const downloadListData = computed(() => {
-      return store.state.download
+      return store.state.downloadList
     })
 
     const colors = [

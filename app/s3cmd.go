@@ -54,8 +54,8 @@ func (a *App) DeleteBucket(bucket string) string {
 type Object struct {
 	Key          string    `json:"key"`
 	Size         int64     `json:"size"`
-	HumanSize    string    `json:"human_size"`
-	LastModified time.Time `json:"last_modified"`
+	HumanSize    string    `json:"humanSize"`
+	LastModified time.Time `json:"lastModified"`
 }
 
 type ListObjectResult struct {

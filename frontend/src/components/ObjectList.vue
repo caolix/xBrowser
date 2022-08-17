@@ -127,7 +127,7 @@
         </template>
       </el-table-column>
       <el-table-column prop="type" label="Type" width="200"></el-table-column>
-      <el-table-column prop="human_size" label="Size" width="200"></el-table-column>
+      <el-table-column prop="humanSize" label="Size" width="200"></el-table-column>
       <el-table-column label="Operations" fixed="right" align="right">
         <template #default="scope">
           <el-button size="small" @click="getObject(tableData[scope.$index].key)"
@@ -238,9 +238,9 @@ export default {
     interface SelectedObject {
       type: string
       key: string
-      last_modified: string
+      lastModified: string
       size: string
-      human_size: string
+      humanSize: string
     }
 
     const multipleTableRef = ref<InstanceType<typeof ElTable>>()
@@ -309,9 +309,9 @@ export default {
                 const objectInfo = {
                   type: TypeObject,
                   key: k,
-                  last_modified: c.last_modified,
+                  lastModified: c.lastModified,
                   size: c.size,
-                  human_size: c.human_size
+                  humanSize: c.humanSize
                 }
                 tableData.push(objectInfo)
               }
@@ -361,7 +361,7 @@ export default {
               key: fp.key,
               source: fp.source,
               size: fp.size,
-              human_size: fp.human_size,
+              humanSize: fp.humanSize,
               status: 0,  // 0-PENDING, 1-PAUSE, 2-ERROR, 3-FINISH
               taskId: eventProgress
             }
@@ -409,7 +409,7 @@ export default {
               bucket: bucketName,
               key: v.key,
               size: v.size,
-              human_size: v.human_size,
+              humanSize: v.humanSize,
               status: 0,  // 0-PENDING, 1-PAUSE, 2-ERROR, 3-FINISH
               taskId: eventProgress
             }

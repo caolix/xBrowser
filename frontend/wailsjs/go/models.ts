@@ -1,51 +1,11 @@
 export namespace app {
 	
-	export class ObjectHandlerResult {
-	    err: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new ObjectHandlerResult(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.err = source["err"];
-	    }
-	}
-	export class DeleteKey {
-	    key: string;
-	    keyType: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new DeleteKey(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.key = source["key"];
-	        this.keyType = source["keyType"];
-	    }
-	}
-	export class ListBucketResult {
-	    buckets: string[];
-	    err: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new ListBucketResult(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.buckets = source["buckets"];
-	        this.err = source["err"];
-	    }
-	}
 	export class Object {
 	    key: string;
 	    size: number;
-	    human_size: string;
+	    humanSize: string;
 	    // Go type: time.Time
-	    last_modified: any;
+	    lastModified: any;
 	
 	    static createFrom(source: any = {}) {
 	        return new Object(source);
@@ -55,8 +15,8 @@ export namespace app {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.key = source["key"];
 	        this.size = source["size"];
-	        this.human_size = source["human_size"];
-	        this.last_modified = this.convertValues(source["last_modified"], null);
+	        this.humanSize = source["humanSize"];
+	        this.lastModified = this.convertValues(source["lastModified"], null);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -132,9 +92,9 @@ export namespace app {
 	export class SelectedUploadFile {
 	    key: string;
 	    size: number;
-	    human_size: string;
+	    humanSize: string;
 	    // Go type: time.Time
-	    last_modified: any;
+	    lastModified: any;
 	    source: string;
 	    name: string;
 	
@@ -146,8 +106,8 @@ export namespace app {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.key = source["key"];
 	        this.size = source["size"];
-	        this.human_size = source["human_size"];
-	        this.last_modified = this.convertValues(source["last_modified"], null);
+	        this.humanSize = source["humanSize"];
+	        this.lastModified = this.convertValues(source["lastModified"], null);
 	        this.source = source["source"];
 	        this.name = source["name"];
 	    }
@@ -201,6 +161,46 @@ export namespace app {
 		    }
 		    return a;
 		}
+	}
+	export class ObjectHandlerResult {
+	    err: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ObjectHandlerResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.err = source["err"];
+	    }
+	}
+	export class DeleteKey {
+	    key: string;
+	    keyType: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new DeleteKey(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.key = source["key"];
+	        this.keyType = source["keyType"];
+	    }
+	}
+	export class ListBucketResult {
+	    buckets: string[];
+	    err: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ListBucketResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.buckets = source["buckets"];
+	        this.err = source["err"];
+	    }
 	}
 
 }
