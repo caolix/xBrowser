@@ -39,10 +39,13 @@
         Create Folder
       </el-button>
 
-<!--      More-->
+      <!--      More-->
       <el-dropdown class="more-button" trigger="click" @command="handleMoreCommand">
         <el-button color="#606266" :dark="isDark" plain :disabled="disableMoreButton">
-          More<el-icon class="el-icon--right"><arrow-down /></el-icon>
+          More
+          <el-icon class="el-icon--right">
+            <arrow-down/>
+          </el-icon>
         </el-button>
         <template #dropdown>
           <el-dropdown-menu>
@@ -134,7 +137,7 @@
         @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55"/>
-      <el-table-column prop="key" label="Name" show-overflow-tooltip="true">
+      <el-table-column prop="key" label="Name" width="400">
         <template #default="scope">
           <el-icon style="top:4px" v-if="tableData[scope.$index].type==='Folder'">
             <FolderOpened/>
@@ -142,19 +145,28 @@
           <el-icon style="top:4px" v-else>
             <Document/>
           </el-icon>
-          <el-button
-              link
-              type="primary"
-              size="small"
-              @click="clickKey(tableData[scope.$index])"
+          <el-tooltip
+              class="box-item"
+              effect="dark"
+              placement="right"
           >
-            {{ tableData[scope.$index].key }}
-          </el-button>
+            <template #content>
+              {{ tableData[scope.$index].key }}
+            </template>
+            <el-button
+                link
+                type="primary"
+                size="small"
+                @click="clickKey(tableData[scope.$index])"
+            >
+              {{ tableData[scope.$index].showed }}
+            </el-button>
+          </el-tooltip>
         </template>
       </el-table-column>
       <el-table-column prop="type" label="Type"></el-table-column>
       <el-table-column prop="humanSize" label="Size"></el-table-column>
-      <el-table-column label="Operations" fixed="right" align="right">
+      <el-table-column label="Operations" fixed="right" align="right" width="200">
         <template #default="scope">
           <el-button size="small" @click="getObject(tableData[scope.$index].key)"
                      v-if="tableData[scope.$index].type==='Object'">
@@ -329,7 +341,7 @@ export default {
       var tableData = []
       var p = prefix
       var i = p.lastIndexOf('/')
-      var folder = p.slice(0, i + 1)
+      var folderPrefix = p.slice(0, i + 1)
       ListObjects(bucketName, marker, prefix, maxKey).then(res => {
         loading.value = true
         if (res.err !== '') {
@@ -338,13 +350,18 @@ export default {
           if (res.prefixes !== null) {
             res.prefixes.forEach((p, i) => {
               var k = p
-              k = k.slice(folder.length, p.length)
+              var showed = k
+              k = k.slice(folderPrefix.length, p.length)
+              if (k.length > 40) {
+                showed = k.slice(0, 40) + "..."
+              }
               if (k === '') {
                 k = '/'
               }
               const folderInfo = {
                 type: TypeFolder,
                 key: k,
+                showed: showed,
               }
               tableData.push(folderInfo)
             })
@@ -353,11 +370,16 @@ export default {
           if (res.contents !== null) {
             res.contents.forEach((c, i) => {
               var k = c.key
-              k = k.slice(folder.length, c.key.length)
+              var showed = k
+              k = k.slice(folderPrefix.length, c.key.length)
+              if (k.length > 40) {
+                showed = k.slice(0, 30) + "..."
+              }
               if (k !== '') {
                 const objectInfo = {
                   type: TypeObject,
                   key: k,
+                  showed: showed,
                   lastModified: c.lastModified,
                   size: c.size,
                   humanSize: c.humanSize
