@@ -1,13 +1,37 @@
 <template>
   <div class="container2">
+      <el-button type="primary" @click="backward">
+        <el-icon>
+          <ArrowLeftBold/>
+        </el-icon>
+        Back
+      </el-button>
+      <el-input v-model="showPath" width="80%"></el-input>
+  </div>
+  <div class="container2">
     <div style="text-align: left; width: 50%">
-      <el-space :size="20" alignment="start">
-        <el-button type="primary" @click="selectUploadObjects">
+        <el-dropdown split-button type="primary" @click="selectUploadObjects" @command="handleUploadCommand">
           <el-icon style="padding-right: 6px">
             <UploadFilled/>
           </el-icon>
           Upload
-        </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="UploadFiles">
+                <el-icon style="padding-right: 6px">
+                  <Document/>
+                </el-icon>
+                Upload Files
+              </el-dropdown-item>
+              <el-dropdown-item command="UploadFolder">
+                <el-icon style="padding-right: 6px">
+                  <Folder/>
+                </el-icon>
+                Upload Folder
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
         <el-button type="primary" @click="dialogCreateDirVisible = true">
           <el-icon style="padding-right: 6px">
             <FolderAdd/>
@@ -26,16 +50,7 @@
           </el-icon>
           Download
         </el-button>
-        <el-space :size="1">
-          <el-button type="primary" @click="backward">
-            <el-icon>
-              <ArrowLeftBold/>
-            </el-icon>
-            Back
-          </el-button>
-          <el-input v-model="showPath"></el-input>
-        </el-space>
-      </el-space>
+
     </div>
     <div style="text-align: right;  width: 50%">
       <el-input class="input-with-select" placeholder="Search by prefix" v-model="subPrefix">
@@ -177,7 +192,8 @@ import {
   ListObjects,
   PutDir,
   SelectUploadFiles,
-  SelectDownloadPath
+  SelectDownloadPath,
+  SelectUploadFolder, DoUploadFolder
 } from "../../wailsjs/go/app/App";
 import {ElMessage, ElMessageBox, ElTable} from "element-plus";
 import {EventsOn} from "../../wailsjs/runtime";
@@ -234,6 +250,14 @@ export default {
       {color: '#1989fa', percentage: 100},
       {color: '#5cb87a', percentage: 101},
     ]
+
+    const handleUploadCommand = (command: string | number | object) => {
+      if(command === "UploadFiles") {
+        selectUploadObjects()
+      } else if(command === "UploadFolder") {
+        selectUploadFolder()
+      }
+    }
 
     interface SelectedObject {
       type: string
@@ -344,6 +368,73 @@ export default {
           dialogCreateDirVisible.value = false
           listObjects(bucketName, '', prefix.value, 100)
           newFolderName.value = ''
+        }
+      })
+    }
+
+    const selectUploadFolder = () => {
+      SelectUploadFolder().then((res) => {
+        if (res.err !== '') {
+          ElMessage.error(res.err)
+        } else {
+          if (res.path === '') {
+            return
+          }
+          var eventWalkPath = "w" + res.path + Math.random()
+          // open TaskList
+          context.emit('changeVisible', true)
+          EventsOn(eventWalkPath, (fp) => {
+            if (fp.type === TypeFolder) {
+              PutDir(<string>bucketName, fp.key, prefix.value).then(res => {
+                if (res.err !== '') {
+                  ElMessage.error(res.err)
+                } else {
+                  dialogCreateDirVisible.value = false
+                  listObjects(bucketName, '', prefix.value, 100)
+                  newFolderName.value = ''
+                }
+              })
+            } else {
+              var eventProgress = "u" + fp.key + Math.random()
+              const file = {
+                type:   fp.type,
+                bucket: bucketName,
+                name: fp.name,
+                key: fp.key,
+                source: fp.source,
+                size: fp.size,
+                humanSize: fp.humanSize,
+                status: 0,  // 0-PENDING, 1-PAUSE, 2-ERROR, 3-FINISH
+                taskId: eventProgress
+              }
+              const payload = {
+                file: file,
+                progress: eventProgress
+              }
+              store.commit('addToUploadList', payload)
+              // begin to upload
+              EventsOn(eventProgress, (data) => {
+                const payload = {
+                  data: data,
+                  progress: eventProgress
+                }
+                store.commit('updateUploadProgress', payload)
+              })
+              DoPutObject(<string>bucketName, fp.key, fp.source, eventProgress).then(res => {
+                if (res.err !== '') {
+                  ElMessage.error(res.err)
+                } else {
+                  const payload = {
+                    data: 100,
+                    progress: eventProgress
+                  }
+                  store.commit('updateUploadProgress', payload)
+                  listObjects(bucketName, '', prefix.value, 100)
+                }
+              })
+            }
+          })
+          DoUploadFolder(prefix.value, res.path, eventWalkPath)
         }
       })
     }
@@ -568,6 +659,7 @@ export default {
       selectUploadObjects,
       selectDownloadDir,
       handleSelectionChange,
+      handleUploadCommand,
       disableDeleteButton,
       newFolderName,
       multipleTableRef,

@@ -71,7 +71,7 @@ func NewDefaultSettings() *Settings {
 	return &Settings{
 		PartSizeMB:             5,
 		UploadPartsConcurrency: 10,
-		UploadConcurrency:      10,
+		UploadConcurrency:      2,
 		DownloadConcurrency:    10,
 	}
 }

@@ -5,7 +5,9 @@ import (
 	"context"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"io"
+	"io/fs"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
@@ -107,8 +109,49 @@ func getFileName(key string) string {
 	return sp[len(sp)-1]
 }
 
+type SelectUploadFolderResult struct {
+	Path string `json:"path"`
+	Err  string `json:"err"`
+}
+
+func (a *App) SelectUploadFolder() SelectUploadFolderResult {
+	path, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{})
+	if err != nil {
+		runtime.LogErrorf(a.ctx, "OpenDirectoryDialog err: %s ", err)
+		return SelectUploadFolderResult{Err: err.Error()}
+	}
+	return SelectUploadFolderResult{
+		Path: path,
+	}
+
+}
+
+func (a *App) DoUploadFolder(prefix, root, eventWalkPath string) {
+	folderName := getFileName(root)
+	filepath.Walk(root, func(path string, info fs.FileInfo, err error) error {
+		key := prefix + folderName + path[len(root):]
+		var t string
+		if info.IsDir() {
+			t = TypeFolder
+		} else {
+			t = TypeObject
+		}
+		var sf = SelectedUploadFile{
+			SourcePath: path,
+			Name:       getFileName(key),
+			Type:       t,
+		}
+		sf.Key = key
+		sf.Size = info.Size()
+		sf.HumanSize = util.IBytes(uint64(info.Size()))
+		runtime.EventsEmit(a.ctx, eventWalkPath, sf)
+		return nil
+	})
+}
+
 type SelectedUploadFile struct {
 	Object
+	Type       string `json:"type"`
 	SourcePath string `json:"source"`
 	Name       string `json:"name"`
 }

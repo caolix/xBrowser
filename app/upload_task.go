@@ -6,6 +6,15 @@ import (
 	"xBrowser/app/db"
 )
 
+//func (a *App) ListenUploadTask(taskQ chan *db.UploadTask) {
+//	for {
+//		select {
+//		case task := <-taskQ:
+//
+//		}
+//	}
+//}
+
 func (a *App) LoadAllUploadTasks() []db.UploadTask {
 	tasks, err := db.GlobalAppDB.ListAllUploadTasks(a.AccountId)
 	if err != nil {

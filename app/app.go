@@ -23,6 +23,10 @@ type App struct {
 
 	UnfinishedUploadTask   int64
 	UnfinishedDownloadTask int64
+
+	uploadTaskQ map[string]chan *db.UploadTask // AccountId -> chan
+	//downloadTaskQ
+
 	// App setup status
 	LoadDbErr error
 	AccountId string
@@ -48,7 +52,8 @@ func NewApp() *App {
 	}
 
 	return &App{
-		Config: DefaultConfig,
+		Config:      DefaultConfig,
+		uploadTaskQ: make(map[string]chan *db.UploadTask),
 	}
 }
 

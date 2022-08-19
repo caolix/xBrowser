@@ -34,6 +34,10 @@ func (a *App) Login(l db.LoginInfo, needSave bool, isHttps bool) string {
 		}
 	}
 	a.AccountId = util.GenAccountId(l.AccessKey, l.Endpoint)
+	if _, ok := a.uploadTaskQ[a.AccountId]; !ok {
+		a.uploadTaskQ[a.AccountId] = make(chan *db.UploadTask, 1000)
+
+	}
 	runtime.LogDebugf(a.ctx, "Login account id: %s", a.AccountId)
 	return ""
 }

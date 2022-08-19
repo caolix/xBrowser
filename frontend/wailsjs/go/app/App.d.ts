@@ -16,6 +16,8 @@ export function DeleteObjects(arg1:string,arg2:Array<app.DeleteKey>,arg3:string,
 
 export function DoPutObject(arg1:string,arg2:string,arg3:string,arg4:string):Promise<app.ObjectHandlerResult>;
 
+export function DoUploadFolder(arg1:string,arg2:string,arg3:string):void;
+
 export function GetObject(arg1:string,arg2:string,arg3:boolean,arg4:string,arg5:string):Promise<app.ObjectHandlerResult>;
 
 export function ListAllLoginInfo():Promise<Array<db.LoginInfo>>;
@@ -41,5 +43,7 @@ export function ResumeUploadTask(arg1:db.UploadTask):Promise<app.ObjectHandlerRe
 export function SelectDownloadPath():Promise<app.SelectDownloadPathResult>;
 
 export function SelectUploadFiles(arg1:string):Promise<app.SelectUploadFilesResult>;
+
+export function SelectUploadFolder():Promise<app.SelectUploadFolderResult>;
 
 export function SetupMenu():void;

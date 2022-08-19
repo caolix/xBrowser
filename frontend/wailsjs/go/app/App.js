@@ -26,6 +26,10 @@ export function DoPutObject(arg1, arg2, arg3, arg4) {
   return window['go']['app']['App']['DoPutObject'](arg1, arg2, arg3, arg4);
 }
 
+export function DoUploadFolder(arg1, arg2, arg3) {
+  return window['go']['app']['App']['DoUploadFolder'](arg1, arg2, arg3);
+}
+
 export function GetObject(arg1, arg2, arg3, arg4, arg5) {
   return window['go']['app']['App']['GetObject'](arg1, arg2, arg3, arg4, arg5);
 }
@@ -76,6 +80,10 @@ export function SelectDownloadPath() {
 
 export function SelectUploadFiles(arg1) {
   return window['go']['app']['App']['SelectUploadFiles'](arg1);
+}
+
+export function SelectUploadFolder() {
+  return window['go']['app']['App']['SelectUploadFolder']();
 }
 
 export function SetupMenu() {

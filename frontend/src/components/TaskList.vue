@@ -48,7 +48,31 @@
                 <el-progress :percentage="downloadPercentageMap[scope.row.taskId]" :color="colors"/>
               </template>
             </el-table-column>
+
             <el-table-column prop="humanSize" width="100"/>
+
+            <el-table-column fixed="right" align="right">
+              <template #default="scope">
+                <el-button
+                    v-if="downloadListData[scope.$index].status===1"
+                    type="success"
+                    @click="resumeDownload(uploadListData[scope.$index], scope.$index)"
+                >
+                  <el-icon>
+                    <CaretRight/>
+                  </el-icon>
+                </el-button>
+                <el-button
+                    type="danger"
+                    plain
+                    @click="removeDownload(uploadListData[scope.$index], scope.$index)"
+                >
+                  <el-icon>
+                    <Delete/>
+                  </el-icon>
+                </el-button>
+              </template>
+            </el-table-column>
           </el-table>
         </el-tab-pane>
       </el-tabs>
