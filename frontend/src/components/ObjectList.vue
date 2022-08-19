@@ -1,55 +1,66 @@
 <template>
   <div class="container2">
-      <el-button type="primary" @click="backward">
-        <el-icon>
-          <ArrowLeftBold/>
-        </el-icon>
-        Back
-      </el-button>
-      <el-input v-model="showPath" width="80%"></el-input>
+    <el-button type="primary" @click="backward">
+      <el-icon>
+        <ArrowLeftBold/>
+      </el-icon>
+      Back
+    </el-button>
+    <el-input v-model="showPath" width="80%"></el-input>
   </div>
   <div class="container2">
     <div style="text-align: left; width: 50%">
-        <el-dropdown split-button type="primary" @click="selectUploadObjects" @command="handleUploadCommand">
-          <el-icon style="padding-right: 6px">
-            <UploadFilled/>
-          </el-icon>
-          Upload
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="UploadFiles">
-                <el-icon style="padding-right: 6px">
-                  <Document/>
-                </el-icon>
-                Upload Files
-              </el-dropdown-item>
-              <el-dropdown-item command="UploadFolder">
-                <el-icon style="padding-right: 6px">
-                  <Folder/>
-                </el-icon>
-                Upload Folder
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-        <el-button type="primary" @click="dialogCreateDirVisible = true">
-          <el-icon style="padding-right: 6px">
-            <FolderAdd/>
-          </el-icon>
-          Create Folder
+      <el-dropdown split-button type="primary" @click="selectUploadObjects" @command="handleUploadCommand">
+        <el-icon style="padding-right: 6px">
+          <UploadFilled/>
+        </el-icon>
+        Upload
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="UploadFiles">
+              <el-icon color="#409EFF">
+                <DocumentAdd/>
+              </el-icon>
+              Upload Files
+            </el-dropdown-item>
+            <el-dropdown-item command="UploadFolder">
+              <el-icon color="#409EFF">
+                <FolderAdd/>
+              </el-icon>
+              Upload Folder
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+      <el-button type="primary" @click="dialogCreateDirVisible = true">
+        <el-icon style="padding-right: 6px">
+          <FolderAdd/>
+        </el-icon>
+        Create Folder
+      </el-button>
+
+<!--      More-->
+      <el-dropdown class="more-button" trigger="click" @command="handleMoreCommand">
+        <el-button color="#606266" :dark="isDark" plain :disabled="disableMoreButton">
+          More<el-icon class="el-icon--right"><arrow-down /></el-icon>
         </el-button>
-        <el-button plain type="danger" @click="confirmDeleteObjects" :disabled="disableDeleteButton">
-          <el-icon style="padding-right: 6px">
-            <Delete/>
-          </el-icon>
-          Delete
-        </el-button>
-        <el-button plain type="info" @click="selectDownloadDir" :disabled="disableDeleteButton">
-          <el-icon style="padding-right: 6px">
-            <Delete/>
-          </el-icon>
-          Download
-        </el-button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="RemoveFiles">
+              <el-icon style="bottom: 1px" color="#F56C6C">
+                <CloseBold/>
+              </el-icon>
+              Remove
+            </el-dropdown-item>
+            <el-dropdown-item command="DownloadFiles">
+              <el-icon style="bottom: 1px" color="#67C23A">
+                <Download/>
+              </el-icon>
+              Download
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
 
     </div>
     <div style="text-align: right;  width: 50%">
@@ -112,7 +123,7 @@
     </template>
   </el-dialog>
 
-<!-- Table Data -->
+  <!-- Table Data -->
   <div class="container">
     <el-table
         :data="objectList"
@@ -123,12 +134,12 @@
         @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55"/>
-      <el-table-column prop="key" label="Name" width="400" show-overflow-tooltip="true">
+      <el-table-column prop="key" label="Name" show-overflow-tooltip="true">
         <template #default="scope">
-          <el-icon style="padding-right: 2px; padding-top: 2px" v-if="tableData[scope.$index].type==='Folder'">
+          <el-icon style="top:4px" v-if="tableData[scope.$index].type==='Folder'">
             <FolderOpened/>
           </el-icon>
-          <el-icon style="padding-right: 2px; padding-top: 2px" v-else>
+          <el-icon style="top:4px" v-else>
             <Document/>
           </el-icon>
           <el-button
@@ -141,8 +152,8 @@
           </el-button>
         </template>
       </el-table-column>
-      <el-table-column prop="type" label="Type" width="200"></el-table-column>
-      <el-table-column prop="humanSize" label="Size" width="200"></el-table-column>
+      <el-table-column prop="type" label="Type"></el-table-column>
+      <el-table-column prop="humanSize" label="Size"></el-table-column>
       <el-table-column label="Operations" fixed="right" align="right">
         <template #default="scope">
           <el-button size="small" @click="getObject(tableData[scope.$index].key)"
@@ -171,11 +182,16 @@
     </el-table>
   </div>
 
-<!--  Page -->
+  <!--  Page -->
   <el-button-group>
-    <el-button type="primary" :icon="ArrowLeft" :disabled="markerStack.length === 0" @click="toPreviousPage">Previous Page</el-button>
+    <el-button type="primary" :icon="ArrowLeft" :disabled="markerStack.length === 0" @click="toPreviousPage">Previous
+      Page
+    </el-button>
     <el-button type="primary" :disabled="!isTruncate" @click="toNextPage">
-      Next Page<el-icon class="el-icon--right"><ArrowRight /></el-icon>
+      Next Page
+      <el-icon class="el-icon--right">
+        <ArrowRight/>
+      </el-icon>
     </el-button>
   </el-button-group>
 </template>
@@ -188,12 +204,13 @@ import {
   DeleteObject,
   DeleteObjects,
   DoPutObject,
+  DoUploadFolder,
   GetObject,
   ListObjects,
   PutDir,
-  SelectUploadFiles,
   SelectDownloadPath,
-  SelectUploadFolder, DoUploadFolder
+  SelectUploadFiles,
+  SelectUploadFolder
 } from "../../wailsjs/go/app/App";
 import {ElMessage, ElMessageBox, ElTable} from "element-plus";
 import {EventsOn} from "../../wailsjs/runtime";
@@ -223,7 +240,7 @@ export default {
     const percentage = ref(0)
     const percentageLabel = ref('')
     const newFolderName = ref('')
-    const disableDeleteButton = ref(true)
+    const disableMoreButton = ref(true)
 
     var marker = ''
     var nextMarker = ''
@@ -252,10 +269,18 @@ export default {
     ]
 
     const handleUploadCommand = (command: string | number | object) => {
-      if(command === "UploadFiles") {
+      if (command === "UploadFiles") {
         selectUploadObjects()
-      } else if(command === "UploadFolder") {
+      } else if (command === "UploadFolder") {
         selectUploadFolder()
+      }
+    }
+
+    const handleMoreCommand = (command: string | number | object) => {
+      if (command === "RemoveFiles") {
+        confirmDeleteObjects()
+      } else if (command === "DownloadFiles") {
+        selectDownloadDir()
       }
     }
 
@@ -271,7 +296,7 @@ export default {
     const multipleSelection = ref<SelectedObject[]>([])
 
     const handleSelectionChange = (val: SelectedObject[]) => {
-      disableDeleteButton.value = val.length === 0;
+      disableMoreButton.value = val.length === 0;
       multipleSelection.value = val
       console.log(multipleSelection.value)
     }
@@ -397,7 +422,7 @@ export default {
             } else {
               var eventProgress = "u" + fp.key + Math.random()
               const file = {
-                type:   fp.type,
+                type: fp.type,
                 bucket: bucketName,
                 name: fp.name,
                 key: fp.key,
@@ -660,7 +685,8 @@ export default {
       selectDownloadDir,
       handleSelectionChange,
       handleUploadCommand,
-      disableDeleteButton,
+      handleMoreCommand,
+      disableMoreButton,
       newFolderName,
       multipleTableRef,
       dialogFormVisible,
@@ -713,6 +739,13 @@ export default {
 .input-with-select {
   width: 50%;
   border-radius: 0;
+}
+
+.more-button .el-dropdown-link {
+  cursor: pointer;
+  color: var(--el-color-primary);
+  display: flex;
+  align-items: center;
 }
 
 </style>
