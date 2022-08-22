@@ -175,7 +175,6 @@ export default {
     }
 
     const removeUpload = (task, index) => {
-      console.log(task.taskId)
       if (uploadPercentageMap[task.taskId] !== 100) {
         var t = new db.UploadTask()
         t.uploadedSize = task.uploadedSize

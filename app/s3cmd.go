@@ -197,15 +197,14 @@ func (a *App) SelectUploadFiles(prefix string) SelectUploadFilesResult {
 	return res
 }
 
-func (a *App) doPut(bucketName, key string, r io.ReadSeeker, task *db.UploadTask, resCh chan ObjectHandlerResult) {
-	// TODO: cancel Put
-	_, err := a.S3Client.UploadObject(context.Background(), bucketName, key, r, task)
+func (a *App) doPut(ctx context.Context, wrapper *UploadTaskWrapper) {
+	_, err := a.S3Client.UploadObject(ctx, wrapper.readSeeker, wrapper.task)
 	if err != nil {
-		resCh <- ObjectHandlerResult{Err: err.Error()}
+		wrapper.uploadResCh <- err
 		return
 	}
 	atomic.AddInt64(&a.UnfinishedUploadTask, -1)
-	resCh <- ObjectHandlerResult{}
+	wrapper.uploadResCh <- nil
 }
 
 func (a *App) DoPutObject(bucketName, key, filePath, eventProgress string) ObjectHandlerResult {
@@ -235,11 +234,18 @@ func (a *App) DoPutObject(bucketName, key, filePath, eventProgress string) Objec
 
 	atomic.AddInt64(&a.UnfinishedUploadTask, 1)
 	p := NewProgress(a.ctx, eventProgress, fInfo.Size())
-	r := NewUploadProgressReader(f, p)
+	wrapper := &UploadTaskWrapper{
+		task:         task,
+		readSeeker:   NewUploadProgressReader(f, p),
+		requestResCh: make(chan error),
+		uploadResCh:  make(chan error),
+	}
 
-	resCh := make(chan ObjectHandlerResult)
-	go a.doPut(bucketName, key, r, task, resCh)
-	return <-resCh
+	a.uploadTaskQ <- wrapper
+	if err = <-wrapper.requestResCh; err != nil {
+		return ObjectHandlerResult{Err: err.Error()}
+	}
+	return ObjectHandlerResult{}
 }
 
 func (a *App) PutDir(bucketName, dirName, prefix string) ObjectHandlerResult {

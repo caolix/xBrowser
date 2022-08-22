@@ -24,7 +24,9 @@ type App struct {
 	UnfinishedUploadTask   int64
 	UnfinishedDownloadTask int64
 
-	uploadTaskQ map[string]chan *db.UploadTask // AccountId -> chan
+	uploadTaskQ   chan *UploadTaskWrapper
+	uploadWorkers []uploadWorker
+	cancelFunc    context.CancelFunc
 	//downloadTaskQ
 
 	// App setup status
@@ -53,7 +55,7 @@ func NewApp() *App {
 
 	return &App{
 		Config:      DefaultConfig,
-		uploadTaskQ: make(map[string]chan *db.UploadTask),
+		uploadTaskQ: make(chan *UploadTaskWrapper),
 	}
 }
 

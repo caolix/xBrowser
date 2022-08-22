@@ -7,11 +7,11 @@ import (
 	"xBrowser/app/db"
 )
 
-func (s3client *S3Client) UploadObject(ctx aws.Context, bucketName, key string, body io.ReadSeeker, task *db.UploadTask) (out *UploadOutput, err error) {
+func (s3client *S3Client) UploadObject(ctx aws.Context, body io.ReadSeeker, task *db.UploadTask) (out *UploadOutput, err error) {
 	params := &UploadInput{
 		Body:       body,
-		Bucket:     aws.String(bucketName),
-		Key:        aws.String(key),
+		Bucket:     aws.String(task.Bucket),
+		Key:        aws.String(task.Key),
 		UploadTask: task,
 	}
 	return s3client.Uploader.UploadWithContext(ctx, params)

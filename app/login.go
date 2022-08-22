@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"time"
 	"xBrowser/app/db"
@@ -34,12 +35,29 @@ func (a *App) Login(l db.LoginInfo, needSave bool, isHttps bool) string {
 		}
 	}
 	a.AccountId = util.GenAccountId(l.AccessKey, l.Endpoint)
-	if _, ok := a.uploadTaskQ[a.AccountId]; !ok {
-		a.uploadTaskQ[a.AccountId] = make(chan *db.UploadTask, 1000)
-
-	}
+	a.registerWorkers()
 	runtime.LogDebugf(a.ctx, "Login account id: %s", a.AccountId)
 	return ""
+}
+
+func (a *App) registerWorkers() {
+	UploadTaskCancelFunc = make(map[string]context.CancelFunc)
+	rootCtx, cancel := context.WithCancel(context.Background())
+	a.cancelFunc = cancel
+	for i := 0; i < a.Config.AppSettings.UploadConcurrency; i++ {
+		var ctx context.Context
+		ctx, _ = context.WithCancel(rootCtx)
+		worker := uploadWorker{
+			ctx:   ctx,
+			taskQ: a.uploadTaskQ,
+		}
+		a.uploadWorkers = append(a.uploadWorkers, worker)
+		go worker.start(a)
+	}
+}
+
+func (a *App) Logout() {
+	a.cancelFunc()
 }
 
 func (a *App) CheckDbError() string {

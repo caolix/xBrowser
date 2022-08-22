@@ -1,19 +1,50 @@
 package app
 
 import (
+	"context"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"io"
 	"os"
+	"sync"
 	"xBrowser/app/db"
 )
 
-//func (a *App) ListenUploadTask(taskQ chan *db.UploadTask) {
-//	for {
-//		select {
-//		case task := <-taskQ:
-//
-//		}
-//	}
-//}
+type UploadTaskWrapper struct {
+	task         *db.UploadTask
+	readSeeker   io.ReadSeeker
+	uploadResCh  chan error
+	requestResCh chan error
+}
+
+type uploadWorker struct {
+	ctx   context.Context
+	taskQ chan *UploadTaskWrapper
+}
+
+var UploadTaskCancelFunc map[string]context.CancelFunc
+var lock sync.Mutex
+
+func (u *uploadWorker) start(a *App) {
+	for {
+		select {
+		case wrapper := <-u.taskQ:
+			uploadCtx, cancel := context.WithCancel(u.ctx)
+			lock.Lock()
+			UploadTaskCancelFunc[wrapper.task.TaskId] = cancel
+			lock.Unlock()
+			go a.doPut(uploadCtx, wrapper)
+			uploadErr := <-wrapper.uploadResCh
+			if uploadErr != nil {
+				runtime.LogErrorf(a.ctx, "upload task %s %s err: %s",
+					wrapper.task.Bucket, wrapper.task.Key, uploadErr.Error())
+			}
+			wrapper.requestResCh <- uploadErr
+		case <-u.ctx.Done():
+			runtime.LogDebugf(a.ctx, "recieve context cancel")
+			return
+		}
+	}
+}
 
 func (a *App) LoadAllUploadTasks() []db.UploadTask {
 	tasks, err := db.GlobalAppDB.ListAllUploadTasks(a.AccountId)
@@ -37,9 +68,6 @@ func (a *App) ResumeUploadTask(u db.UploadTask) ObjectHandlerResult {
 		return ObjectHandlerResult{Err: err.Error()}
 	}
 	runtime.LogDebugf(a.ctx, "ResumeUploadTask source: %s bucket: %s, key: %s", u.Source, u.Bucket, u.Key)
-	p := NewProgress(a.ctx, u.TaskId, fInfo.Size())
-	r := NewUploadProgressReader(f, p)
-	resCh := make(chan ObjectHandlerResult)
 	if u.IsMultipart {
 		completePart, maxPartNum, err := a.getUploadedParts(&u)
 		if err != nil {
@@ -52,8 +80,18 @@ func (a *App) ResumeUploadTask(u db.UploadTask) ObjectHandlerResult {
 			return ObjectHandlerResult{Err: err.Error()}
 		}
 	}
-	go a.doPut(u.Bucket, u.Key, r, &u, resCh)
-	return <-resCh
+	p := NewProgress(a.ctx, u.TaskId, fInfo.Size())
+	wrapper := &UploadTaskWrapper{
+		task:         &u,
+		readSeeker:   NewUploadProgressReader(f, p),
+		requestResCh: make(chan error),
+		uploadResCh:  make(chan error),
+	}
+	a.uploadTaskQ <- wrapper
+	if err = <-wrapper.requestResCh; err != nil {
+		return ObjectHandlerResult{Err: err.Error()}
+	}
+	return ObjectHandlerResult{}
 }
 
 func (a *App) RemoveUploadTask(u db.UploadTask) ObjectHandlerResult {
@@ -68,6 +106,12 @@ func (a *App) RemoveUploadTask(u db.UploadTask) ObjectHandlerResult {
 			runtime.LogErrorf(a.ctx, "AbortMultiPartUpload err: %v", err)
 			return ObjectHandlerResult{Err: err.Error()}
 		}
+	}
+	if cancel, ok := UploadTaskCancelFunc[u.TaskId]; ok {
+		cancel()
+		lock.Lock()
+		delete(UploadTaskCancelFunc, u.TaskId)
+		lock.Unlock()
 	}
 	return ObjectHandlerResult{}
 }

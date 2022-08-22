@@ -58,6 +58,10 @@ export function Login(arg1, arg2, arg3) {
   return window['go']['app']['App']['Login'](arg1, arg2, arg3);
 }
 
+export function Logout() {
+  return window['go']['app']['App']['Logout']();
+}
+
 export function MakeBucket(arg1) {
   return window['go']['app']['App']['MakeBucket'](arg1);
 }
