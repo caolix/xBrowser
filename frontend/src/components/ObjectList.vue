@@ -444,6 +444,7 @@ export default {
             } else {
               var eventProgress = "u" + fp.key + Math.random()
               const file = {
+                accountId: fp.accountId,
                 type: fp.type,
                 bucket: bucketName,
                 name: fp.name,
@@ -494,6 +495,7 @@ export default {
           res.files.forEach((fp, i) => {
             var eventProgress = "u" + fp.key + Math.random()
             const file = {
+              accountId: fp.accountId,
               bucket: bucketName,
               name: fp.name,
               key: fp.key,

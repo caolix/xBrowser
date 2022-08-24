@@ -121,7 +121,8 @@ func (a *App) ResumeUploadTask(u db.UploadTask) ObjectHandlerResult {
 
 func (a *App) RemoveUploadTask(u db.UploadTask) ObjectHandlerResult {
 	defer func() {
-		runtime.LogDebugf(a.ctx, "CancelUploadTask to DeleteUploadTask: %s %s %s", u.Bucket, u.Key, u.UploadId)
+		runtime.LogDebugf(a.ctx, "CancelUploadTask: %s %s %s", u.Bucket, u.Key, u.UploadId)
+		runtime.LogDebugf(a.ctx, "DeleteUploadTask: %s %s", u.AccountId, u.TaskId)
 		db.GlobalAppDB.DeleteUploadTask(u.AccountId, u.TaskId)
 	}()
 	if cancel, ok := UploadTaskCancelFunc[u.TaskId]; ok {

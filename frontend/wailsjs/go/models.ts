@@ -1,5 +1,96 @@
 export namespace app {
 	
+	export class SelectedUploadFile {
+	    key: string;
+	    size: number;
+	    humanSize: string;
+	    // Go type: time.Time
+	    lastModified: any;
+	    accountId: string;
+	    type: string;
+	    source: string;
+	    name: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SelectedUploadFile(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.key = source["key"];
+	        this.size = source["size"];
+	        this.humanSize = source["humanSize"];
+	        this.lastModified = this.convertValues(source["lastModified"], null);
+	        this.accountId = source["accountId"];
+	        this.type = source["type"];
+	        this.source = source["source"];
+	        this.name = source["name"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class SelectUploadFilesResult {
+	    files: SelectedUploadFile[];
+	    err: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SelectUploadFilesResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.files = this.convertValues(source["files"], SelectedUploadFile);
+	        this.err = source["err"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class SelectUploadFolderResult {
+	    path: string;
+	    err: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SelectUploadFolderResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.path = source["path"];
+	        this.err = source["err"];
+	    }
+	}
 	export class ObjectHandlerResult {
 	    err: string;
 	
@@ -129,120 +220,11 @@ export namespace app {
 	        this.err = source["err"];
 	    }
 	}
-	export class SelectedUploadFile {
-	    key: string;
-	    size: number;
-	    humanSize: string;
-	    // Go type: time.Time
-	    lastModified: any;
-	    type: string;
-	    source: string;
-	    name: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new SelectedUploadFile(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.key = source["key"];
-	        this.size = source["size"];
-	        this.humanSize = source["humanSize"];
-	        this.lastModified = this.convertValues(source["lastModified"], null);
-	        this.type = source["type"];
-	        this.source = source["source"];
-	        this.name = source["name"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class SelectUploadFilesResult {
-	    files: SelectedUploadFile[];
-	    err: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new SelectUploadFilesResult(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.files = this.convertValues(source["files"], SelectedUploadFile);
-	        this.err = source["err"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class SelectUploadFolderResult {
-	    path: string;
-	    err: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new SelectUploadFolderResult(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.path = source["path"];
-	        this.err = source["err"];
-	    }
-	}
 
 }
 
 export namespace db {
 	
-	export class Settings {
-	    accountId: string;
-	    partSize: number;
-	    uploadPartsConcurrency: number;
-	    uploadConcurrency: number;
-	    downloadConcurrency: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new Settings(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.accountId = source["accountId"];
-	        this.partSize = source["partSize"];
-	        this.uploadPartsConcurrency = source["uploadPartsConcurrency"];
-	        this.uploadConcurrency = source["uploadConcurrency"];
-	        this.downloadConcurrency = source["downloadConcurrency"];
-	    }
-	}
 	export class LoginInfo {
 	    accountId: string;
 	    endpoint: string;
@@ -360,6 +342,26 @@ export namespace db {
 		    }
 		    return a;
 		}
+	}
+	export class Settings {
+	    accountId: string;
+	    partSize: number;
+	    uploadPartsConcurrency: number;
+	    uploadConcurrency: number;
+	    downloadConcurrency: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new Settings(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.accountId = source["accountId"];
+	        this.partSize = source["partSize"];
+	        this.uploadPartsConcurrency = source["uploadPartsConcurrency"];
+	        this.uploadConcurrency = source["uploadConcurrency"];
+	        this.downloadConcurrency = source["downloadConcurrency"];
+	    }
 	}
 
 }

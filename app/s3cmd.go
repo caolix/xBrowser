@@ -137,6 +137,7 @@ func (a *App) DoUploadFolder(prefix, root, eventWalkPath string) {
 			t = TypeObject
 		}
 		var sf = SelectedUploadFile{
+			AccountId:  a.AccountId,
 			SourcePath: path,
 			Name:       getFileName(key),
 			Type:       t,
@@ -151,6 +152,7 @@ func (a *App) DoUploadFolder(prefix, root, eventWalkPath string) {
 
 type SelectedUploadFile struct {
 	Object
+	AccountId  string `json:"accountId"`
 	Type       string `json:"type"`
 	SourcePath string `json:"source"`
 	Name       string `json:"name"`
@@ -185,13 +187,13 @@ func (a *App) SelectUploadFiles(prefix string) SelectUploadFilesResult {
 
 		fName := getFileName(fp)
 		var sf = SelectedUploadFile{
+			AccountId:  a.AccountId,
 			SourcePath: fp,
 			Name:       fName,
 		}
 		sf.Key = prefix + getFileName(fp)
 		sf.Size = fInfo.Size()
 		sf.HumanSize = util.IBytes(uint64(fInfo.Size()))
-
 		res.SelectedFile = append(res.SelectedFile, sf)
 	}
 	return res
