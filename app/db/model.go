@@ -50,28 +50,69 @@ type CompletedPart struct {
 	PartNumber int64 `json:"partNumber"`
 }
 
+const (
+	MaxUploadConcurrency      = 10
+	MaxDownloadConcurrency    = 10
+	MaxUploadPartsConcurrency = 10
+	MaxPartSizeMB             = 5120
+)
+
 type Settings struct {
-	PartSizeMB             int `json:"partSize"`
-	UploadPartsConcurrency int `json:"uploadPartsConcurrency"`
-	UploadConcurrency      int `json:"uploadConcurrency"`
-	DownloadConcurrency    int `json:"downloadConcurrency"`
+	AccountId              string `gorm:"primaryKey" json:"accountId"`
+	PartSizeMB             int    `json:"partSize"`
+	UploadPartsConcurrency int    `json:"uploadPartsConcurrency"`
+	UploadConcurrency      int    `json:"uploadConcurrency"`
+	DownloadConcurrency    int    `json:"downloadConcurrency"`
 }
 
 type SettingsOption func(settings *Settings)
 
-func NewSettings(opt ...SettingsOption) *Settings {
+func NewSettings(accountId string, opt ...SettingsOption) *Settings {
 	s := NewDefaultSettings()
 	for _, f := range opt {
 		f(s)
 	}
+	s.AccountId = accountId
 	return s
 }
 
 func NewDefaultSettings() *Settings {
 	return &Settings{
 		PartSizeMB:             5,
-		UploadPartsConcurrency: 10,
+		UploadPartsConcurrency: 2,
 		UploadConcurrency:      2,
-		DownloadConcurrency:    10,
+		DownloadConcurrency:    1,
 	}
+}
+
+func (s *Settings) SetDefault() {
+	if s.PartSizeMB < 1 || s.PartSizeMB > MaxPartSizeMB {
+		s.PartSizeMB = 5
+	}
+	if s.UploadConcurrency < 1 || s.UploadConcurrency > MaxUploadConcurrency {
+		s.UploadConcurrency = 2
+	}
+	if s.UploadPartsConcurrency < 1 || s.UploadPartsConcurrency > MaxUploadPartsConcurrency {
+		s.UploadPartsConcurrency = 2
+	}
+	if s.DownloadConcurrency < 1 || s.DownloadConcurrency > MaxDownloadConcurrency {
+		s.DownloadConcurrency = 1
+	}
+}
+
+func (s *Settings) Validate() (string, bool) {
+	if s.UploadConcurrency < 1 || s.UploadConcurrency > MaxUploadConcurrency {
+		return "UploadConcurrency", false
+	}
+
+	if s.UploadPartsConcurrency < 1 || s.UploadPartsConcurrency > MaxUploadPartsConcurrency {
+		return "UploadPartsConcurrency", false
+	}
+	if s.DownloadConcurrency < 1 || s.DownloadConcurrency > MaxDownloadConcurrency {
+		return "DownloadConcurrency", false
+	}
+	if s.PartSizeMB < 1 || s.PartSizeMB > MaxPartSizeMB {
+		return "PartSizeMB", false
+	}
+	return "", true
 }

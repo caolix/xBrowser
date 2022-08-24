@@ -42,17 +42,23 @@ func (a *App) Login(l db.LoginInfo, needSave bool, isHttps bool) string {
 
 func (a *App) registerWorkers() {
 	UploadTaskCancelFunc = make(map[string]context.CancelFunc)
-	rootCtx, cancel := context.WithCancel(context.Background())
-	a.cancelFunc = cancel
-	for i := 0; i < a.Config.AppSettings.UploadConcurrency; i++ {
+	a.uploadCtx, a.cancelFunc = context.WithCancel(context.Background())
+	for i := 0; i < db.MaxUploadConcurrency; i++ {
 		var ctx context.Context
-		ctx, _ = context.WithCancel(rootCtx)
-		worker := uploadWorker{
-			ctx:   ctx,
-			taskQ: a.uploadTaskQ,
+		ctx, _ = context.WithCancel(a.uploadCtx)
+		worker := &uploadWorker{
+			num:    i,
+			ctx:    ctx,
+			taskCh: a.uploadTaskQ,
+			stopCh: make(chan struct{}, 1),
+			status: WorkerStopped,
 		}
+		if i < a.Config.AppSettings.UploadConcurrency {
+			worker.setStatus(WorkerRunning)
+			go worker.start(a)
+		}
+		runtime.LogDebugf(a.ctx, "registerWorkers id: %d status: %d", worker.num, worker.status)
 		a.uploadWorkers = append(a.uploadWorkers, worker)
-		go worker.start(a)
 	}
 }
 

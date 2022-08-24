@@ -25,7 +25,8 @@ type App struct {
 	UnfinishedDownloadTask int64
 
 	uploadTaskQ   chan *UploadTaskWrapper
-	uploadWorkers []uploadWorker
+	uploadWorkers []*uploadWorker
+	uploadCtx     context.Context
 	cancelFunc    context.CancelFunc
 	//downloadTaskQ
 
@@ -48,9 +49,8 @@ func NewApp() *App {
 		return nil
 	}
 	DefaultConfig := &AppConfig{
-		DbType:      db.TYPE_SQLITE,
-		Address:     dir,
-		AppSettings: db.NewSettings(),
+		DbType:  db.TYPE_SQLITE,
+		Address: dir,
 	}
 
 	return &App{
@@ -128,7 +128,7 @@ func (a *App) Startup(ctx context.Context) {
 	default:
 		runtime.LogError(ctx, "not supported:"+string(a.Config.DbType))
 		a.LoadDbErr = errors.New("db type not supported")
-		db.GlobalAppDB = &db.AppMemory{}
+		//db.GlobalAppDB = &db.AppMemory{}
 	}
 	runtime.LogInfo(ctx, "Startup finished.")
 }
@@ -138,8 +138,19 @@ func (a *App) Startup(ctx context.Context) {
 func (a *App) DomReady(ctx context.Context) {
 	// Add your action here
 	// 在这里添加你的操作
-	a.LoadDbErr = db.GlobalAppDB.Init(a.Config.Address)
-	runtime.LogInfo(ctx, "DomReady finished.")
+	defer runtime.LogInfo(ctx, "DomReady finished.")
+	err := db.GlobalAppDB.Init(a.Config.Address)
+	if err != nil {
+		a.LoadDbErr = err
+		return
+	}
+	settings, err := db.GlobalAppDB.LoadSettings(a.AccountId)
+	if err != nil {
+		a.LoadDbErr = err
+		return
+	}
+	a.Config.AppSettings = settings
+	runtime.LogDebugf(ctx, "LoadSettings: %v", *settings)
 }
 
 // shutdown is called at application termination

@@ -223,6 +223,26 @@ export namespace app {
 
 export namespace db {
 	
+	export class Settings {
+	    accountId: string;
+	    partSize: number;
+	    uploadPartsConcurrency: number;
+	    uploadConcurrency: number;
+	    downloadConcurrency: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new Settings(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.accountId = source["accountId"];
+	        this.partSize = source["partSize"];
+	        this.uploadPartsConcurrency = source["uploadPartsConcurrency"];
+	        this.uploadConcurrency = source["uploadConcurrency"];
+	        this.downloadConcurrency = source["downloadConcurrency"];
+	    }
+	}
 	export class LoginInfo {
 	    accountId: string;
 	    endpoint: string;

@@ -18,7 +18,7 @@
     <el-menu-item index="1" @click="showDrawer">
       <span>TaskList</span>
     </el-menu-item>
-    <el-menu-item index="2">Settings</el-menu-item>
+    <el-menu-item index="2" @click="showSettings">Settings</el-menu-item>
     <el-menu-item index="3">About</el-menu-item>
     <el-menu-item index="4" style="height:56px">
       <el-button link type="danger" @click="logout">
@@ -47,8 +47,12 @@ export default {
     const showDrawer = () => {
       context.emit('drawerVisible', true)
     }
+    const showSettings = () => {
+      context.emit('settingsVisible', true)
+    }
     return {
       showDrawer,
+      showSettings,
       logout
     }
   }

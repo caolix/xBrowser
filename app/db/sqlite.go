@@ -133,3 +133,28 @@ func (s *AppSqlite) UpsertUploadTask(u *UploadTask) error {
 func (s *AppSqlite) DeleteUploadTask(accountId string, taskId string) {
 	s.DB.Delete(&UploadTask{}, "account_id = ? AND task_id = ?", accountId, taskId)
 }
+
+func (s *AppSqlite) UpdateSettings(settings *Settings) error {
+	res := s.DB.Save(settings)
+	if res.Error != nil {
+		return res.Error
+	}
+	return nil
+}
+
+func (s *AppSqlite) LoadSettings(accountId string) (*Settings, error) {
+	query := &Settings{AccountId: accountId}
+	res := s.DB.First(&query)
+	if res.Error != nil {
+		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+			query.SetDefault()
+			res = s.DB.Create(query)
+			if res.Error != nil {
+				return nil, res.Error
+			}
+			return query, nil
+		}
+		return nil, res.Error
+	}
+	return query, nil
+}

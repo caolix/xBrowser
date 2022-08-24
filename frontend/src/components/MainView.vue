@@ -1,6 +1,7 @@
 <template>
-  <MainMenu @drawerVisible="changeVisible"/>
+  <MainMenu @drawerVisible="changeVisible" @settingsVisible="changeSettingsVisible"/>
   <TaskList :visible="visible" @cancelVisible="changeVisible" :tabName="tabName"/>
+  <Settings :visible="settingsVisible" @cancelVisible="changeSettingsVisible"/>
   <div style="margin-top: 10px">
     <router-view @changeVisible="changeVisible" @setTaskTabName="setTaskTabName"/>
   </div>
@@ -9,17 +10,22 @@
 <script>
 import MainMenu from "./MainMenu.vue"
 import TaskList from "./TaskList.vue";
+import Settings from "./Settings.vue";
 import {ref} from "vue";
 import {LoadAllUploadTasks} from "../../wailsjs/go/app/App";
 import {EventsOn, LogDebug} from "../../wailsjs/runtime";
 import {useStore} from "vuex";
 
 export default {
-  components: {MainMenu, TaskList},
+  components: {MainMenu, TaskList, Settings},
   setup() {
     const visible = ref(false)
+    const settingsVisible = ref(false)
     const changeVisible = (bool) => {
       visible.value = bool
+    }
+    const changeSettingsVisible = (bool) => {
+      settingsVisible.value = bool
     }
     const tabName = ref("upload")
     const setTaskTabName = (name) => {
@@ -77,8 +83,10 @@ export default {
     })
     return {
       visible,
+      settingsVisible,
       tabName,
       changeVisible,
+      changeSettingsVisible,
       setTaskTabName
     }
   }

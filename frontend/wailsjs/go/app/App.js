@@ -54,6 +54,10 @@ export function LoadLatestLoginInfo() {
   return window['go']['app']['App']['LoadLatestLoginInfo']();
 }
 
+export function LoadSettings() {
+  return window['go']['app']['App']['LoadSettings']();
+}
+
 export function Login(arg1, arg2, arg3) {
   return window['go']['app']['App']['Login'](arg1, arg2, arg3);
 }
@@ -92,4 +96,8 @@ export function SelectUploadFolder() {
 
 export function SetupMenu() {
   return window['go']['app']['App']['SetupMenu']();
+}
+
+export function UpdateSettings(arg1) {
+  return window['go']['app']['App']['UpdateSettings'](arg1);
 }

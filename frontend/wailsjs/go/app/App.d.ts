@@ -30,6 +30,8 @@ export function LoadAllUploadTasks():Promise<Array<db.UploadTask>>;
 
 export function LoadLatestLoginInfo():Promise<db.LoginInfo>;
 
+export function LoadSettings():Promise<db.Settings>;
+
 export function Login(arg1:db.LoginInfo,arg2:boolean,arg3:boolean):Promise<string>;
 
 export function Logout():void;
@@ -49,3 +51,5 @@ export function SelectUploadFiles(arg1:string):Promise<app.SelectUploadFilesResu
 export function SelectUploadFolder():Promise<app.SelectUploadFolderResult>;
 
 export function SetupMenu():void;
+
+export function UpdateSettings(arg1:db.Settings):Promise<app.ObjectHandlerResult>;

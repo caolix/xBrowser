@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"sync"
+	"sync/atomic"
 	"xBrowser/app/db"
 )
 
@@ -16,9 +17,19 @@ type UploadTaskWrapper struct {
 	requestResCh chan error
 }
 
+const (
+	WorkerPending = iota
+	WorkerRunning
+	WorkerStopping
+	WorkerStopped
+)
+
 type uploadWorker struct {
-	ctx   context.Context
-	taskQ chan *UploadTaskWrapper
+	num    int
+	ctx    context.Context
+	status int32
+	taskCh chan *UploadTaskWrapper
+	stopCh chan struct{}
 }
 
 var UploadTaskCancelFunc map[string]context.CancelFunc
@@ -26,8 +37,21 @@ var lock sync.Mutex
 
 func (u *uploadWorker) start(a *App) {
 	for {
+		if u.status == WorkerStopping {
+			runtime.LogDebugf(a.ctx, "worker %d stopped. status: %d", u.num, u.status)
+			u.setStatus(WorkerStopped)
+			break
+		}
+		u.setStatus(WorkerPending)
 		select {
-		case wrapper := <-u.taskQ:
+		case <-u.ctx.Done():
+			runtime.LogDebugf(a.ctx, "recieve context cancel on worker %d", u.num)
+			u.setStatus(WorkerStopping)
+		case <-u.stopCh:
+			runtime.LogDebugf(a.ctx, "recieve stopCh on worker %d", u.num)
+			u.setStatus(WorkerStopping)
+		case wrapper := <-u.taskCh:
+			u.setStatus(WorkerRunning)
 			uploadCtx, cancel := context.WithCancel(u.ctx)
 			lock.Lock()
 			UploadTaskCancelFunc[wrapper.task.TaskId] = cancel
@@ -39,11 +63,12 @@ func (u *uploadWorker) start(a *App) {
 					wrapper.task.Bucket, wrapper.task.Key, uploadErr.Error())
 			}
 			wrapper.requestResCh <- uploadErr
-		case <-u.ctx.Done():
-			runtime.LogDebugf(a.ctx, "recieve context cancel")
-			return
 		}
 	}
+}
+
+func (u *uploadWorker) setStatus(status int32) {
+	atomic.StoreInt32(&u.status, status)
 }
 
 func (a *App) LoadAllUploadTasks() []db.UploadTask {
@@ -99,6 +124,12 @@ func (a *App) RemoveUploadTask(u db.UploadTask) ObjectHandlerResult {
 		runtime.LogDebugf(a.ctx, "CancelUploadTask to DeleteUploadTask: %s %s %s", u.Bucket, u.Key, u.UploadId)
 		db.GlobalAppDB.DeleteUploadTask(u.AccountId, u.TaskId)
 	}()
+	if cancel, ok := UploadTaskCancelFunc[u.TaskId]; ok {
+		cancel()
+		lock.Lock()
+		delete(UploadTaskCancelFunc, u.TaskId)
+		lock.Unlock()
+	}
 	if u.IsMultipart && u.Status != db.FINISH {
 		runtime.LogDebugf(a.ctx, "AbortMultiPartUpload: %s %s %s", u.Bucket, u.Key, u.UploadId)
 		err := a.S3Client.AbortMultiPartUpload(u.Bucket, u.Key, u.UploadId)
@@ -106,12 +137,6 @@ func (a *App) RemoveUploadTask(u db.UploadTask) ObjectHandlerResult {
 			runtime.LogErrorf(a.ctx, "AbortMultiPartUpload err: %v", err)
 			return ObjectHandlerResult{Err: err.Error()}
 		}
-	}
-	if cancel, ok := UploadTaskCancelFunc[u.TaskId]; ok {
-		cancel()
-		lock.Lock()
-		delete(UploadTaskCancelFunc, u.TaskId)
-		lock.Unlock()
 	}
 	return ObjectHandlerResult{}
 }
