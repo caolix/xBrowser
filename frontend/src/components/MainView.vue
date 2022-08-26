@@ -11,8 +11,8 @@
 import MainMenu from "./MainMenu.vue"
 import TaskList from "./TaskList.vue";
 import Settings from "./Settings.vue";
-import {ref} from "vue";
-import {LoadAllUploadTasks} from "../../wailsjs/go/app/App";
+import {onMounted, ref} from "vue";
+import {LoadAllDownloadTasks, LoadAllUploadTasks} from "../../wailsjs/go/app/App";
 import {EventsOn, LogDebug} from "../../wailsjs/runtime";
 import {useStore} from "vuex";
 
@@ -32,55 +32,102 @@ export default {
       tabName.value = name
     }
     const store = useStore()
-    LoadAllUploadTasks().then((tasks) => {
-      if (tasks.length !== 0) {
-        tasks.forEach((task, i) => {
-          if (task.status === 0) {
-            task.status = 1
-          }
-          const file = {
-            name: task.name,
-            bucket: task.bucket,
-            key: task.key,
-            source: task.source,
-            uploadedSize: task.uploadedSize,
-            size: task.size,
-            humanSize: task.humanSize,
-            status: task.status,
-            progress: task.taskId,
-            accountId:  task.accountId,
-            isMultipart: task.isMultipart,
-            partSize: task.partSize,
-            taskId: task.taskId,
-            uploadId: task.uploadId
-          }
-          const payload = {
-            file: file,
-            progress: task.taskId
-          }
 
-          LogDebug("Load task:" + file.bucket + "/" + file.key + " status: " + file.status)
-          store.commit('addToUploadList', payload)
+    onMounted(() => {
+      LoadAllUploadTasks().then((tasks) => {
+        if (tasks.length !== 0) {
+          tasks.forEach((task, i) => {
+            if (task.status === 0) {
+              task.status = 1
+            }
+            const file = {
+              name: task.name,
+              bucket: task.bucket,
+              key: task.key,
+              source: task.source,
+              uploadedSize: task.uploadedSize,
+              size: task.size,
+              humanSize: task.humanSize,
+              status: task.status,
+              progress: task.taskId,
+              accountId: task.accountId,
+              isMultipart: task.isMultipart,
+              partSize: task.partSize,
+              taskId: task.taskId,
+              uploadId: task.uploadId
+            }
+            const payload = {
+              file: file,
+              progress: task.taskId
+            }
 
-          const progressPayload = {
-            data: task.uploadedSize,
-            progress: task.taskId
-          }
-          store.commit('updateUploadProgress', progressPayload)
+            LogDebug("Load task:" + file.bucket + "/" + file.key + " status: " + file.status)
+            store.commit('addToUploadList', payload)
 
-          EventsOn(task.taskId, (data) => {
             const progressPayload = {
-              data: data,
+              data: task.uploadedSize,
               progress: task.taskId
             }
             store.commit('updateUploadProgress', progressPayload)
+
+            EventsOn(task.taskId, (data) => {
+              const progressPayload = {
+                data: data,
+                progress: task.taskId
+              }
+              store.commit('updateUploadProgress', progressPayload)
+            })
+          })
+        }
+      })
+
+      LoadAllDownloadTasks().then((tasks) => {
+        if (tasks.length !== 0) {
+          tasks.forEach((task, i) => {
+            if (task.status === 0) {
+              task.status = 1
+            }
+            const file = {
+              name: task.name,
+              bucket: task.bucket,
+              key: task.key,
+              dest: task.dest,
+              size: task.size,
+              humanSize: task.humanSize,
+              status: task.status,
+              progress: task.taskId,
+              accountId: task.accountId,
+              taskId: task.taskId,
+            }
+            const payload = {
+              file: file,
+              progress: task.taskId
+            }
+
+            LogDebug("Load task:" + file.bucket + "/" + file.key + " status: " + file.status)
+            store.commit('addToDownloadList', payload)
+
+            const progressPayload = {
+              data: 0,
+              progress: task.taskId
+            }
+            store.commit('updateDownloadProgress', progressPayload)
+
+            EventsOn(task.taskId, (data) => {
+              const progressPayload = {
+                data: data,
+                progress: task.taskId
+              }
+              store.commit('updateDownloadProgress', progressPayload)
+            })
+
           })
 
-        })
-
-
-      }
+        }
+      })
     })
+
+
     return {
       visible,
       settingsVisible,

@@ -20,7 +20,7 @@ func (s *AppSqlite) Init(dir string) (err error) {
 		return err
 	}
 	s.Address = dbAddress
-	err = s.DB.AutoMigrate(&LoginInfo{}, &UploadTask{}, &Settings{})
+	err = s.DB.AutoMigrate(&LoginInfo{}, &UploadTask{}, &Settings{}, &DownloadTask{}, &CompletedDownloadPart{})
 	if err != nil {
 		s.DB = nil
 		return err
@@ -100,9 +100,22 @@ func (s *AppSqlite) ListAllUploadTasks(accountId string) ([]UploadTask, error) {
 	return querys, nil
 }
 
+func (s *AppSqlite) ListAllDownloadTasks(accountId string) ([]DownloadTask, error) {
+	querys := []DownloadTask{}
+	res := s.DB.Where("account_id = ?", accountId).Find(&querys)
+	if res.Error != nil {
+		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, res.Error
+	}
+	return querys, nil
+}
+
 func (s *AppSqlite) UpsertUploadTask(u *UploadTask) error {
 	query := UploadTask{
 		AccountId: u.AccountId,
+		TaskId:    u.TaskId,
 	}
 	task := UploadTask{}
 	res := s.DB.Where(&query).First(&task)
@@ -132,6 +145,80 @@ func (s *AppSqlite) UpsertUploadTask(u *UploadTask) error {
 
 func (s *AppSqlite) DeleteUploadTask(accountId string, taskId string) {
 	s.DB.Delete(&UploadTask{}, "account_id = ? AND task_id = ?", accountId, taskId)
+}
+
+func (s *AppSqlite) CreateDownloadTask(u *DownloadTask) error {
+	query := DownloadTask{
+		AccountId: u.AccountId,
+		TaskId:    u.TaskId,
+	}
+	task := DownloadTask{}
+	res := s.DB.Where(&query).First(&task)
+	if res.Error != nil {
+		// Insert login info if not exist
+		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+			res = s.DB.Create(u)
+			if res.Error != nil {
+				return res.Error
+			}
+			return nil
+		}
+		return res.Error
+	}
+	task.Status = u.Status
+	res = s.DB.Where("status = ?", u.Status).Save(&task)
+	if res.Error != nil {
+		return res.Error
+	}
+	return nil
+}
+
+func (s *AppSqlite) CreateDownloadPart(taskId string, offset, partSize int64) error {
+	p := CompletedDownloadPart{
+		TaskId:   taskId,
+		Offset:   offset,
+		PartSize: partSize,
+	}
+	res := s.DB.Create(p)
+	if res.Error != nil {
+		return res.Error
+	}
+	return nil
+}
+
+func (s *AppSqlite) GetAllDownloadParts(taskId string) ([]*CompletedDownloadPart, error) {
+	res := []*CompletedDownloadPart{}
+	parts := []CompletedDownloadPart{}
+	query := s.DB.Where("task_id = ?", taskId).Order("offset").Find(&parts)
+	if query.Error != nil {
+		if errors.Is(query.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, query.Error
+	}
+	var partOffsetMarker int64 = 0
+	for _, p := range parts {
+		if p.Offset == partOffsetMarker {
+			partOffsetMarker = p.Offset + p.PartSize
+			res = append(res, &CompletedDownloadPart{
+				TaskId:   taskId,
+				Offset:   p.Offset,
+				PartSize: p.PartSize,
+			})
+		} else {
+			break
+		}
+	}
+	return res, nil
+}
+
+func (s *AppSqlite) DeleteDownloadTask(accountId string, taskId string) {
+	s.DB.Transaction(func(tx *gorm.DB) error {
+		s.DB.Delete(&DownloadTask{}, "account_id = ? AND task_id = ?", accountId, taskId)
+		s.DB.Delete(&CompletedDownloadPart{}, "task_id = ?", taskId)
+		// return nil will commit the whole transaction
+		return nil
+	})
 }
 
 func (s *AppSqlite) UpdateSettings(settings *Settings) error {

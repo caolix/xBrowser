@@ -51,7 +51,6 @@
           <el-popconfirm
               confirm-button-text="Yes"
               cancel-button-text="No"
-              :icon="QuestionFilled"
               icon-color="#FF0000"
               title="Are you sure to delete this bucket?"
               @confirm="toDeleteBucket(tableData[scope.$index].name)"

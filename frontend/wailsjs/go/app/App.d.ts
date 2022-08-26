@@ -14,17 +14,19 @@ export function DeleteObject(arg1:string,arg2:string,arg3:string,arg4:string,arg
 
 export function DeleteObjects(arg1:string,arg2:Array<app.DeleteKey>,arg3:string,arg4:string):Promise<app.ObjectHandlerResult>;
 
+export function DoGetObject(arg1:string,arg2:string,arg3:string,arg4:number,arg5:string,arg6:boolean):Promise<app.ObjectHandlerResult>;
+
 export function DoPutObject(arg1:string,arg2:string,arg3:string,arg4:string):Promise<app.ObjectHandlerResult>;
 
 export function DoUploadFolder(arg1:string,arg2:string,arg3:string):void;
-
-export function GetObject(arg1:string,arg2:string,arg3:boolean,arg4:string,arg5:string):Promise<app.ObjectHandlerResult>;
 
 export function ListAllLoginInfo():Promise<Array<db.LoginInfo>>;
 
 export function ListBuckets():Promise<app.ListBucketResult>;
 
 export function ListObjects(arg1:string,arg2:string,arg3:string,arg4:number):Promise<app.ListObjectResult>;
+
+export function LoadAllDownloadTasks():Promise<Array<db.DownloadTask>>;
 
 export function LoadAllUploadTasks():Promise<Array<db.UploadTask>>;
 
@@ -40,7 +42,11 @@ export function MakeBucket(arg1:string):Promise<string>;
 
 export function PutDir(arg1:string,arg2:string,arg3:string):Promise<app.ObjectHandlerResult>;
 
+export function RemoveDownloadTask(arg1:db.DownloadTask):Promise<app.ObjectHandlerResult>;
+
 export function RemoveUploadTask(arg1:db.UploadTask):Promise<app.ObjectHandlerResult>;
+
+export function ResumeDownloadTask(arg1:db.DownloadTask):Promise<app.ObjectHandlerResult>;
 
 export function ResumeUploadTask(arg1:db.UploadTask):Promise<app.ObjectHandlerResult>;
 

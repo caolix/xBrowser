@@ -17,6 +17,15 @@ func (s3client *S3Client) UploadObject(ctx aws.Context, body io.ReadSeeker, task
 	return s3client.Uploader.UploadWithContext(ctx, params)
 }
 
+func (s3client *S3Client) DownloadObject(ctx aws.Context, w io.WriterAt, task *db.DownloadTask) (int64, error) {
+	params := &GetObjectInput{
+		Bucket:       aws.String(task.Bucket),
+		Key:          aws.String(task.Key),
+		DownloadTask: task,
+	}
+	return s3client.Downloader.DownloadWithContext(ctx, w, params)
+}
+
 func (s3client *S3Client) PutObject(bucketName, key string, body io.ReadSeeker) (err error) {
 	params := &s3.PutObjectInput{
 		Bucket: aws.String(bucketName),

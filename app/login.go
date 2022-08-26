@@ -41,8 +41,8 @@ func (a *App) Login(l db.LoginInfo, needSave bool, isHttps bool) string {
 }
 
 func (a *App) registerWorkers() {
-	UploadTaskCancelFunc = make(map[string]context.CancelFunc)
-	a.uploadCtx, a.cancelFunc = context.WithCancel(context.Background())
+	TaskCancelFunc = make(map[string]context.CancelFunc)
+	a.uploadCtx, a.uploadCancelFunc = context.WithCancel(context.Background())
 	for i := 0; i < db.MaxUploadConcurrency; i++ {
 		var ctx context.Context
 		ctx, _ = context.WithCancel(a.uploadCtx)
@@ -60,10 +60,30 @@ func (a *App) registerWorkers() {
 		runtime.LogDebugf(a.ctx, "registerWorkers id: %d status: %d", worker.num, worker.status)
 		a.uploadWorkers = append(a.uploadWorkers, worker)
 	}
+
+	a.downloadCtx, a.downloadCancelFunc = context.WithCancel(context.Background())
+	for i := 0; i < db.MaxDownloadConcurrency; i++ {
+		var ctx context.Context
+		ctx, _ = context.WithCancel(a.downloadCtx)
+		worker := &downloadWorker{
+			num:    i,
+			ctx:    ctx,
+			taskCh: a.downloadTaskQ,
+			stopCh: make(chan struct{}, 1),
+			status: WorkerStopped,
+		}
+		if i < a.Config.AppSettings.UploadConcurrency {
+			worker.setStatus(WorkerRunning)
+			go worker.start(a)
+		}
+		runtime.LogDebugf(a.ctx, "registerWorkers id: %d status: %d", worker.num, worker.status)
+		a.downloadWorkers = append(a.downloadWorkers, worker)
+	}
 }
 
 func (a *App) Logout() {
-	a.cancelFunc()
+	a.uploadCancelFunc()
+	a.downloadCancelFunc()
 }
 
 func (a *App) CheckDbError() string {

@@ -22,16 +22,16 @@ export function DeleteObjects(arg1, arg2, arg3, arg4) {
   return window['go']['app']['App']['DeleteObjects'](arg1, arg2, arg3, arg4);
 }
 
+export function DoGetObject(arg1, arg2, arg3, arg4, arg5, arg6) {
+  return window['go']['app']['App']['DoGetObject'](arg1, arg2, arg3, arg4, arg5, arg6);
+}
+
 export function DoPutObject(arg1, arg2, arg3, arg4) {
   return window['go']['app']['App']['DoPutObject'](arg1, arg2, arg3, arg4);
 }
 
 export function DoUploadFolder(arg1, arg2, arg3) {
   return window['go']['app']['App']['DoUploadFolder'](arg1, arg2, arg3);
-}
-
-export function GetObject(arg1, arg2, arg3, arg4, arg5) {
-  return window['go']['app']['App']['GetObject'](arg1, arg2, arg3, arg4, arg5);
 }
 
 export function ListAllLoginInfo() {
@@ -44,6 +44,10 @@ export function ListBuckets() {
 
 export function ListObjects(arg1, arg2, arg3, arg4) {
   return window['go']['app']['App']['ListObjects'](arg1, arg2, arg3, arg4);
+}
+
+export function LoadAllDownloadTasks() {
+  return window['go']['app']['App']['LoadAllDownloadTasks']();
 }
 
 export function LoadAllUploadTasks() {
@@ -74,8 +78,16 @@ export function PutDir(arg1, arg2, arg3) {
   return window['go']['app']['App']['PutDir'](arg1, arg2, arg3);
 }
 
+export function RemoveDownloadTask(arg1) {
+  return window['go']['app']['App']['RemoveDownloadTask'](arg1);
+}
+
 export function RemoveUploadTask(arg1) {
   return window['go']['app']['App']['RemoveUploadTask'](arg1);
+}
+
+export function ResumeDownloadTask(arg1) {
+  return window['go']['app']['App']['ResumeDownloadTask'](arg1);
 }
 
 export function ResumeUploadTask(arg1) {

@@ -41,6 +41,26 @@ type UploadTask struct {
 	ModifiedTime  time.Time        `json:"modifiedTime"`
 }
 
+// Unfinished Task
+type DownloadTask struct {
+	AccountId     string                   `json:"accountId"`
+	TaskId        string                   `json:"taskId"`
+	Bucket        string                   `json:"bucket"`
+	Key           string                   `json:"key"`
+	Name          string                   `json:"name"`
+	Destination   string                   `json:"dest"`
+	Size          int64                    `json:"size"`
+	HumanSize     string                   `json:"humanSize"`
+	CompletedPart []*CompletedDownloadPart `json:"completedPart" gorm:"-"`
+	Status        int                      `json:"status"`
+}
+
+type CompletedDownloadPart struct {
+	TaskId   string `json:"taskId"`
+	Offset   int64  `json:"offset"`
+	PartSize int64  `json:"partSize"`
+}
+
 type CompletedPart struct {
 	// Entity tag returned when the part was uploaded.
 	ETag string `json:"etag"`

@@ -76,37 +76,11 @@ type ReadSeeker struct {
 	p *Progress
 }
 
-type Reader struct {
-	io.Reader
-	p *Progress
-}
-
 func NewUploadProgressReader(rs io.ReadSeeker, p *Progress) *ReadSeeker {
 	return &ReadSeeker{
 		ReadSeeker: rs,
 		p:          p,
 	}
-}
-
-func NewDownloadProgressReader(r io.Reader, p *Progress) *Reader {
-	return &Reader{
-		Reader: r,
-		p:      p,
-	}
-}
-
-// Read will read the data and add the number of bytes to the progressbar
-func (r *Reader) Read(p []byte) (n int, err error) {
-	if !r.p.IsCalc {
-		go r.p.calc()
-		r.p.IsCalc = true
-	}
-	n, err = r.Reader.Read(p)
-	r.p.Add(int64(n))
-	if err != nil {
-		r.p.closeCh <- struct{}{}
-	}
-	return
 }
 
 // Read will read the data and add the number of bytes to the progressbar
@@ -127,4 +101,29 @@ func (r *ReadSeeker) Seek(offset int64, whence int) (n int64, err error) {
 	n, err = r.ReadSeeker.Seek(offset, whence)
 	r.p.Set(offset)
 	return n, err
+}
+
+type WriterAt struct {
+	io.WriterAt
+	p *Progress
+}
+
+func NewDownloadProgressWriterAt(w io.WriterAt, p *Progress) *WriterAt {
+	return &WriterAt{
+		WriterAt: w,
+		p:        p,
+	}
+}
+
+func (w *WriterAt) WriteAt(p []byte, offset int64) (n int, err error) {
+	if !w.p.IsCalc {
+		go w.p.calc()
+		w.p.IsCalc = true
+	}
+	n, err = w.WriterAt.WriteAt(p, offset)
+	if err != nil {
+		w.p.closeCh <- struct{}{}
+	}
+	w.p.Add(int64(n))
+	return
 }

@@ -56,7 +56,7 @@
                 <el-button
                     v-if="downloadListData[scope.$index].status===1"
                     type="success"
-                    @click="resumeDownload(uploadListData[scope.$index], scope.$index)"
+                    @click="resumeDownload(downloadListData[scope.$index], scope.$index)"
                 >
                   <el-icon>
                     <CaretRight/>
@@ -65,7 +65,7 @@
                 <el-button
                     type="danger"
                     plain
-                    @click="removeDownload(uploadListData[scope.$index], scope.$index)"
+                    @click="removeDownload(downloadListData[scope.$index], scope.$index)"
                 >
                   <el-icon>
                     <Delete/>
@@ -89,7 +89,7 @@
 <script>
 import {computed} from 'vue'
 import {useStore} from "vuex";
-import {RemoveUploadTask, ResumeUploadTask} from "../../wailsjs/go/app/App";
+import {RemoveUploadTask, ResumeUploadTask, RemoveDownloadTask} from "../../wailsjs/go/app/App";
 import {ElMessage} from "element-plus";
 import {db} from '../../wailsjs/go/models'
 
@@ -206,7 +206,30 @@ export default {
     }
 
     const removeDownload = (task, index) => {
+      if (downloadPercentageMap[task.taskId] !== 100) {
+        var t = new db.DownloadTask()
+        t.key = task.key
+        t.size = task.size
+        t.name = task.name
+        t.accountId = task.accountId
+        t.bucket = task.bucket
+        t.humanSize = task.humanSize
+        t.dest = task.dest
+        t.status = task.status
+        t.taskId = task.taskId
+        RemoveDownloadTask(t).then((res) => {
+          if (res.err !== '') {
+            ElMessage.error(res.err)
+          }
+        })
+      }
 
+      const payload = {
+        index: index,
+        progress: task.taskId
+      }
+      console.log("payload:" + payload.index + payload.progress)
+      store.commit('removeDownloadListParam', payload)
     }
 
     return {

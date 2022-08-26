@@ -32,7 +32,7 @@
           </el-dropdown-menu>
         </template>
       </el-dropdown>
-      <el-button type="primary" @click="dialogCreateDirVisible = true">
+      <el-button type="primary" @click="dialogCreateDirVisible = true" style="margin-left: 10px">
         <el-icon style="padding-right: 6px">
           <FolderAdd/>
         </el-icon>
@@ -40,8 +40,8 @@
       </el-button>
 
       <!--      More-->
-      <el-dropdown class="more-button" trigger="click" @command="handleMoreCommand">
-        <el-button color="#606266" :dark="isDark" plain :disabled="disableMoreButton">
+      <el-dropdown class="more-button" trigger="click" @command="handleMoreCommand" style="margin-left: 10px">
+        <el-button color="#606266" plain :disabled="disableMoreButton">
           More
           <el-icon class="el-icon--right">
             <arrow-down/>
@@ -89,21 +89,6 @@
          >Create</el-button
          >
         <el-button @click="dialogCreateDirVisible = false">Cancel</el-button>
-      </span>
-    </template>
-  </el-dialog>
-
-  <!--GetObject Dialog-->
-  <el-dialog v-model="dialogFormVisible" title="Progress">
-    <el-progress type="dashboard" :percentage="percentage" :color="colors">
-      <template #default="{ percentage }">
-        <span class="percentage-value">{{ percentage }}%</span>
-        <span class="percentage-label">{{ percentageLabel }}</span>
-      </template>
-    </el-progress>
-    <template #footer>
-      <span class="dialog-footer">
-        <el-button @click="dialogFormVisible = false">Cancel</el-button>
       </span>
     </template>
   </el-dialog>
@@ -168,14 +153,13 @@
       <el-table-column prop="humanSize" label="Size"></el-table-column>
       <el-table-column label="Operations" fixed="right" align="right" width="200">
         <template #default="scope">
-          <el-button size="small" @click="getObject(tableData[scope.$index].key)"
+          <el-button size="small" @click="downloadSingleFile(tableData[scope.$index])"
                      v-if="tableData[scope.$index].type==='Object'">
             Download
           </el-button>
           <el-popconfirm
               confirm-button-text="Yes"
               cancel-button-text="No"
-              :icon="QuestionFilled"
               icon-color="#FF0000"
               title="Are you sure to delete this object?"
               @confirm="deleteObject(tableData[scope.$index].key, tableData[scope.$index].type)"
@@ -196,8 +180,11 @@
 
   <!--  Page -->
   <el-button-group>
-    <el-button type="primary" :icon="ArrowLeft" :disabled="markerStack.length === 0" @click="toPreviousPage">Previous
-      Page
+    <el-button type="primary" :disabled="markerStack.length === 0" @click="toPreviousPage">
+      <el-icon class="el-icon--left">
+        <ArrowLeft/>
+      </el-icon>
+      Previous Page
     </el-button>
     <el-button type="primary" :disabled="!isTruncate" @click="toNextPage">
       Next Page
@@ -215,9 +202,9 @@ import {computed, onMounted, reactive, ref, toRefs} from "vue";
 import {
   DeleteObject,
   DeleteObjects,
+  DoGetObject,
   DoPutObject,
   DoUploadFolder,
-  GetObject,
   ListObjects,
   PutDir,
   SelectDownloadPath,
@@ -225,7 +212,7 @@ import {
   SelectUploadFolder
 } from "../../wailsjs/go/app/App";
 import {ElMessage, ElMessageBox, ElTable} from "element-plus";
-import {EventsOn} from "../../wailsjs/runtime";
+import {EventsOff, EventsOn} from "../../wailsjs/runtime";
 import {useStore} from "vuex";
 import {app} from "../../wailsjs/go/models";
 import DeleteKey = app.DeleteKey;
@@ -292,7 +279,7 @@ export default {
       if (command === "RemoveFiles") {
         confirmDeleteObjects()
       } else if (command === "DownloadFiles") {
-        selectDownloadDir()
+        downloadMultipleFiles()
       }
     }
 
@@ -300,7 +287,7 @@ export default {
       type: string
       key: string
       lastModified: string
-      size: string
+      size: number
       humanSize: string
     }
 
@@ -310,7 +297,6 @@ export default {
     const handleSelectionChange = (val: SelectedObject[]) => {
       disableMoreButton.value = val.length === 0;
       multipleSelection.value = val
-      console.log(multipleSelection.value)
     }
 
     const backward = () => {
@@ -337,6 +323,13 @@ export default {
       listObjects(bucketName, marker, prefix.value, 100)
     })
 
+    // tableData
+    // type,
+    // key,
+    // showed,
+    // lastModified,
+    // size,
+    // humanSize
     const listObjects = async (bucketName, marker, prefix, maxKey) => {
       var tableData = []
       var p = prefix
@@ -538,63 +531,100 @@ export default {
       })
     }
 
-    const selectDownloadDir = () => {
+    // params:
+    //  bucket,
+    //  key,
+    //  type,
+    //  path,
+    //  accountId,
+    //  size,
+    //  humanSize,
+    const doGetObject = (v) => {
+      if (v.type === TypeFolder) {
+        // IMPLEMENT ME: Get Folders
+
+      } else {
+        var eventProgress = "d" + prefix.value + v.key + Math.random()
+        const downloadTask = {
+          accountId: v.accountId,
+          bucket: bucketName,
+          key: v.key,
+          size: v.size,
+          humanSize: v.humanSize,
+          status: 0,  // 0-PENDING, 1-PAUSE, 2-ERROR, 3-FINISH
+          taskId: eventProgress
+        }
+        const payload = {
+          file: downloadTask,
+          progress: eventProgress
+        }
+        store.commit('addToDownloadList', payload)
+        // begin to download
+        EventsOn(eventProgress, (data) => {
+          const payload = {
+            data: data,
+            progress: eventProgress
+          }
+          store.commit('updateDownloadProgress', payload)
+        })
+
+        // open TaskList and download label
+        context.emit('changeVisible', true)
+        context.emit('setTaskTabName', "download")
+        DoGetObject(<string>bucketName, prefix.value + v.key, v.path, v.size, eventProgress, false)
+            .then(res => {
+              if (res.err !== '') {
+                ElMessage.error(res.err)
+              } else {
+                const payload = {
+                  data: 100,
+                  progress: eventProgress
+                }
+                store.commit('updateDownloadProgress', payload)
+                EventsOff(eventProgress)
+              }
+            })
+      }
+    }
+
+    const downloadMultipleFiles = () => {
       SelectDownloadPath().then((res) => {
         if (res.err !== '') {
           ElMessage.error(res.err)
         } else {
           multipleSelection.value.forEach((v, i) => {
-            var eventProgress = "d" + prefix.value + v.key + Math.random()
-            const downloadTask = {
+            var params = {
               bucket: bucketName,
               key: v.key,
+              type: v.type,
+              path: res.path,
+              accountId: res.accountId,
               size: v.size,
-              humanSize: v.humanSize,
-              status: 0,  // 0-PENDING, 1-PAUSE, 2-ERROR, 3-FINISH
-              taskId: eventProgress
+              humanSize: v.humanSize
             }
-            const payload = {
-              file: downloadTask,
-              progress: eventProgress
-            }
-            store.commit('addToDownloadList', payload)
-            // begin to download
-            EventsOn(eventProgress, (data) => {
-              const payload = {
-                data: data,
-                progress: eventProgress
-              }
-              store.commit('updateDownloadProgress', payload)
-            })
-
-            // open TaskList and download label
-            context.emit('changeVisible', true)
-            context.emit('setTaskTabName', "download")
+            doGetObject(params)
           })
         }
       })
     }
 
-    const getObject = (key) => {
-      var eventDialog = "downloadDialog"
-      var eventProgress = "d" + prefix.value + key + Math.random()
-      percentageLabel.value = 'Downloading...'
-      EventsOn(eventDialog, () => {
-        dialogFormVisible.value = true
-      })
-      // FIXME: fix range download
-      percentage.value = 0
-      EventsOn(eventProgress, (data) => {
-        percentage.value = data
-      })
-
-      GetObject(<string>bucketName, prefix.value + key, true, eventDialog, eventProgress).then(res => {
+    const downloadSingleFile = (v) => {
+      SelectDownloadPath().then((res) => {
         if (res.err !== '') {
           ElMessage.error(res.err)
-          percentageLabel.value = 'Failed'
         } else {
-          percentage.value = 100
-          percentageLabel.value = 'Finished'
+          multipleSelection.value.forEach((v, i) => {
+            var params = {
+              bucket: bucketName,
+              key: v.key,
+              type: v.type,
+              path: res.path,
+              accountId: res.accountId,
+              size: v.size,
+              humanSize: v.humanSize
+            }
+            doGetObject(params)
+          })
         }
       })
     }
@@ -698,7 +728,6 @@ export default {
       toPreviousPage,
       toNextPage,
       searchBySubPrefix,
-      getObject,
       deleteObject,
       confirmDeleteObjects,
       deleteObjects,
@@ -706,7 +735,8 @@ export default {
       clickKey,
       backward,
       selectUploadObjects,
-      selectDownloadDir,
+      downloadSingleFile,
+      downloadMultipleFiles,
       handleSelectionChange,
       handleUploadCommand,
       handleMoreCommand,

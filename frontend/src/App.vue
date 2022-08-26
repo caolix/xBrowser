@@ -18,6 +18,18 @@
   background-origin: content-box;
 }
 
+#logo-uni {
+  width: 50%;
+  height: 50%;
+  margin: 4% 3% auto auto;
+  padding: 0% 0 0;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  background-origin: content-box;
+}
+
+
 #logo2 {
   display: block;
   width: 40%;

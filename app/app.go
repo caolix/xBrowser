@@ -24,11 +24,15 @@ type App struct {
 	UnfinishedUploadTask   int64
 	UnfinishedDownloadTask int64
 
-	uploadTaskQ   chan *UploadTaskWrapper
-	uploadWorkers []*uploadWorker
-	uploadCtx     context.Context
-	cancelFunc    context.CancelFunc
-	//downloadTaskQ
+	uploadTaskQ      chan *UploadTaskWrapper
+	uploadWorkers    []*uploadWorker
+	uploadCtx        context.Context
+	uploadCancelFunc context.CancelFunc
+
+	downloadTaskQ      chan *DownloadTaskWrapper
+	downloadWorkers    []*downloadWorker
+	downloadCtx        context.Context
+	downloadCancelFunc context.CancelFunc
 
 	// App setup status
 	LoadDbErr error
@@ -54,8 +58,9 @@ func NewApp() *App {
 	}
 
 	return &App{
-		Config:      DefaultConfig,
-		uploadTaskQ: make(chan *UploadTaskWrapper),
+		Config:        DefaultConfig,
+		uploadTaskQ:   make(chan *UploadTaskWrapper),
+		downloadTaskQ: make(chan *DownloadTaskWrapper),
 	}
 }
 

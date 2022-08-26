@@ -1,12 +1,12 @@
 <template>
   <main>
-    <!--    <div>-->
-    <!--      <img id="logo" alt="Wails logo" src="../assets/images/uni2.png"/>-->
-    <!--    </div>-->
-    <div style="display: flex;">
-      <img id="logo" alt="Wails logo" src="../assets/images/bear_good.gif"/>
-      <img id="logo2" alt="Wails logo" src="../assets/images/logo1.jpeg"/>
-    </div>
+        <div>
+          <img id="logo-uni" alt="Wails logo" src="../assets/images/uni2.png"/>
+        </div>
+<!--    <div style="display: flex;">-->
+<!--      <img id="logo" alt="Wails logo" src="../assets/images/bear_good.gif"/>-->
+<!--      <img id="logo2" alt="Wails logo" src="../assets/images/logo1.jpeg"/>-->
+<!--    </div>-->
     <div class="container" :style="{
           boxShadow: `var(--el-box-shadow-light)`,
         }">

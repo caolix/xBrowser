@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
-	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -71,7 +70,7 @@ type ListObjectResult struct {
 func (a *App) ListObjects(bucketName, marker, prefix string, maxKeys int64) ListObjectResult {
 	out, err := a.S3Client.ListObjects(bucketName, marker, prefix, maxKeys, "/")
 	if err != nil {
-		runtime.LogErrorf(a.ctx, "ListObjects %s %s %s %s %d %s err: %s ", bucketName, marker, prefix, maxKeys, "/", err)
+		runtime.LogErrorf(a.ctx, "ListObjects %s %s %s %d %s err: %s ", bucketName, marker, prefix, maxKeys, "/", err)
 		return ListObjectResult{Err: err.Error()}
 	}
 	res := ListObjectResult{}
@@ -129,6 +128,7 @@ func (a *App) SelectUploadFolder() SelectUploadFolderResult {
 func (a *App) DoUploadFolder(prefix, root, eventWalkPath string) {
 	folderName := getFileName(root)
 	filepath.Walk(root, func(path string, info fs.FileInfo, err error) error {
+		path = strings.Replace(path, string(os.PathSeparator), "/", -1)
 		key := prefix + folderName + path[len(root):]
 		var t string
 		if info.IsDir() {
@@ -202,11 +202,11 @@ func (a *App) SelectUploadFiles(prefix string) SelectUploadFilesResult {
 func (a *App) doPut(ctx context.Context, wrapper *UploadTaskWrapper) {
 	_, err := a.S3Client.UploadObject(ctx, wrapper.readSeeker, wrapper.task)
 	if err != nil {
-		wrapper.uploadResCh <- err
+		wrapper.resCh <- err
 		return
 	}
 	atomic.AddInt64(&a.UnfinishedUploadTask, -1)
-	wrapper.uploadResCh <- nil
+	wrapper.resCh <- nil
 }
 
 func (a *App) DoPutObject(bucketName, key, filePath, eventProgress string) ObjectHandlerResult {
@@ -237,14 +237,14 @@ func (a *App) DoPutObject(bucketName, key, filePath, eventProgress string) Objec
 	atomic.AddInt64(&a.UnfinishedUploadTask, 1)
 	p := NewProgress(a.ctx, eventProgress, fInfo.Size())
 	wrapper := &UploadTaskWrapper{
-		task:         task,
-		readSeeker:   NewUploadProgressReader(f, p),
-		requestResCh: make(chan error),
-		uploadResCh:  make(chan error),
+		task:       task,
+		readSeeker: NewUploadProgressReader(f, p),
+		requestCh:  make(chan error),
+		resCh:      make(chan error),
 	}
 
 	a.uploadTaskQ <- wrapper
-	if err = <-wrapper.requestResCh; err != nil {
+	if err = <-wrapper.requestCh; err != nil {
 		return ObjectHandlerResult{Err: err.Error()}
 	}
 	return ObjectHandlerResult{}
@@ -262,8 +262,9 @@ func (a *App) PutDir(bucketName, dirName, prefix string) ObjectHandlerResult {
 }
 
 type SelectDownloadPathResult struct {
-	Path string `json:"path"`
-	Err  string `json:"err"`
+	AccountId string `json:"accountId"`
+	Path      string `json:"path"`
+	Err       string `json:"err"`
 }
 
 func (a *App) SelectDownloadPath() SelectDownloadPathResult {
@@ -273,68 +274,65 @@ func (a *App) SelectDownloadPath() SelectDownloadPathResult {
 		return SelectDownloadPathResult{Err: err.Error()}
 	}
 	return SelectDownloadPathResult{
-		Path: path,
+		AccountId: a.AccountId,
+		Path:      path,
 	}
 }
 
-func (a *App) GetObject(bucketName, key string, override bool, eventDialog string, eventProgress string) ObjectHandlerResult {
-	path, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{})
-	if err != nil {
-		runtime.LogErrorf(a.ctx, "OpenDirectoryDialog err: %s ", err)
-		return ObjectHandlerResult{Err: err.Error()}
-	}
-	out, err := a.S3Client.GetObjectOutPut(bucketName, key)
-	if err != nil {
-		runtime.LogErrorf(a.ctx, "GetObject %s in bucket %s err: %s ", key, bucketName, err)
-		return ObjectHandlerResult{Err: err.Error()}
-	}
-
-	fName := getFileName(key)
-	filePath := path + string(os.PathSeparator) + fName
-	fileExist, err := PathExists(filePath)
-	if err != nil {
-		return ObjectHandlerResult{Err: err.Error()}
-	}
+func (a *App) DoGetObject(bucketName, key, destPath string, size int64, eventProgress string, override bool) ObjectHandlerResult {
+	downloadFileName := getFileName(key) + ".download"
+	downloadFilePath := destPath + string(os.PathSeparator) + downloadFileName
+	filePath := destPath + string(os.PathSeparator) + getFileName(key)
 	// TODO: implement override
-	if fileExist {
-		return ObjectHandlerResult{Err: "File already exists."}
-	}
-	f, err := os.Create(filePath)
+	var f *os.File
+	f, err := os.Create(downloadFilePath)
 	if err != nil {
-		runtime.LogErrorf(a.ctx, "Create file %s err: %s ", filePath, err)
+		runtime.LogErrorf(a.ctx, "Create file %s err: %s ", downloadFilePath, err)
 		return ObjectHandlerResult{Err: err.Error()}
 	}
 
-	p := NewProgress(a.ctx, eventProgress, -1)
-	if out.ContentLength != nil {
-		p.TotalBytes = *out.ContentLength
+	defer f.Close()
+
+	task := &db.DownloadTask{
+		AccountId:   a.AccountId,
+		TaskId:      eventProgress,
+		Bucket:      bucketName,
+		Key:         key,
+		Name:        getFileName(key),
+		Destination: filePath,
+		Size:        size,
+		HumanSize:   util.IBytes(uint64(size)),
+		Status:      db.PENDING,
 	}
 
-	r := NewDownloadProgressReader(out.Body, p)
+	atomic.AddInt64(&a.UnfinishedDownloadTask, 1)
+	p := NewProgress(a.ctx, eventProgress, size)
+	wrapper := &DownloadTaskWrapper{
+		task:      task,
+		w:         NewDownloadProgressWriterAt(f, p),
+		resCh:     make(chan error),
+		requestCh: make(chan error),
+	}
 
-	// open dialog
-	runtime.EventsEmit(a.ctx, eventDialog, true)
-	_, err = io.Copy(f, r)
+	a.downloadTaskQ <- wrapper
+	if err = <-wrapper.requestCh; err != nil {
+		return ObjectHandlerResult{Err: err.Error()}
+	}
+	err = os.Rename(downloadFilePath, filePath)
 	if err != nil {
-		runtime.LogErrorf(a.ctx, "Download file %s err: %s ", filePath, err)
-		delErr := os.Remove(filePath)
-		if delErr != nil {
-			runtime.LogErrorf(a.ctx, "Delete file %s err: %s ", filePath, err)
-		}
 		return ObjectHandlerResult{Err: err.Error()}
 	}
 	return ObjectHandlerResult{}
 }
 
-func PathExists(path string) (bool, error) {
-	_, err := os.Stat(path)
-	if err == nil {
-		return true, nil
+func (a *App) doGet(ctx context.Context, wrapper *DownloadTaskWrapper) {
+	_, err := a.S3Client.DownloadObject(ctx, wrapper.w, wrapper.task)
+	if err != nil {
+		wrapper.resCh <- err
+		return
 	}
-	if os.IsNotExist(err) {
-		return false, nil
-	}
-	return false, err
+	atomic.AddInt64(&a.UnfinishedDownloadTask, -1)
+	wrapper.resCh <- nil
 }
 
 func (a *App) DeleteObject(bucketName, key string, selectedType string,

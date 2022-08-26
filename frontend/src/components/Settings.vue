@@ -1,14 +1,22 @@
 <template>
   <!--Settings Dialog-->
   <el-dialog v-model="props.visible" title="Settings" @close="onClose">
-    <el-form :model="form" label-width="150px">
+    <el-form :model="form" label-width="180px">
       <el-form-item label="Upload Concurrency">
         <el-input-number
             v-model="form.uploadConcurrency"
             :min="1"
             :max="10"
             controls-position="right"
-            @change="handleUploadConcurrencyChange"
+        />
+        <span style="margin-left: 20px" ty>(1 - 10)</span>
+      </el-form-item>
+      <el-form-item label="Download Concurrency">
+        <el-input-number
+            v-model="form.downloadConcurrency"
+            :min="1"
+            :max="10"
+            controls-position="right"
         />
         <span style="margin-left: 20px" ty>(1 - 10)</span>
       </el-form-item>
@@ -44,12 +52,14 @@ export default {
     onMounted(() => {
       LoadSettings().then((res) => {
         form.uploadConcurrency = res.uploadConcurrency
+        form.downloadConcurrency = res.downloadConcurrency
       })
     })
 
     const onSubmit = () => {
       var s = new db.Settings()
       s.uploadConcurrency = form.uploadConcurrency
+      s.downloadConcurrency = form.downloadConcurrency
       UpdateSettings(s).then((res) => {
         if (res.err !== '') {
           ElMessage.error(res.err)

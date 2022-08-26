@@ -8,8 +8,9 @@ import (
 )
 
 type S3Client struct {
-	Client   *s3.S3
-	Uploader *Uploader
+	Client     *s3.S3
+	Uploader   *Uploader
+	Downloader *Downloader
 }
 
 func NewS3(Endpoint, AccessKey, SecretKey string, UseSSL bool) *S3Client {
@@ -25,7 +26,8 @@ func NewS3(Endpoint, AccessKey, SecretKey string, UseSSL bool) *S3Client {
 	)
 	// By default make sure a region is specified
 	return &S3Client{
-		Client:   s3.New(sess),
-		Uploader: NewUploader(sess),
+		Client:     s3.New(sess),
+		Uploader:   NewUploader(sess),
+		Downloader: NewDownloader(sess),
 	}
 }
