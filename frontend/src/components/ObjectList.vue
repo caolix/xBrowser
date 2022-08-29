@@ -620,18 +620,16 @@ export default {
         if (res.err !== '') {
           ElMessage.error(res.err)
         } else {
-          multipleSelection.value.forEach((v, i) => {
-            var params = {
-              bucket: bucketName,
-              key: v.key,
-              type: v.type,
-              path: res.path,
-              accountId: res.accountId,
-              size: v.size,
-              humanSize: v.humanSize
-            }
-            doGetObject(params)
-          })
+          var params = {
+            bucket: bucketName,
+            key: v.key,
+            type: v.type,
+            path: res.path,
+            accountId: res.accountId,
+            size: v.size,
+            humanSize: v.humanSize
+          }
+          doGetObject(params)
         }
       })
     }

@@ -1,5 +1,110 @@
 export namespace app {
 	
+	export class ListBucketResult {
+	    buckets: string[];
+	    err: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ListBucketResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.buckets = source["buckets"];
+	        this.err = source["err"];
+	    }
+	}
+	export class Object {
+	    key: string;
+	    size: number;
+	    humanSize: string;
+	    // Go type: time.Time
+	    lastModified: any;
+	
+	    static createFrom(source: any = {}) {
+	        return new Object(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.key = source["key"];
+	        this.size = source["size"];
+	        this.humanSize = source["humanSize"];
+	        this.lastModified = this.convertValues(source["lastModified"], null);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ListObjectResult {
+	    contents: Object[];
+	    prefixes: string[];
+	    nextMarker: string;
+	    isTruncated: boolean;
+	    err: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ListObjectResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.contents = this.convertValues(source["contents"], Object);
+	        this.prefixes = source["prefixes"];
+	        this.nextMarker = source["nextMarker"];
+	        this.isTruncated = source["isTruncated"];
+	        this.err = source["err"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class SelectDownloadPathResult {
+	    accountId: string;
+	    path: string;
+	    err: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SelectDownloadPathResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.accountId = source["accountId"];
+	        this.path = source["path"];
+	        this.err = source["err"];
+	    }
+	}
 	export class SelectedUploadFile {
 	    key: string;
 	    size: number;
@@ -117,161 +222,11 @@ export namespace app {
 	        this.keyType = source["keyType"];
 	    }
 	}
-	export class ListBucketResult {
-	    buckets: string[];
-	    err: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new ListBucketResult(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.buckets = source["buckets"];
-	        this.err = source["err"];
-	    }
-	}
-	export class Object {
-	    key: string;
-	    size: number;
-	    humanSize: string;
-	    // Go type: time.Time
-	    lastModified: any;
-	
-	    static createFrom(source: any = {}) {
-	        return new Object(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.key = source["key"];
-	        this.size = source["size"];
-	        this.humanSize = source["humanSize"];
-	        this.lastModified = this.convertValues(source["lastModified"], null);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class ListObjectResult {
-	    contents: Object[];
-	    prefixes: string[];
-	    nextMarker: string;
-	    isTruncated: boolean;
-	    err: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new ListObjectResult(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.contents = this.convertValues(source["contents"], Object);
-	        this.prefixes = source["prefixes"];
-	        this.nextMarker = source["nextMarker"];
-	        this.isTruncated = source["isTruncated"];
-	        this.err = source["err"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class SelectDownloadPathResult {
-	    accountId: string;
-	    path: string;
-	    err: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new SelectDownloadPathResult(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.accountId = source["accountId"];
-	        this.path = source["path"];
-	        this.err = source["err"];
-	    }
-	}
 
 }
 
 export namespace db {
 	
-	export class LoginInfo {
-	    accountId: string;
-	    endpoint: string;
-	    ak: string;
-	    sk: string;
-	    remark: string;
-	    prepath: string;
-	    // Go type: time.Time
-	    loginTime: any;
-	    useSSL: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new LoginInfo(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.accountId = source["accountId"];
-	        this.endpoint = source["endpoint"];
-	        this.ak = source["ak"];
-	        this.sk = source["sk"];
-	        this.remark = source["remark"];
-	        this.prepath = source["prepath"];
-	        this.loginTime = this.convertValues(source["loginTime"], null);
-	        this.useSSL = source["useSSL"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
 	export class CompletedDownloadPart {
 	    taskId: string;
 	    offset: number;
@@ -428,6 +383,51 @@ export namespace db {
 	        this.uploadConcurrency = source["uploadConcurrency"];
 	        this.downloadConcurrency = source["downloadConcurrency"];
 	    }
+	}
+	export class LoginInfo {
+	    accountId: string;
+	    endpoint: string;
+	    ak: string;
+	    sk: string;
+	    remark: string;
+	    prepath: string;
+	    // Go type: time.Time
+	    loginTime: any;
+	    useSSL: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new LoginInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.accountId = source["accountId"];
+	        this.endpoint = source["endpoint"];
+	        this.ak = source["ak"];
+	        this.sk = source["sk"];
+	        this.remark = source["remark"];
+	        this.prepath = source["prepath"];
+	        this.loginTime = this.convertValues(source["loginTime"], null);
+	        this.useSSL = source["useSSL"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 
 }

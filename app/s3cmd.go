@@ -293,8 +293,6 @@ func (a *App) DoGetObject(bucketName, key, destPath string, size int64, eventPro
 		return ObjectHandlerResult{Err: err.Error()}
 	}
 
-	defer f.Close()
-
 	task := &db.DownloadTask{
 		AccountId:   a.AccountId,
 		TaskId:      eventProgress,
@@ -317,8 +315,10 @@ func (a *App) DoGetObject(bucketName, key, destPath string, size int64, eventPro
 
 	a.downloadTaskQ <- wrapper
 	if err = <-wrapper.requestCh; err != nil {
+		f.Close()
 		return ObjectHandlerResult{Err: err.Error()}
 	}
+	f.Close()
 	err = os.Rename(downloadFilePath, filePath)
 	if err != nil {
 		return ObjectHandlerResult{Err: err.Error()}
