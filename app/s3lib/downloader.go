@@ -16,7 +16,6 @@ import (
 	"sync"
 	"time"
 	"xBrowser/app/db"
-	"xBrowser/app/logger"
 )
 
 // DefaultDownloadPartSize is the default range of bytes to get at a time when
@@ -285,7 +284,6 @@ func (d *downloader) download() (n int64, err error) {
 	} else {
 		err = db.GlobalAppDB.CreateDownloadTask(d.in.DownloadTask)
 		if err != nil {
-			logger.GlobalLogger.Debug("CreateDownloadTask err: " + err.Error())
 			return 0, fmt.Errorf("CreateDownloadTask err: %s", err.Error())
 		}
 		// Spin off first worker to check additional header information
@@ -335,8 +333,6 @@ func (d *downloader) download() (n int64, err error) {
 
 	if d.err == nil {
 		db.GlobalAppDB.DeleteDownloadTask(d.in.DownloadTask.AccountId, d.in.DownloadTask.TaskId)
-		logger.GlobalLogger.Debug(fmt.Sprintf("DeleteDownloadTask: %s, %s",
-			d.in.DownloadTask.AccountId, d.in.DownloadTask.TaskId))
 	}
 	// Return error
 	return d.written, d.err
@@ -364,7 +360,6 @@ func (d *downloader) downloadPart(ch chan dlchunk) {
 			d.setErr(err)
 		} else {
 			err = db.GlobalAppDB.CreateDownloadPart(d.in.DownloadTask.TaskId, chunk.start, chunk.size)
-			logger.GlobalLogger.Debug(fmt.Sprintf("CreateDownloadPart: %s, %d, %d, err: %v", d.in.DownloadTask.TaskId, chunk.start, chunk.size, err))
 			if err != nil {
 				d.setErr(err)
 			}

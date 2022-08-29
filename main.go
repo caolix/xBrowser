@@ -8,9 +8,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
-	"time"
 	"xBrowser/app"
-	logger2 "xBrowser/app/logger"
 )
 
 //go:embed frontend/dist
@@ -19,16 +17,10 @@ var assets embed.FS
 //go:embed build/bear.png
 var icon []byte
 
-const AppName = "xBrowser"
-
 func main() {
 	// Create an instance of the app structure
 	w, h := getWindowSize()
-	app := app.NewApp()
-
-	// Create global logger
-	logName := AppName + "-" + time.Now().Local().Format("2006-01-02") + ".log"
-	logger2.NewGlobalLogger(logName)
+	myApp := app.NewApp()
 
 	err := wails.Run(&options.App{
 		Title:              "xBrowser",
@@ -39,15 +31,15 @@ func main() {
 		MinWidth:           w / 2,
 		MinHeight:          h / 2,
 		Assets:             assets,
-		Logger:             logger2.GlobalLogger,
 		LogLevelProduction: logger.DEBUG,
-		OnStartup:          app.Startup,
-		OnDomReady:         app.DomReady,
-		OnShutdown:         app.Shutdown,
-		OnBeforeClose:      app.BeforeClose,
+		Logger:             myApp.Logger,
+		OnStartup:          myApp.Startup,
+		OnDomReady:         myApp.DomReady,
+		OnShutdown:         myApp.Shutdown,
+		OnBeforeClose:      myApp.BeforeClose,
 		LogLevel:           logger.DEBUG,
 		Bind: []interface{}{
-			app,
+			myApp,
 		},
 
 		Windows: &windows.Options{},

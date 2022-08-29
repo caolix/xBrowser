@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/wailsapp/wails/v2/pkg/logger"
 	"github.com/wailsapp/wails/v2/pkg/menu"
 	"github.com/wailsapp/wails/v2/pkg/menu/keys"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -12,6 +13,7 @@ import (
 	os_runtime "runtime"
 	"time"
 	"xBrowser/app/db"
+	logger2 "xBrowser/app/logger"
 	"xBrowser/app/s3lib"
 )
 
@@ -20,9 +22,6 @@ type App struct {
 	ctx      context.Context
 	S3Client *s3lib.S3Client
 	Config   *AppConfig
-
-	UnfinishedUploadTask   int64
-	UnfinishedDownloadTask int64
 
 	uploadTaskQ      chan *UploadTaskWrapper
 	uploadWorkers    []*uploadWorker
@@ -34,9 +33,12 @@ type App struct {
 	downloadCtx        context.Context
 	downloadCancelFunc context.CancelFunc
 
+	Logger logger.Logger
+
 	// App setup status
-	LoadDbErr error
-	AccountId string
+	InitLoggerErr error
+	LoadDbErr     error
+	AccountId     string
 }
 
 type AppConfig struct {
@@ -47,21 +49,25 @@ type AppConfig struct {
 
 // NewApp creates a new App application struct
 func NewApp() *App {
-	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	app := &App{
+		uploadTaskQ:   make(chan *UploadTaskWrapper),
+		downloadTaskQ: make(chan *DownloadTaskWrapper),
+	}
+	dbDir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
 		fmt.Println(err)
 		return nil
 	}
-	DefaultConfig := &AppConfig{
+	app.Config = &AppConfig{
 		DbType:  db.TYPE_SQLITE,
-		Address: dir,
+		Address: dbDir,
 	}
 
-	return &App{
-		Config:        DefaultConfig,
-		uploadTaskQ:   make(chan *UploadTaskWrapper),
-		downloadTaskQ: make(chan *DownloadTaskWrapper),
+	app.Logger, app.InitLoggerErr = logger2.NewAppLogger()
+	if app.InitLoggerErr != nil {
+		fmt.Println(app.InitLoggerErr)
 	}
+	return app
 }
 
 func (a *App) SetupMenu() {
@@ -124,18 +130,18 @@ func (a *App) SetupMenu() {
 func (a *App) Startup(ctx context.Context) {
 	// Perform your setup here
 	// 在这里执行初始化设置
+	defer runtime.LogInfo(ctx, "Startup finished.")
 	a.ctx = ctx
 	// TODO: use OS_ENV to choose db config, load it and then set db type
 	runtime.LogInfo(ctx, "Load db type:"+string(a.Config.DbType))
 	switch a.Config.DbType {
 	case db.TYPE_SQLITE:
-		db.GlobalAppDB = &db.AppSqlite{}
+		db.GlobalAppDB = &db.AppSqlite{Logger: a.Logger}
 	default:
 		runtime.LogError(ctx, "not supported:"+string(a.Config.DbType))
 		a.LoadDbErr = errors.New("db type not supported")
 		//db.GlobalAppDB = &db.AppMemory{}
 	}
-	runtime.LogInfo(ctx, "Startup finished.")
 }
 
 // domReady is called after the front-end dom has been loaded
@@ -144,18 +150,22 @@ func (a *App) DomReady(ctx context.Context) {
 	// Add your action here
 	// 在这里添加你的操作
 	defer runtime.LogInfo(ctx, "DomReady finished.")
-	err := db.GlobalAppDB.Init(a.Config.Address)
-	if err != nil {
-		a.LoadDbErr = err
-		return
+	if db.GlobalAppDB != nil {
+		err := db.GlobalAppDB.Init(a.Config.Address)
+		if err != nil {
+			a.LoadDbErr = err
+			return
+		}
+		settings, err := db.GlobalAppDB.LoadSettings(a.AccountId)
+		if err != nil {
+			a.LoadDbErr = err
+			return
+		}
+		a.Config.AppSettings = settings
+		runtime.LogDebugf(ctx, "LoadSettings: %v", *settings)
+	} else {
+		a.LoadDbErr = errors.New("no db supported.")
 	}
-	settings, err := db.GlobalAppDB.LoadSettings(a.AccountId)
-	if err != nil {
-		a.LoadDbErr = err
-		return
-	}
-	a.Config.AppSettings = settings
-	runtime.LogDebugf(ctx, "LoadSettings: %v", *settings)
 }
 
 // shutdown is called at application termination

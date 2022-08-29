@@ -10,7 +10,6 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 	"xBrowser/app/db"
 	"xBrowser/app/util"
@@ -103,8 +102,13 @@ type ObjectHandlerResult struct {
 	Err string `json:"err"`
 }
 
-func getFileName(key string) string {
+func getUploadName(key string) string {
 	sp := strings.Split(key, string(os.PathSeparator))
+	return sp[len(sp)-1]
+}
+
+func getDownloadName(key string) string {
+	sp := strings.Split(key, "/")
 	return sp[len(sp)-1]
 }
 
@@ -126,7 +130,7 @@ func (a *App) SelectUploadFolder() SelectUploadFolderResult {
 }
 
 func (a *App) DoUploadFolder(prefix, root, eventWalkPath string) {
-	folderName := getFileName(root)
+	folderName := getUploadName(root)
 	filepath.Walk(root, func(path string, info fs.FileInfo, err error) error {
 		path = strings.Replace(path, string(os.PathSeparator), "/", -1)
 		key := prefix + folderName + path[len(root):]
@@ -139,7 +143,7 @@ func (a *App) DoUploadFolder(prefix, root, eventWalkPath string) {
 		var sf = SelectedUploadFile{
 			AccountId:  a.AccountId,
 			SourcePath: path,
-			Name:       getFileName(key),
+			Name:       getUploadName(key),
 			Type:       t,
 		}
 		sf.Key = key
@@ -185,13 +189,13 @@ func (a *App) SelectUploadFiles(prefix string) SelectUploadFilesResult {
 			return SelectUploadFilesResult{Err: err.Error()}
 		}
 
-		fName := getFileName(fp)
+		fName := getUploadName(fp)
 		var sf = SelectedUploadFile{
 			AccountId:  a.AccountId,
 			SourcePath: fp,
 			Name:       fName,
 		}
-		sf.Key = prefix + getFileName(fp)
+		sf.Key = prefix + getUploadName(fp)
 		sf.Size = fInfo.Size()
 		sf.HumanSize = util.IBytes(uint64(fInfo.Size()))
 		res.SelectedFile = append(res.SelectedFile, sf)
@@ -205,7 +209,6 @@ func (a *App) doPut(ctx context.Context, wrapper *UploadTaskWrapper) {
 		wrapper.resCh <- err
 		return
 	}
-	atomic.AddInt64(&a.UnfinishedUploadTask, -1)
 	wrapper.resCh <- nil
 }
 
@@ -226,7 +229,7 @@ func (a *App) DoPutObject(bucketName, key, filePath, eventProgress string) Objec
 		TaskId:       eventProgress,
 		Bucket:       bucketName,
 		Key:          key,
-		Name:         getFileName(key),
+		Name:         getUploadName(key),
 		Source:       filePath,
 		Size:         fInfo.Size(),
 		HumanSize:    util.IBytes(uint64(fInfo.Size())),
@@ -234,7 +237,6 @@ func (a *App) DoPutObject(bucketName, key, filePath, eventProgress string) Objec
 		ModifiedTime: time.Now().Local(),
 	}
 
-	atomic.AddInt64(&a.UnfinishedUploadTask, 1)
 	p := NewProgress(a.ctx, eventProgress, fInfo.Size())
 	wrapper := &UploadTaskWrapper{
 		task:       task,
@@ -280,9 +282,9 @@ func (a *App) SelectDownloadPath() SelectDownloadPathResult {
 }
 
 func (a *App) DoGetObject(bucketName, key, destPath string, size int64, eventProgress string, override bool) ObjectHandlerResult {
-	downloadFileName := getFileName(key) + ".download"
+	downloadFileName := getDownloadName(key) + ".download"
 	downloadFilePath := destPath + string(os.PathSeparator) + downloadFileName
-	filePath := destPath + string(os.PathSeparator) + getFileName(key)
+	filePath := destPath + string(os.PathSeparator) + getDownloadName(key)
 	// TODO: implement override
 	var f *os.File
 	f, err := os.Create(downloadFilePath)
@@ -298,14 +300,13 @@ func (a *App) DoGetObject(bucketName, key, destPath string, size int64, eventPro
 		TaskId:      eventProgress,
 		Bucket:      bucketName,
 		Key:         key,
-		Name:        getFileName(key),
+		Name:        getDownloadName(key),
 		Destination: filePath,
 		Size:        size,
 		HumanSize:   util.IBytes(uint64(size)),
 		Status:      db.PENDING,
 	}
 
-	atomic.AddInt64(&a.UnfinishedDownloadTask, 1)
 	p := NewProgress(a.ctx, eventProgress, size)
 	wrapper := &DownloadTaskWrapper{
 		task:      task,
@@ -331,7 +332,6 @@ func (a *App) doGet(ctx context.Context, wrapper *DownloadTaskWrapper) {
 		wrapper.resCh <- err
 		return
 	}
-	atomic.AddInt64(&a.UnfinishedDownloadTask, -1)
 	wrapper.resCh <- nil
 }
 

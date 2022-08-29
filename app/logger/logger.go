@@ -7,9 +7,8 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"time"
 )
-
-var GlobalLogger *FileLogger
 
 type FileLogger struct {
 	out    io.WriteCloser
@@ -18,16 +17,43 @@ type FileLogger struct {
 
 var logFlags = log.Ldate | log.Ltime | log.Lmicroseconds
 
+const AppName = "xBrowser"
+
 // NewDefaultLogger creates a new Logger.
-func NewGlobalLogger(path string) {
-	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+func NewAppLogger() (*FileLogger, error) {
+	// Create global logger
+	logDir, err := getLogDir()
 	if err != nil {
-		panic("Failed to open log file " + path)
+		return nil, err
 	}
-	GlobalLogger = &FileLogger{
+	logName := AppName + "-" + time.Now().Local().Format("2006-01-02") + ".log"
+	f, err := os.Create(logDir + logName)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to open log file %s error: %s", logDir+logName, err)
+	}
+	return &FileLogger{
 		out:    f,
 		logger: log.New(f, "", logFlags),
+	}, nil
+}
+
+func getLogDir() (logDir string, err error) {
+	home, _ := os.UserHomeDir()
+	switch runtime.GOOS {
+	case "darwin":
+		logDir = fmt.Sprintf("%s/Library/Logs/%s/", home, AppName)
+	case "windows":
+		logDir = fmt.Sprintf("%s\\%s\\logs\\", home, AppName)
+	case "linux":
+		logDir = fmt.Sprintf("%s/%s/logs/", home, AppName)
+	default:
+		return "", fmt.Errorf("not supported on this platform: %s", runtime.GOOS)
 	}
+	if err = os.MkdirAll(logDir, 0755); err != nil {
+		return "", fmt.Errorf("Failed to create dir %s. error: %s", logDir, err)
+	}
+	fmt.Println("log dir:", logDir)
+	return logDir, nil
 }
 
 func getCaller(skipCallDepth int) string {

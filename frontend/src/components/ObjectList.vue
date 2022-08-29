@@ -347,6 +347,8 @@ export default {
               k = k.slice(folderPrefix.length, p.length)
               if (k.length > 40) {
                 showed = k.slice(0, 40) + "..."
+              } else {
+                showed = k
               }
               if (k === '') {
                 k = '/'
@@ -365,8 +367,13 @@ export default {
               var k = c.key
               var showed = k
               k = k.slice(folderPrefix.length, c.key.length)
+
+              console.log(k, folderPrefix, c.key)
+
               if (k.length > 40) {
                 showed = k.slice(0, 30) + "..."
+              } else {
+                showed = k
               }
               if (k !== '') {
                 const objectInfo = {

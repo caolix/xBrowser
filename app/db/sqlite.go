@@ -2,6 +2,7 @@ package db
 
 import (
 	"errors"
+	"github.com/wailsapp/wails/v2/pkg/logger"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"os"
@@ -11,6 +12,7 @@ import (
 type AppSqlite struct {
 	Address string
 	DB      *gorm.DB
+	Logger  logger.Logger
 }
 
 func (s *AppSqlite) Init(dir string) (err error) {
