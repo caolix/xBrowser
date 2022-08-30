@@ -141,7 +141,20 @@ func (a *App) Startup(ctx context.Context) {
 		runtime.LogError(ctx, "not supported:"+string(a.Config.DbType))
 		a.LoadDbErr = errors.New("db type not supported")
 		//db.GlobalAppDB = &db.AppMemory{}
+		return
 	}
+	err := db.GlobalAppDB.Init(a.Config.Address)
+	if err != nil {
+		a.LoadDbErr = err
+		return
+	}
+	settings, err := db.GlobalAppDB.LoadSettings(a.AccountId)
+	if err != nil {
+		a.LoadDbErr = err
+		return
+	}
+	a.Config.AppSettings = settings
+	runtime.LogDebugf(ctx, "LoadSettings: %v", *settings)
 }
 
 // domReady is called after the front-end dom has been loaded
@@ -149,23 +162,7 @@ func (a *App) Startup(ctx context.Context) {
 func (a *App) DomReady(ctx context.Context) {
 	// Add your action here
 	// 在这里添加你的操作
-	defer runtime.LogInfo(ctx, "DomReady finished.")
-	if db.GlobalAppDB != nil {
-		err := db.GlobalAppDB.Init(a.Config.Address)
-		if err != nil {
-			a.LoadDbErr = err
-			return
-		}
-		settings, err := db.GlobalAppDB.LoadSettings(a.AccountId)
-		if err != nil {
-			a.LoadDbErr = err
-			return
-		}
-		a.Config.AppSettings = settings
-		runtime.LogDebugf(ctx, "LoadSettings: %v", *settings)
-	} else {
-		a.LoadDbErr = errors.New("no db supported.")
-	}
+	defer runtime.LogInfo(ctx, fmt.Sprintf("DomReady finished."))
 }
 
 // shutdown is called at application termination
