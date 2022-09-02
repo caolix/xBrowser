@@ -15,6 +15,7 @@ import (
 	"xBrowser/app/db"
 	logger2 "xBrowser/app/logger"
 	"xBrowser/app/s3lib"
+	"xBrowser/app/util"
 )
 
 // App struct
@@ -24,6 +25,7 @@ type App struct {
 	Config   *AppConfig
 
 	uploadTaskQ      chan *UploadTaskWrapper
+	uploadTaskWaitQ  map[string]*util.Queue // accountId -> TaskQ
 	uploadWorkers    []*uploadWorker
 	uploadCtx        context.Context
 	uploadCancelFunc context.CancelFunc
@@ -50,8 +52,9 @@ type AppConfig struct {
 // NewApp creates a new App application struct
 func NewApp() *App {
 	app := &App{
-		uploadTaskQ:   make(chan *UploadTaskWrapper),
-		downloadTaskQ: make(chan *DownloadTaskWrapper),
+		uploadTaskQ:     make(chan *UploadTaskWrapper),
+		uploadTaskWaitQ: make(map[string]*util.Queue),
+		downloadTaskQ:   make(chan *DownloadTaskWrapper),
 	}
 	dbDir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {

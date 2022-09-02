@@ -19,6 +19,7 @@ func (a *App) Login(l db.LoginInfo, needSave bool, isHttps bool) string {
 		return err.Error()
 	}
 	runtime.LogInfof(a.ctx, "Login success.")
+	a.AccountId = util.GenAccountId(l.AccessKey, l.Endpoint)
 	if needSave {
 		// Update if the database has the same record, otherwise insert
 		err = db.GlobalAppDB.UpsertLoginInfo(&db.LoginInfo{
@@ -34,10 +35,36 @@ func (a *App) Login(l db.LoginInfo, needSave bool, isHttps bool) string {
 			runtime.LogWarningf(a.ctx, "Insert login info failed. err: %s", err)
 		}
 	}
-	a.AccountId = util.GenAccountId(l.AccessKey, l.Endpoint)
 	a.registerWorkers()
+	a.loadTaskWaitQ()
 	runtime.LogDebugf(a.ctx, "Login account id: %s", a.AccountId)
 	return ""
+}
+
+func (a *App) loadTaskWaitQ() {
+	// TODO: Load from db
+	if _, ok := a.uploadTaskWaitQ[a.AccountId]; !ok {
+		a.uploadTaskWaitQ[a.AccountId] = util.NewQueue()
+		go a.listenTaskWaitQ()
+	}
+}
+
+func (a *App) listenTaskWaitQ() {
+	for {
+		if a.uploadTaskWaitQ[a.AccountId].Size() == 0 {
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
+		// TODO: control queue size
+
+		w := a.uploadTaskWaitQ[a.AccountId].Pop()
+		wrapper := w.(*UploadTaskWrapper)
+		a.uploadTaskQ <- wrapper
+	}
+}
+
+func (a *App) GetAccountId() string {
+	return a.AccountId
 }
 
 func (a *App) registerWorkers() {

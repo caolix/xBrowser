@@ -16,8 +16,8 @@ type LoginInfo struct {
 }
 
 const (
-	PENDING int = iota
-	PAUSE
+	PAUSE int = iota
+	RUNNING
 	ERROR
 	FINISH
 )
