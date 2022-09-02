@@ -114,35 +114,40 @@ func (s *AppSqlite) ListAllDownloadTasks(accountId string) ([]DownloadTask, erro
 	return querys, nil
 }
 
-func (s *AppSqlite) UpsertUploadTask(u *UploadTask) error {
-	query := UploadTask{
-		AccountId: u.AccountId,
-		TaskId:    u.TaskId,
-	}
-	task := UploadTask{}
-	res := s.DB.Where(&query).First(&task)
-	if res.Error != nil {
-		// Insert login info if not exist
-		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-			res = s.DB.Create(u)
-			if res.Error != nil {
-				return res.Error
-			}
-			return nil
-		}
-		return res.Error
-	}
-	// Update login time if login info exist
-	task.ModifiedTime = time.Now().Local()
-	task.Status = u.Status
-	task.UploadedSize = u.UploadedSize
-
-	res = s.DB.Where("status = ? AND uploaded_size = ? AND modified_time = ?",
-		u.Status, u.UploadedSize, u.ModifiedTime).Save(&task)
+func (s *AppSqlite) CreateUploadTask(u *UploadTask) error {
+	res := s.DB.Create(u)
 	if res.Error != nil {
 		return res.Error
 	}
 	return nil
+	//query := UploadTask{
+	//	AccountId: u.AccountId,
+	//	TaskId:    u.TaskId,
+	//}
+	//task := UploadTask{}
+	//res := s.DB.Where(&query).First(&task)
+	//if res.Error != nil {
+	//	// Insert login info if not exist
+	//	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+	//		res = s.DB.Create(u)
+	//		if res.Error != nil {
+	//			return res.Error
+	//		}
+	//		return nil
+	//	}
+	//	return res.Error
+	//}
+	//// Update login time if login info exist
+	//task.ModifiedTime = time.Now().Local()
+	//task.Status = u.Status
+	//task.UploadedSize = u.UploadedSize
+	//
+	//res = s.DB.Where("status = ? AND uploaded_size = ? AND modified_time = ?",
+	//	u.Status, u.UploadedSize, u.ModifiedTime).Save(&task)
+	//if res.Error != nil {
+	//	return res.Error
+	//}
+	//return nil
 }
 
 func (s *AppSqlite) DeleteUploadTask(accountId string, taskId string) {

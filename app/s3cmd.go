@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"io/fs"
 	"os"
@@ -162,45 +163,28 @@ type SelectedUploadFile struct {
 	Name       string `json:"name"`
 }
 
-type SelectUploadFilesResult struct {
-	SelectedFile []SelectedUploadFile `json:"files"`
-	Err          string               `json:"err"`
-}
-
-func (a *App) SelectUploadFiles(prefix string) SelectUploadFilesResult {
+func (a *App) SelectUploadFiles(prefix string, bucketName string) ObjectHandlerResult {
 	filePaths, err := runtime.OpenMultipleFilesDialog(a.ctx, runtime.OpenDialogOptions{})
 	if err != nil {
-		return SelectUploadFilesResult{Err: err.Error()}
+		return ObjectHandlerResult{Err: err.Error()}
 	}
 	if len(filePaths) == 0 {
-		return SelectUploadFilesResult{}
+		return ObjectHandlerResult{}
 	}
 
-	var res SelectUploadFilesResult
-	for _, fp := range filePaths {
-		f, err := os.Open(fp)
-		if err != nil {
-			runtime.LogErrorf(a.ctx, "Open file %s err: %s ", fp, err)
-			return SelectUploadFilesResult{Err: err.Error()}
+	runtime.EventsEmit(a.ctx, EventBackend, Event{
+		Type: TypeShowTasksEvent,
+		Args: []string{"upload"},
+	})
+	go func() {
+		for _, fp := range filePaths {
+			key := prefix + getUploadName(fp)
+			a.DoPutObject(bucketName, key, fp, GenerateEventProgressName("upload", key))
 		}
-		fInfo, err := f.Stat()
-		if err != nil {
-			runtime.LogErrorf(a.ctx, "Stat file %s err: %s ", fp, err)
-			return SelectUploadFilesResult{Err: err.Error()}
-		}
+	}()
 
-		fName := getUploadName(fp)
-		var sf = SelectedUploadFile{
-			AccountId:  a.AccountId,
-			SourcePath: fp,
-			Name:       fName,
-		}
-		sf.Key = prefix + getUploadName(fp)
-		sf.Size = fInfo.Size()
-		sf.HumanSize = util.IBytes(uint64(fInfo.Size()))
-		res.SelectedFile = append(res.SelectedFile, sf)
-	}
-	return res
+	fmt.Println("SelectUploadFiles FINISH")
+	return ObjectHandlerResult{}
 }
 
 func (a *App) doPut(ctx context.Context, wrapper *UploadTaskWrapper) {
@@ -237,17 +221,22 @@ func (a *App) DoPutObject(bucketName, key, filePath, eventProgress string) Objec
 		ModifiedTime: time.Now().Local(),
 	}
 
+	runtime.EventsEmit(a.ctx, EventAddToUploadList, *task)
+
 	p := NewProgress(a.ctx, eventProgress, fInfo.Size())
 	wrapper := &UploadTaskWrapper{
 		task:       task,
 		readSeeker: NewUploadProgressReader(f, p),
-		requestCh:  make(chan error),
 		resCh:      make(chan error),
 	}
 
-	a.uploadTaskQ <- wrapper
-	if err = <-wrapper.requestCh; err != nil {
-		return ObjectHandlerResult{Err: err.Error()}
+	for {
+		if a.uploadTaskWaitQ[a.AccountId].Size() < 3 {
+			a.uploadTaskWaitQ[a.AccountId].Push(wrapper)
+			break
+		} else {
+			time.Sleep(100 * time.Millisecond)
+		}
 	}
 	return ObjectHandlerResult{}
 }

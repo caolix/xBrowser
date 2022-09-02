@@ -30,6 +30,10 @@ export function DoUploadFolder(arg1, arg2, arg3) {
   return window['go']['app']['App']['DoUploadFolder'](arg1, arg2, arg3);
 }
 
+export function GetAccountId() {
+  return window['go']['app']['App']['GetAccountId']();
+}
+
 export function ListAllLoginInfo() {
   return window['go']['app']['App']['ListAllLoginInfo']();
 }
@@ -94,8 +98,8 @@ export function SelectDownloadPath() {
   return window['go']['app']['App']['SelectDownloadPath']();
 }
 
-export function SelectUploadFiles(arg1) {
-  return window['go']['app']['App']['SelectUploadFiles'](arg1);
+export function SelectUploadFiles(arg1, arg2) {
+  return window['go']['app']['App']['SelectUploadFiles'](arg1, arg2);
 }
 
 export function SelectUploadFolder() {

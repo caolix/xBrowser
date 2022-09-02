@@ -67,7 +67,7 @@ package db
 //	return tasks, nil
 //}
 //
-//func (a *AppMemory) UpsertUploadTask(u *UploadTask) error {
+//func (a *AppMemory) CreateUploadTask(u *UploadTask) error {
 //	v, ok := a.uploadTask.Load(u.AccountId)
 //	if !ok {
 //		tasks := make(map[string]*UploadTask)

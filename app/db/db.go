@@ -18,7 +18,7 @@ type AppDB interface {
 	ListAllLoginInfo() ([]LoginInfo, error)
 
 	ListAllUploadTasks(accountId string) ([]UploadTask, error)
-	UpsertUploadTask(u *UploadTask) error
+	CreateUploadTask(u *UploadTask) error
 	DeleteUploadTask(accountId string, taskId string)
 
 	ListAllDownloadTasks(accountId string) ([]DownloadTask, error)

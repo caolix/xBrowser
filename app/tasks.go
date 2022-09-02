@@ -8,6 +8,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"xBrowser/app/db"
+	"xBrowser/app/util"
 )
 
 const (
@@ -21,7 +22,6 @@ type UploadTaskWrapper struct {
 	task       *db.UploadTask
 	readSeeker io.ReadSeeker
 	resCh      chan error
-	requestCh  chan error
 }
 
 type uploadWorker struct {
@@ -34,6 +34,11 @@ type uploadWorker struct {
 
 var TaskCancelFunc map[string]context.CancelFunc
 var lock sync.Mutex
+
+func GenerateEventProgressName(eventType string, key string) string {
+	rand := &util.Random{}
+	return eventType + key + rand.String(32, util.Alphanumeric)
+}
 
 func (u *uploadWorker) start(a *App) {
 	for {
@@ -61,8 +66,13 @@ func (u *uploadWorker) start(a *App) {
 			if uploadErr != nil {
 				runtime.LogErrorf(a.ctx, "upload task %s %s err: %s",
 					wrapper.task.Bucket, wrapper.task.Key, uploadErr.Error())
+			} else {
+				//runtime.EventsEmit(a.ctx, EventBackend, Event{
+				//	Type: TypeListObjectsEvent,
+				//	Args: nil,
+				//})
 			}
-			wrapper.requestCh <- uploadErr
+			runtime.EventsOff(a.ctx, wrapper.task.TaskId)
 		}
 	}
 }
@@ -109,13 +119,9 @@ func (a *App) ResumeUploadTask(u db.UploadTask) ObjectHandlerResult {
 	wrapper := &UploadTaskWrapper{
 		task:       &u,
 		readSeeker: NewUploadProgressReader(f, p),
-		requestCh:  make(chan error),
 		resCh:      make(chan error),
 	}
 	a.uploadTaskQ <- wrapper
-	if err = <-wrapper.requestCh; err != nil {
-		return ObjectHandlerResult{Err: err.Error()}
-	}
 	return ObjectHandlerResult{}
 }
 

@@ -17,6 +17,8 @@ export function DoPutObject(arg1:string,arg2:string,arg3:string,arg4:string):Pro
 
 export function DoUploadFolder(arg1:string,arg2:string,arg3:string):void;
 
+export function GetAccountId():Promise<string>;
+
 export function ListAllLoginInfo():Promise<Array<db.LoginInfo>>;
 
 export function ListBuckets():Promise<app.ListBucketResult>;
@@ -49,7 +51,7 @@ export function ResumeUploadTask(arg1:db.UploadTask):Promise<app.ObjectHandlerRe
 
 export function SelectDownloadPath():Promise<app.SelectDownloadPathResult>;
 
-export function SelectUploadFiles(arg1:string):Promise<app.SelectUploadFilesResult>;
+export function SelectUploadFiles(arg1:string,arg2:string):Promise<app.ObjectHandlerResult>;
 
 export function SelectUploadFolder():Promise<app.SelectUploadFolderResult>;
 

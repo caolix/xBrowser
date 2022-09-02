@@ -267,6 +267,9 @@ export default {
       {color: '#5cb87a', percentage: 101},
     ]
 
+    const eventAddToUploadList = "eventAddToUploadList"
+    const eventBackend = "eventBackend"
+
     const handleUploadCommand = (command: string | number | object) => {
       if (command === "UploadFiles") {
         selectUploadObjects()
@@ -321,7 +324,43 @@ export default {
 
     onMounted(() => {
       listObjects(bucketName, marker, prefix.value, 100)
+      EventsOn(eventBackend, (e) => {
+        switch (e.type) {
+          case "listObjects":
+            listObjects(bucketName, marker, prefix.value, 100)
+            return
+          case "error":
+            ElMessage.error(e.args[0])
+            return
+          case "showTasks":
+            context.emit('changeVisible', true)
+            context.emit('setTaskTabName', e.args[0])
+            return
+        }
+      })
+
+      EventsOn(eventAddToUploadList, (uploadTask) => {
+        addToUploadList(uploadTask)
+      })
     })
+
+    const addToUploadList = (uploadTask) => {
+      const payload = {
+        file: uploadTask,
+        progress: uploadTask.taskId
+      }
+      store.commit('addToUploadList', payload)
+
+      // listen progress
+      EventsOn(uploadTask.taskId, (data) => {
+        const payload = {
+          data: data,
+          progress: uploadTask.taskId
+        }
+        console.log(payload)
+        store.commit('updateUploadProgress', payload)
+      })
+    }
 
     // tableData
     // type,
@@ -367,9 +406,6 @@ export default {
               var k = c.key
               var showed = k
               k = k.slice(folderPrefix.length, c.key.length)
-
-              console.log(k, folderPrefix, c.key)
-
               if (k.length > 40) {
                 showed = k.slice(0, 30) + "..."
               } else {
@@ -488,53 +524,9 @@ export default {
     }
 
     const selectUploadObjects = () => {
-      SelectUploadFiles(prefix.value).then(res => {
-        if (res.err !== '') {
-          ElMessage.error(res.err)
-        } else {
-          res.files.forEach((fp, i) => {
-            var eventProgress = "u" + fp.key + Math.random()
-            const file = {
-              accountId: fp.accountId,
-              bucket: bucketName,
-              name: fp.name,
-              key: fp.key,
-              source: fp.source,
-              size: fp.size,
-              humanSize: fp.humanSize,
-              status: 0,  // 0-PENDING, 1-PAUSE, 2-ERROR, 3-FINISH
-              taskId: eventProgress
-            }
-            const payload = {
-              file: file,
-              progress: eventProgress
-            }
-            store.commit('addToUploadList', payload)
-            // begin to upload
-            EventsOn(eventProgress, (data) => {
-              const payload = {
-                data: data,
-                progress: eventProgress
-              }
-              store.commit('updateUploadProgress', payload)
-            })
+      SelectUploadFiles(prefix.value, <string>bucketName).then(() => {
+        // open TaskList
 
-            // open TaskList
-            context.emit('changeVisible', true)
-            DoPutObject(<string>bucketName, fp.key, fp.source, eventProgress).then(res => {
-              if (res.err !== '') {
-                ElMessage.error(res.err)
-              } else {
-                const payload = {
-                  data: 100,
-                  progress: eventProgress
-                }
-                store.commit('updateUploadProgress', payload)
-                listObjects(bucketName, '', prefix.value, 100)
-              }
-            })
-          })
-        }
       })
     }
 

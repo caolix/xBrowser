@@ -65,6 +65,7 @@ func (p *Progress) calc() {
 				runtime.EventsEmit(p.ctx, p.eventProgress, p.State())
 			}
 		case <-p.closeCh:
+			runtime.EventsEmit(p.ctx, p.eventProgress, p.State())
 			return
 		}
 	}

@@ -509,9 +509,9 @@ func (u *uploader) singlePart(buf io.ReadSeeker) (*UploadOutput, error) {
 	awsutil.Copy(params, u.in)
 	params.Body = buf
 
-	err := db.GlobalAppDB.UpsertUploadTask(u.in.UploadTask)
+	err := db.GlobalAppDB.CreateUploadTask(u.in.UploadTask)
 	if err != nil {
-		return nil, fmt.Errorf("UpsertUploadTask err: %s", err.Error())
+		return nil, fmt.Errorf("CreateUploadTask err: %s", err.Error())
 	}
 	// Need to use request form because URL generated in request is
 	// used in return.
@@ -573,9 +573,9 @@ func (u *multiuploader) upload(firstBuf io.ReadSeeker, firstPart []byte) (*Uploa
 		u.in.UploadTask.IsMultipart = true
 		u.in.UploadTask.PartSize = u.cfg.PartSize
 
-		err = db.GlobalAppDB.UpsertUploadTask(u.in.UploadTask)
+		err = db.GlobalAppDB.CreateUploadTask(u.in.UploadTask)
 		if err != nil {
-			return nil, fmt.Errorf("UpsertUploadTask err: %s", err.Error())
+			return nil, fmt.Errorf("CreateUploadTask err: %s", err.Error())
 		}
 	} else {
 		u.uploadID = u.in.UploadTask.UploadId
