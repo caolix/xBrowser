@@ -357,7 +357,6 @@ export default {
           data: data,
           progress: uploadTask.taskId
         }
-        console.log(payload)
         store.commit('updateUploadProgress', payload)
       })
     }

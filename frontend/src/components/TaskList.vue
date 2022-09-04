@@ -2,41 +2,87 @@
   <el-drawer v-model="props.visible" :show-close="false" size="40%" @close="closeDrawer">
     <template #default>
       <el-tabs v-model="props.tabName" class="demo-tabs" @tab-click="handleClick">
-<!--        upload pane -->
-        <el-tab-pane label="Upload" name="upload">
-          <el-table :data="uploadListData" style="width: 100%">
-            <el-table-column width="250">
-              <template #default="scope">
-                <span>{{ scope.row.key }}</span>
-                <el-progress :percentage="uploadPercentageMap[scope.row.taskId]" :color="colors"/>
-              </template>
-            </el-table-column>
+        <!--        upload pane -->
+        <!--        <el-tab-pane label="Upload" name="upload">-->
+        <!--          <el-table :data="uploadListData" style="width: 100%">-->
+        <!--            <el-table-column width="250">-->
+        <!--              <template #default="scope">-->
+        <!--                <span>{{ scope.row.key }}</span>-->
+        <!--                <el-progress :percentage="uploadPercentageMap[scope.row.taskId]" :color="colors"/>-->
+        <!--              </template>-->
+        <!--            </el-table-column>-->
 
-            <el-table-column prop="humanSize" width="100"/>
+        <!--            <el-table-column prop="humanSize" width="100"/>-->
 
-            <el-table-column fixed="right" align="right">
-              <template #default="scope">
-                <el-button
-                    v-if="uploadListData[scope.$index].status===1"
-                    type="success"
-                    @click="resumeUpload(uploadListData[scope.$index], scope.$index)"
-                >
-                  <el-icon>
-                    <CaretRight/>
-                  </el-icon>
-                </el-button>
-                <el-button
-                    type="danger"
-                    plain
-                    @click="removeUpload(uploadListData[scope.$index], scope.$index)"
-                >
-                  <el-icon>
-                    <Delete/>
-                  </el-icon>
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+        <!--            <el-table-column fixed="right" align="right">-->
+        <!--              <template #default="scope">-->
+        <!--                <el-button-->
+        <!--                    v-if="uploadListData[scope.$index].status===1"-->
+        <!--                    type="success"-->
+        <!--                    @click="resumeUpload(uploadListData[scope.$index], scope.$index)"-->
+        <!--                >-->
+        <!--                  <el-icon>-->
+        <!--                    <CaretRight/>-->
+        <!--                  </el-icon>-->
+        <!--                </el-button>-->
+        <!--                <el-button-->
+        <!--                    type="danger"-->
+        <!--                    plain-->
+        <!--                    @click="removeUpload(uploadListData[scope.$index], scope.$index)"-->
+        <!--                >-->
+        <!--                  <el-icon>-->
+        <!--                    <Delete/>-->
+        <!--                  </el-icon>-->
+        <!--                </el-button>-->
+        <!--              </template>-->
+        <!--            </el-table-column>-->
+        <!--          </el-table>-->
+        <!--        </el-tab-pane>-->
+
+        <el-tab-pane name="upload">
+          <template #label>
+            <span>Upload</span>
+            <el-badge :value="uploadListCount" :max="1000" class="item">
+            </el-badge>
+
+          </template>
+          <div class="infinite-list-wrapper" style="overflow: auto">
+            <ul
+                v-infinite-scroll="load"
+                class="list"
+                :infinite-scroll-disabled="disabled"
+            >
+              <li v-for="(task, i) in uploadListData" :key="i" class="list-item">
+                <el-row>
+                  <el-col :span="12" class="hidden-name">{{ task.name }}
+                    <el-progress :percentage="uploadPercentageMap[task.taskId]" :color="colors"/>
+                  </el-col>
+                  <el-col :span="4" class="hidden-name">{{ task.humanSize }}</el-col>
+                  <el-col :span="8" style="text-align: right">
+                    <el-button
+                        v-if="i.status===1"
+                        type="success"
+                        @click="resumeUpload(task, i)"
+                    >
+                      <el-icon>
+                        <CaretRight/>
+                      </el-icon>
+                    </el-button>
+                    <el-button
+                        type="danger"
+                        plain
+                        @click="removeUpload(task, i)"
+                    >
+                      <el-icon>
+                        <Delete/>
+                      </el-icon>
+                    </el-button>
+                  </el-col>
+                </el-row>
+              </li>
+            </ul>
+            <p v-if="loading" style="color: black">Loading...</p>
+          </div>
         </el-tab-pane>
 
         <!--        download pane -->
@@ -86,10 +132,10 @@
   </el-drawer>
 </template>
 
-<script>
-import {computed} from 'vue'
+<script lang="ts">
+import {computed, ref} from 'vue'
 import {useStore} from "vuex";
-import {RemoveUploadTask, ResumeUploadTask, RemoveDownloadTask} from "../../wailsjs/go/app/App";
+import {RemoveDownloadTask, RemoveUploadTask, ResumeUploadTask} from "../../wailsjs/go/app/App";
 import {ElMessage} from "element-plus";
 import {db} from '../../wailsjs/go/models'
 
@@ -105,6 +151,7 @@ export default {
       default: "upload",
     }
   },
+
   setup(props, context) {
     const store = useStore()
     const cancelClick = () => {
@@ -114,8 +161,43 @@ export default {
       context.emit('cancelVisible', false)
     }
 
+    const InitListItemCount = 20
+    var hasLoadedOnce = false
+    var count = 20
+
+    const uploadSuccessCount = computed(() => {
+      return store.state.uploadSuccessCount
+    })
+
+    const uploadListCount = computed(() => {
+      return uploadSuccessCount.value + "/" + store.state.uploadList.length
+    })
+
+    const listItemCount = computed(() => {
+      if (!hasLoadedOnce) {
+        if (InitListItemCount >= store.state.uploadList.length) {
+          return store.state.uploadList.length
+        }
+        return InitListItemCount
+      }
+      return count
+    })
+    const loading = ref(false)
+    const noMore = computed(() => count >= store.state.uploadList.length)
+    const disabled = computed(() => loading.value || noMore.value)
+    const load = () => {
+      if (!hasLoadedOnce) {
+        hasLoadedOnce = true
+      }
+      loading.value = true
+      setTimeout(() => {
+        count += 20
+        loading.value = false
+      }, 1000)
+    }
+
     const uploadListData = computed(() => {
-      return store.state.uploadList
+      return store.state.uploadList.slice(0, listItemCount.value)
     })
 
     const downloadListData = computed(() => {
@@ -165,7 +247,6 @@ export default {
             status: 3, // finish
           }
           store.commit('updateUploadStatus', statusPayload)
-          listObjects(bucketName, '', prefix.value, 100)
         }
       })
     }
@@ -228,7 +309,6 @@ export default {
         index: index,
         progress: task.taskId
       }
-      console.log("payload:" + payload.index + payload.progress)
       store.commit('removeDownloadListParam', payload)
     }
 
@@ -244,6 +324,13 @@ export default {
       cancelClick,
       resumeUpload,
       resumeDownload,
+      uploadSuccessCount,
+      uploadListCount,
+      count,
+      loading,
+      noMore,
+      disabled,
+      load,
       closeDrawer
     }
   }
@@ -260,5 +347,38 @@ export default {
 .el-drawer {
   --el-transition-duration: 0;
   transition: null;
+}
+
+.item {
+  margin-left: 3px;
+}
+
+.hidden-name {
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.infinite-list-wrapper {
+  height: 800px;
+  width: 100%;
+}
+
+.infinite-list-wrapper .list {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.infinite-list-wrapper .list-item {
+  display: block;
+  height: 40px;
+  color: black;
+  border-bottom: 1px solid #ddd
+}
+
+.infinite-list-wrapper .list-item + .list-item {
+  margin-top: 0px;
 }
 </style>

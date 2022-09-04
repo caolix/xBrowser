@@ -7,6 +7,18 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import {createStore} from 'vuex'
 
 const app = createApp(App)
+// app.directive('loadmore', {
+//     mounted(el, binding) {
+//         let tbody = el.querySelector(".el-table__body-wrapper");
+//         el.tableInfiniteScrollFn = function () {
+//             if (this.scrollHeight - this.scrollTop - parseInt(this.style.height)  === 0) {
+//                 binding.value();
+//             }
+//         };
+//         tbody.addEventListener("scroll", el.tableInfiniteScrollFn);
+//         tbody = undefined;
+//     },
+// })
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
     app.component(key, component)
 }
@@ -30,6 +42,7 @@ const store = createStore({
         // uploadId: task.uploadId
         //  }
         uploadList: [],
+        uploadSuccessCount: 0,
         uploadProgress: {}, // eventProgressId -> value
 
         downloadList: [],
@@ -44,6 +57,9 @@ const store = createStore({
             state.uploadList[payload.index].status = payload.status
         },
         updateUploadProgress(state, payload) {
+            if (payload.data === 100) {
+                state.uploadSuccessCount ++
+            }
             state.uploadProgress[payload.progress] = payload.data
         },
         removeUploadListParam(state, payload) {
