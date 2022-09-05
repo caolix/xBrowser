@@ -2,10 +2,22 @@
   <el-drawer v-model="props.visible" :show-close="false" size="40%" @close="closeDrawer">
     <template #default>
       <el-tabs v-model="props.tabName" class="demo-tabs" @tab-click="handleClick">
+        <div style="text-align: right;margin-bottom: 8px">
+          <el-button
+              plain
+              type="info"
+              @click="clearUploadFinished"
+          >
+            <el-icon color="#67C23A" style="margin-right: 3px">
+              <Finished/>
+            </el-icon>
+            Clear Finished
+          </el-button>
+        </div>
         <el-tab-pane name="upload">
           <template #label>
             <span>Upload</span>
-            <el-badge :value="uploadListCount" :max="1000" class="item">
+            <el-badge :value="uploadListCount" class="item">
             </el-badge>
 
           </template>
@@ -24,20 +36,23 @@
                   <el-col :span="8" style="text-align: right">
                     <el-button
                         v-if="i.status===1"
+                        plain
                         type="success"
                         @click="resumeUpload(task, i)"
+                        style="width: 36px;"
                     >
-                      <el-icon>
+                      <el-icon color="#67C23A">
                         <CaretRight/>
                       </el-icon>
                     </el-button>
                     <el-button
-                        type="danger"
+                        type="info"
                         plain
                         @click="removeUpload(task, i)"
+                        style="width: 36px;"
                     >
-                      <el-icon>
-                        <Delete/>
+                      <el-icon color="#F56C6C">
+                        <CloseBold/>
                       </el-icon>
                     </el-button>
                   </el-col>
@@ -187,6 +202,10 @@ export default {
       return store.state.downloadProgress
     })
 
+    const clearUploadFinished = () => {
+      store.commit('clearUploadFinished')
+    }
+
     const resumeUpload = (task, index) => {
       var t = new db.UploadTask()
       t.uploadedSize = task.uploadedSize
@@ -316,6 +335,7 @@ export default {
       cancelClick,
       resumeUpload,
       resumeDownload,
+      clearUploadFinished,
       uploadSuccessCount,
       uploadListCount,
       uploadTotalSize,

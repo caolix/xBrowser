@@ -64,6 +64,31 @@ const store = createStore({
             }
             state.uploadProgress[payload.progress] = payload.data
         },
+        clearUploadFinished(state) {
+            var start = 0
+            var delCount = 0
+            var uploadTotalSize = 0
+            for (let i = 0; i < state.uploadList.length; i++) {
+                if (state.uploadProgress[state.uploadList[i].taskId] === 100) {
+                    delCount ++
+                    uploadTotalSize += state.uploadList[i].size
+                } else if (delCount === 0){
+                    start ++
+                } else {
+                    state.uploadTotalSize -= uploadTotalSize
+                    state.uploadSuccessCount -= delCount
+                    state.uploadList.splice(start, delCount)
+                    i = start
+                    uploadTotalSize = 0
+                    delCount = 0
+                }
+            }
+            if (delCount > 0) {
+                state.uploadTotalSize -= uploadTotalSize
+                state.uploadSuccessCount -= delCount
+                state.uploadList.splice(start, delCount)
+            }
+        },
         removeUploadListParam(state, payload) {
             state.uploadTotalSize -= state.uploadList[payload.index].size
             state.uploadList.splice(payload.index, 1)
