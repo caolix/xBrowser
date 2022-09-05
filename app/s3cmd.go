@@ -221,8 +221,6 @@ func (a *App) DoPutObject(bucketName, key, filePath, eventProgress string) Objec
 		ModifiedTime: time.Now().Local(),
 	}
 
-	runtime.EventsEmit(a.ctx, EventAddToUploadList, *task)
-
 	p := NewProgress(a.ctx, eventProgress, fInfo.Size())
 	wrapper := &UploadTaskWrapper{
 		task:       task,
@@ -230,14 +228,7 @@ func (a *App) DoPutObject(bucketName, key, filePath, eventProgress string) Objec
 		resCh:      make(chan error),
 	}
 
-	for {
-		if a.uploadTaskWaitQ[a.AccountId].Size() < 3 {
-			a.uploadTaskWaitQ[a.AccountId].Push(wrapper)
-			break
-		} else {
-			time.Sleep(100 * time.Millisecond)
-		}
-	}
+	a.uploadTaskWaitQ[a.AccountId].Push(wrapper)
 	return ObjectHandlerResult{}
 }
 

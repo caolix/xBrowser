@@ -21,12 +21,20 @@ const AppName = "xBrowser"
 
 // NewDefaultLogger creates a new Logger.
 func NewAppLogger() (*FileLogger, error) {
-	// Create global logger
+	logName := AppName + "-" + time.Now().Local().Format("2006-01-02") + ".log"
+	return NewLogger(logName)
+}
+
+func NewAppErrLogger() (*FileLogger, error) {
+	logName := AppName + "-" + time.Now().Local().Format("2006-01-02") + "_error.log"
+	return NewLogger(logName)
+}
+
+func NewLogger(logName string) (*FileLogger, error) {
 	logDir, err := getLogDir()
 	if err != nil {
 		return nil, err
 	}
-	logName := AppName + "-" + time.Now().Local().Format("2006-01-02") + ".log"
 	f, err := os.Create(logDir + logName)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to open log file %s error: %s", logDir+logName, err)

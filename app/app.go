@@ -24,18 +24,20 @@ type App struct {
 	S3Client *s3lib.S3Client
 	Config   *AppConfig
 
-	uploadTaskQ      chan *UploadTaskWrapper
-	uploadTaskWaitQ  map[string]*util.Queue // accountId -> TaskQ
-	uploadWorkers    []*uploadWorker
-	uploadCtx        context.Context
-	uploadCancelFunc context.CancelFunc
+	uploadTaskCh       chan *UploadTaskWrapper
+	uploadTaskWaitQ    map[string]*util.Queue // accountId -> TaskQ
+	uploadTaskRunningQ map[string]*util.Queue // accountId -> TaskQ
+	uploadWorkers      []*uploadWorker
+	uploadCtx          context.Context
+	uploadCancelFunc   context.CancelFunc
 
 	downloadTaskQ      chan *DownloadTaskWrapper
 	downloadWorkers    []*downloadWorker
 	downloadCtx        context.Context
 	downloadCancelFunc context.CancelFunc
 
-	Logger logger.Logger
+	Logger    logger.Logger
+	ErrLogger logger.Logger
 
 	// App setup status
 	InitLoggerErr error
@@ -52,9 +54,11 @@ type AppConfig struct {
 // NewApp creates a new App application struct
 func NewApp() *App {
 	app := &App{
-		uploadTaskQ:     make(chan *UploadTaskWrapper),
-		uploadTaskWaitQ: make(map[string]*util.Queue),
-		downloadTaskQ:   make(chan *DownloadTaskWrapper),
+		uploadTaskCh:       make(chan *UploadTaskWrapper),
+		uploadTaskWaitQ:    make(map[string]*util.Queue),
+		uploadTaskRunningQ: make(map[string]*util.Queue),
+
+		downloadTaskQ: make(chan *DownloadTaskWrapper),
 	}
 	dbDir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
@@ -67,6 +71,10 @@ func NewApp() *App {
 	}
 
 	app.Logger, app.InitLoggerErr = logger2.NewAppLogger()
+	if app.InitLoggerErr != nil {
+		fmt.Println(app.InitLoggerErr)
+	}
+	app.ErrLogger, app.InitLoggerErr = logger2.NewAppErrLogger()
 	if app.InitLoggerErr != nil {
 		fmt.Println(app.InitLoggerErr)
 	}

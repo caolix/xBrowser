@@ -38,7 +38,7 @@ func (p *Progress) Set(num int64) {
 	p.CurrentBytes = num
 }
 
-func (p *Progress) State() int64 {
+func (p *Progress) Ratio() int64 {
 	if p.TotalBytes == 0 {
 		return 0
 	}
@@ -54,18 +54,18 @@ func (p *Progress) Current() int64 {
 }
 
 func (p *Progress) calc() {
-	t := time.NewTicker(100 * time.Millisecond)
+	t := time.NewTicker(500 * time.Millisecond)
 	for {
 		select {
 		case <-t.C:
-			p.SpeedBytes = (p.CurrentBytes - p.LastCheckedBytes) / 10 // Bytes per 1s
+			p.SpeedBytes = (p.CurrentBytes - p.LastCheckedBytes) / 2 // Bytes per 1s
 			p.LastCheckedBytes = p.CurrentBytes
 
-			if p.State() < 100 && p.eventProgress != "" {
-				runtime.EventsEmit(p.ctx, p.eventProgress, p.State())
+			if p.Ratio() < 100 && p.eventProgress != "" {
+				runtime.EventsEmit(p.ctx, p.eventProgress, p.Ratio())
 			}
 		case <-p.closeCh:
-			runtime.EventsEmit(p.ctx, p.eventProgress, p.State())
+			runtime.EventsEmit(p.ctx, p.eventProgress, p.Ratio())
 			return
 		}
 	}

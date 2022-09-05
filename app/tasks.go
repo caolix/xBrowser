@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"io"
 	"os"
@@ -66,11 +67,13 @@ func (u *uploadWorker) start(a *App) {
 			if uploadErr != nil {
 				runtime.LogErrorf(a.ctx, "upload task %s %s err: %s",
 					wrapper.task.Bucket, wrapper.task.Key, uploadErr.Error())
+				a.ErrLogger.Error(fmt.Sprintf("upload task %s %s err: %s",
+					wrapper.task.Bucket, wrapper.task.Key, uploadErr.Error()))
 			} else {
-				//runtime.EventsEmit(a.ctx, EventBackend, Event{
-				//	Type: TypeListObjectsEvent,
-				//	Args: nil,
-				//})
+				runtime.EventsEmit(a.ctx, EventBackend, Event{
+					Type: TypeListObjectsEvent,
+					Args: nil,
+				})
 			}
 			runtime.EventsOff(a.ctx, wrapper.task.TaskId)
 		}
@@ -121,7 +124,7 @@ func (a *App) ResumeUploadTask(u db.UploadTask) ObjectHandlerResult {
 		readSeeker: NewUploadProgressReader(f, p),
 		resCh:      make(chan error),
 	}
-	a.uploadTaskQ <- wrapper
+	a.uploadTaskCh <- wrapper
 	return ObjectHandlerResult{}
 }
 

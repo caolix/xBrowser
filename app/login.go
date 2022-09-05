@@ -36,9 +36,14 @@ func (a *App) Login(l db.LoginInfo, needSave bool, isHttps bool) string {
 		}
 	}
 	a.registerWorkers()
-	a.loadTaskWaitQ()
+	a.loadTaskQueues()
 	runtime.LogDebugf(a.ctx, "Login account id: %s", a.AccountId)
 	return ""
+}
+
+func (a *App) loadTaskQueues() {
+	a.loadTaskRunnningQ()
+	a.loadTaskWaitQ()
 }
 
 func (a *App) loadTaskWaitQ() {
@@ -55,11 +60,35 @@ func (a *App) listenTaskWaitQ() {
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
-		// TODO: control queue size
-
+		// control running queue size
+		if a.uploadTaskRunningQ[a.AccountId].Size() > 10 {
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
 		w := a.uploadTaskWaitQ[a.AccountId].Pop()
+		task := w.(*UploadTaskWrapper).task
+		runtime.EventsEmit(a.ctx, EventAddToUploadList, *task)
+		a.uploadTaskRunningQ[a.AccountId].Push(w)
+	}
+}
+
+func (a *App) loadTaskRunnningQ() {
+	if _, ok := a.uploadTaskRunningQ[a.AccountId]; !ok {
+		a.uploadTaskRunningQ[a.AccountId] = util.NewQueue()
+		go a.listenTaskRunningQ()
+	}
+}
+
+func (a *App) listenTaskRunningQ() {
+	for {
+		if a.uploadTaskRunningQ[a.AccountId].Size() == 0 {
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
+
+		w := a.uploadTaskRunningQ[a.AccountId].Pop()
 		wrapper := w.(*UploadTaskWrapper)
-		a.uploadTaskQ <- wrapper
+		a.uploadTaskCh <- wrapper
 	}
 }
 
@@ -76,7 +105,7 @@ func (a *App) registerWorkers() {
 		worker := &uploadWorker{
 			num:    i,
 			ctx:    ctx,
-			taskCh: a.uploadTaskQ,
+			taskCh: a.uploadTaskCh,
 			stopCh: make(chan struct{}, 1),
 			status: WorkerStopped,
 		}

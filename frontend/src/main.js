@@ -43,6 +43,7 @@ const store = createStore({
         //  }
         uploadList: [],
         uploadSuccessCount: 0,
+        uploadTotalSize: 0,
         uploadProgress: {}, // eventProgressId -> value
 
         downloadList: [],
@@ -52,6 +53,7 @@ const store = createStore({
         addToUploadList(state, payload) {
             state.uploadList.push(payload.file)
             state.uploadProgress[payload.progress] = 0
+            state.uploadTotalSize += payload.file.size
         },
         updateUploadStatus(state, payload) {
             state.uploadList[payload.index].status = payload.status
@@ -63,7 +65,11 @@ const store = createStore({
             state.uploadProgress[payload.progress] = payload.data
         },
         removeUploadListParam(state, payload) {
+            state.uploadTotalSize -= state.uploadList[payload.index].size
             state.uploadList.splice(payload.index, 1)
+            if (state.uploadProgress[payload.progress] === 100) {
+                state.uploadSuccessCount --
+            }
             delete state.uploadProgress[payload.progress]
         },
 

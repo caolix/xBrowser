@@ -2,43 +2,6 @@
   <el-drawer v-model="props.visible" :show-close="false" size="40%" @close="closeDrawer">
     <template #default>
       <el-tabs v-model="props.tabName" class="demo-tabs" @tab-click="handleClick">
-        <!--        upload pane -->
-        <!--        <el-tab-pane label="Upload" name="upload">-->
-        <!--          <el-table :data="uploadListData" style="width: 100%">-->
-        <!--            <el-table-column width="250">-->
-        <!--              <template #default="scope">-->
-        <!--                <span>{{ scope.row.key }}</span>-->
-        <!--                <el-progress :percentage="uploadPercentageMap[scope.row.taskId]" :color="colors"/>-->
-        <!--              </template>-->
-        <!--            </el-table-column>-->
-
-        <!--            <el-table-column prop="humanSize" width="100"/>-->
-
-        <!--            <el-table-column fixed="right" align="right">-->
-        <!--              <template #default="scope">-->
-        <!--                <el-button-->
-        <!--                    v-if="uploadListData[scope.$index].status===1"-->
-        <!--                    type="success"-->
-        <!--                    @click="resumeUpload(uploadListData[scope.$index], scope.$index)"-->
-        <!--                >-->
-        <!--                  <el-icon>-->
-        <!--                    <CaretRight/>-->
-        <!--                  </el-icon>-->
-        <!--                </el-button>-->
-        <!--                <el-button-->
-        <!--                    type="danger"-->
-        <!--                    plain-->
-        <!--                    @click="removeUpload(uploadListData[scope.$index], scope.$index)"-->
-        <!--                >-->
-        <!--                  <el-icon>-->
-        <!--                    <Delete/>-->
-        <!--                  </el-icon>-->
-        <!--                </el-button>-->
-        <!--              </template>-->
-        <!--            </el-table-column>-->
-        <!--          </el-table>-->
-        <!--        </el-tab-pane>-->
-
         <el-tab-pane name="upload">
           <template #label>
             <span>Upload</span>
@@ -82,6 +45,9 @@
               </li>
             </ul>
             <p v-if="loading" style="color: black">Loading...</p>
+          </div>
+          <div>
+            <span style="text-align: left; color: black">Data: {{ uploadTotalSize }}</span>
           </div>
         </el-tab-pane>
 
@@ -171,6 +137,10 @@ export default {
 
     const uploadListCount = computed(() => {
       return uploadSuccessCount.value + "/" + store.state.uploadList.length
+    })
+
+    const uploadTotalSize = computed(() => {
+      return humanReadableFilesize(store.state.uploadTotalSize)
     })
 
     const listItemCount = computed(() => {
@@ -282,7 +252,6 @@ export default {
         index: index,
         progress: task.taskId
       }
-      console.log("payload:" + payload.index + payload.progress)
       store.commit('removeUploadListParam', payload)
     }
 
@@ -312,6 +281,29 @@ export default {
       store.commit('removeDownloadListParam', payload)
     }
 
+    function humanReadableFilesize(size) {
+      var units = new Array("B", "KB", "MB", "GB", "TB", "PB");
+      var mod = 1024.0;
+      var i = 0;
+      while (size >= mod) {
+        size /= mod;
+        i++;
+      }
+      //return Math.round(size) + units[i];
+      return formatNum(size, 1) + units[i];
+    }
+
+    //格式化数字类型,保留小数点后几位,非四舍五入
+    //size:值
+    //n:保留位数
+    function formatNum(size, n) {
+      var sizeStr = size.toString();
+      if (sizeStr.lastIndexOf('.') > -1)
+        return sizeStr.substring(0, sizeStr.toString().indexOf('.') + 1 + n);
+      else
+        return sizeStr;
+    }
+
     return {
       props,
       colors,
@@ -326,6 +318,7 @@ export default {
       resumeDownload,
       uploadSuccessCount,
       uploadListCount,
+      uploadTotalSize,
       count,
       loading,
       noMore,
