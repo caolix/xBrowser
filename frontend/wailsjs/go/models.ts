@@ -207,36 +207,6 @@ export namespace db {
 
 export namespace app {
 	
-	export class SelectDownloadPathResult {
-	    accountId: string;
-	    path: string;
-	    err: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new SelectDownloadPathResult(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.accountId = source["accountId"];
-	        this.path = source["path"];
-	        this.err = source["err"];
-	    }
-	}
-	export class SelectUploadFolderResult {
-	    path: string;
-	    err: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new SelectUploadFolderResult(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.path = source["path"];
-	        this.err = source["err"];
-	    }
-	}
 	export class ObjectHandlerResult {
 	    err: string;
 	
@@ -351,6 +321,22 @@ export namespace app {
 		    }
 		    return a;
 		}
+	}
+	export class SelectDownloadPathResult {
+	    accountId: string;
+	    path: string;
+	    err: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SelectDownloadPathResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.accountId = source["accountId"];
+	        this.path = source["path"];
+	        this.err = source["err"];
+	    }
 	}
 
 }

@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"io/fs"
@@ -118,41 +119,40 @@ type SelectUploadFolderResult struct {
 	Err  string `json:"err"`
 }
 
-func (a *App) SelectUploadFolder() SelectUploadFolderResult {
-	path, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{})
+func (a *App) SelectUploadFolder(prefix string, bucketName string) ObjectHandlerResult {
+	root, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{})
 	if err != nil {
 		runtime.LogErrorf(a.ctx, "OpenDirectoryDialog err: %s ", err)
-		return SelectUploadFolderResult{Err: err.Error()}
-	}
-	return SelectUploadFolderResult{
-		Path: path,
+		return ObjectHandlerResult{Err: err.Error()}
 	}
 
-}
+	if len(root) == 0 {
+		return ObjectHandlerResult{}
+	}
 
-func (a *App) DoUploadFolder(prefix, root, eventWalkPath string) {
 	folderName := getUploadName(root)
-	filepath.Walk(root, func(path string, info fs.FileInfo, err error) error {
-		path = strings.Replace(path, string(os.PathSeparator), "/", -1)
-		key := prefix + folderName + path[len(root):]
-		var t string
+	runtime.EventsEmit(a.ctx, EventBackend, Event{
+		Type: TypeShowTasksEvent,
+		Args: []string{"upload"},
+	})
+
+	go filepath.Walk(root, func(fp string, info fs.FileInfo, err error) error {
+		kp := strings.Replace(fp, string(os.PathSeparator), "/", -1)
+		key := prefix + folderName + kp[len(root):]
 		if info.IsDir() {
-			t = TypeFolder
-		} else {
-			t = TypeObject
+			res := a.PutDir(bucketName, folderName, prefix)
+			if res.Err != "" {
+				return errors.New(res.Err)
+			}
+			return nil
 		}
-		var sf = SelectedUploadFile{
-			AccountId:  a.AccountId,
-			SourcePath: path,
-			Name:       getUploadName(key),
-			Type:       t,
-		}
-		sf.Key = key
-		sf.Size = info.Size()
-		sf.HumanSize = util.IBytes(uint64(info.Size()))
-		runtime.EventsEmit(a.ctx, eventWalkPath, sf)
+
+		a.DoPutObject(bucketName, key, fp, GenerateEventProgressName("upload", key))
 		return nil
 	})
+
+	fmt.Println("SelectUploadFolder FINISH")
+	return ObjectHandlerResult{}
 }
 
 type SelectedUploadFile struct {

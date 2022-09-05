@@ -122,7 +122,7 @@
         @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55"/>
-      <el-table-column prop="key" label="Name" width="400">
+      <el-table-column prop="key" label="Name" width="450">
         <template #default="scope">
           <el-icon style="top:4px" v-if="tableData[scope.$index].type==='Folder'">
             <FolderOpened/>
@@ -203,8 +203,6 @@ import {
   DeleteObject,
   DeleteObjects,
   DoGetObject,
-  DoPutObject,
-  DoUploadFolder,
   ListObjects,
   PutDir,
   SelectDownloadPath,
@@ -455,78 +453,13 @@ export default {
     }
 
     const selectUploadFolder = () => {
-      SelectUploadFolder().then((res) => {
-        if (res.err !== '') {
-          ElMessage.error(res.err)
-        } else {
-          if (res.path === '') {
-            return
-          }
-          var eventWalkPath = "w" + res.path + Math.random()
-          // open TaskList
-          context.emit('changeVisible', true)
-          EventsOn(eventWalkPath, (fp) => {
-            if (fp.type === TypeFolder) {
-              PutDir(<string>bucketName, fp.key, prefix.value).then(res => {
-                if (res.err !== '') {
-                  ElMessage.error(res.err)
-                } else {
-                  dialogCreateDirVisible.value = false
-                  listObjects(bucketName, '', prefix.value, 100)
-                  newFolderName.value = ''
-                }
-              })
-            } else {
-              var eventProgress = "u" + fp.key + Math.random()
-              const file = {
-                accountId: fp.accountId,
-                type: fp.type,
-                bucket: bucketName,
-                name: fp.name,
-                key: fp.key,
-                source: fp.source,
-                size: fp.size,
-                humanSize: fp.humanSize,
-                status: 0,  // 0-PENDING, 1-PAUSE, 2-ERROR, 3-FINISH
-                taskId: eventProgress
-              }
-              const payload = {
-                file: file,
-                progress: eventProgress
-              }
-              store.commit('addToUploadList', payload)
-              // begin to upload
-              EventsOn(eventProgress, (data) => {
-                const payload = {
-                  data: data,
-                  progress: eventProgress
-                }
-                store.commit('updateUploadProgress', payload)
-              })
-              DoPutObject(<string>bucketName, fp.key, fp.source, eventProgress).then(res => {
-                if (res.err !== '') {
-                  ElMessage.error(res.err)
-                } else {
-                  const payload = {
-                    data: 100,
-                    progress: eventProgress
-                  }
-                  store.commit('updateUploadProgress', payload)
-                  listObjects(bucketName, '', prefix.value, 100)
-                }
-              })
-            }
-          })
-          DoUploadFolder(prefix.value, res.path, eventWalkPath)
-        }
+      SelectUploadFolder(prefix.value, <string>bucketName).then(() => {
+
       })
     }
 
     const selectUploadObjects = () => {
-      SelectUploadFiles(prefix.value, <string>bucketName).then(() => {
-        // open TaskList
-
-      })
+      SelectUploadFiles(prefix.value, <string>bucketName).then(() => {})
     }
 
     // params:

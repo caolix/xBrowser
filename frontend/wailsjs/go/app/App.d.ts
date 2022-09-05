@@ -15,8 +15,6 @@ export function DoGetObject(arg1:string,arg2:string,arg3:string,arg4:number,arg5
 
 export function DoPutObject(arg1:string,arg2:string,arg3:string,arg4:string):Promise<app.ObjectHandlerResult>;
 
-export function DoUploadFolder(arg1:string,arg2:string,arg3:string):void;
-
 export function GetAccountId():Promise<string>;
 
 export function ListAllLoginInfo():Promise<Array<db.LoginInfo>>;
@@ -53,7 +51,7 @@ export function SelectDownloadPath():Promise<app.SelectDownloadPathResult>;
 
 export function SelectUploadFiles(arg1:string,arg2:string):Promise<app.ObjectHandlerResult>;
 
-export function SelectUploadFolder():Promise<app.SelectUploadFolderResult>;
+export function SelectUploadFolder(arg1:string,arg2:string):Promise<app.ObjectHandlerResult>;
 
 export function SetupMenu():void;
 
