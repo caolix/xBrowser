@@ -69,14 +69,6 @@ export default {
               progress: task.taskId
             }
             store.commit('updateUploadProgress', progressPayload)
-
-            EventsOn(task.taskId, (data) => {
-              const progressPayload = {
-                data: data,
-                progress: task.taskId
-              }
-              store.commit('updateUploadProgress', progressPayload)
-            })
           })
         }
       })

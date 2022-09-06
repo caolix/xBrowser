@@ -7,7 +7,7 @@
           <el-button
               plain
               type="info"
-              @click="resumeAllPausedTask"
+              @click="resumeAllUploads"
           >
             <el-icon color="#67C23A" style="margin-right: 3px; right: 3px">
               <CaretRight/>
@@ -51,7 +51,7 @@
                         v-if="task.status===0"
                         plain
                         type="success"
-                        @click="resumeUpload(task, i)"
+                        @click="resumeUpload(task)"
                         style="width: 36px;"
                     >
                       <el-icon color="#67C23A">
@@ -77,7 +77,7 @@
           </div>
           <div style="text-align: left">
             <span style="color: black">Data: {{ uploadTotalSize }}</span>
-            <span style="color: red; margin-left: 10px">Failed: 0</span>
+<!--            <span style="color: red; margin-left: 10px">Failed: 0</span>-->
           </div>
         </el-tab-pane>
 
@@ -226,7 +226,16 @@ export default {
       store.commit('clearUploadFinished')
     }
 
-    const resumeUpload = (task, index) => {
+    const resumeAllUploads = () => {
+      for (var i in uploadListData.value) {
+        console.log(i, uploadListData.value[i])
+        if (uploadListData.value[i].status === 0) {
+          resumeUpload(uploadListData.value[i])
+        }
+      }
+    }
+
+    const resumeUpload = (task) => {
       var t = new db.UploadTask()
       t.uploadedSize = task.uploadedSize
       t.key = task.key
@@ -341,6 +350,7 @@ export default {
       removeUpload,
       removeDownload,
       cancelClick,
+      resumeAllUploads,
       resumeUpload,
       resumeDownload,
       clearUploadFinished,
