@@ -42,6 +42,10 @@ export function ListObjects(arg1, arg2, arg3, arg4) {
   return window['go']['app']['App']['ListObjects'](arg1, arg2, arg3, arg4);
 }
 
+export function ListenListObjectsEvent() {
+  return window['go']['app']['App']['ListenListObjectsEvent']();
+}
+
 export function LoadAllDownloadTasks() {
   return window['go']['app']['App']['LoadAllDownloadTasks']();
 }

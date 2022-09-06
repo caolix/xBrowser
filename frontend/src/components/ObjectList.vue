@@ -334,6 +334,14 @@ export default {
             context.emit('changeVisible', true)
             context.emit('setTaskTabName', e.args[0])
             return
+          case "listenUploadTask":
+            EventsOn(e.args[0], (data) => {
+              const payload = {
+                data: data,
+                progress: e.args[0]
+              }
+              store.commit('updateUploadProgress', payload)
+            })
         }
       })
 
@@ -348,15 +356,6 @@ export default {
         progress: uploadTask.taskId
       }
       store.commit('addToUploadList', payload)
-
-      // listen progress
-      EventsOn(uploadTask.taskId, (data) => {
-        const payload = {
-          data: data,
-          progress: uploadTask.taskId
-        }
-        store.commit('updateUploadProgress', payload)
-      })
     }
 
     // tableData
@@ -482,7 +481,7 @@ export default {
           key: v.key,
           size: v.size,
           humanSize: v.humanSize,
-          status: 0,  // 0-PENDING, 1-PAUSE, 2-ERROR, 3-FINISH
+          status: 0,  // 0-PAUSE, 1-RUNNING, 2-ERROR, 3-FINISH
           taskId: eventProgress
         }
         const payload = {

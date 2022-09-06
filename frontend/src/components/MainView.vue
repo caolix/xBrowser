@@ -37,8 +37,8 @@ export default {
       LoadAllUploadTasks().then((tasks) => {
         if (tasks.length !== 0) {
           tasks.forEach((task, i) => {
-            if (task.status === 0) {
-              task.status = 1
+            if (task.status === 1) {
+              task.status = 0
             }
             const file = {
               name: task.name,
@@ -61,7 +61,7 @@ export default {
               progress: task.taskId
             }
 
-            LogDebug("Load task:" + file.bucket + "/" + file.key + " status: " + file.status)
+            console.log("Load task:" + file.bucket + "/" + file.key + " status: " + file.status)
             store.commit('addToUploadList', payload)
 
             const progressPayload = {

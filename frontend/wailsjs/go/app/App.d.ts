@@ -23,6 +23,8 @@ export function ListBuckets():Promise<app.ListBucketResult>;
 
 export function ListObjects(arg1:string,arg2:string,arg3:string,arg4:number):Promise<app.ListObjectResult>;
 
+export function ListenListObjectsEvent():void;
+
 export function LoadAllDownloadTasks():Promise<Array<db.DownloadTask>>;
 
 export function LoadAllUploadTasks():Promise<Array<db.UploadTask>>;

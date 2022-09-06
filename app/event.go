@@ -4,9 +4,10 @@ const (
 	EventAddToUploadList = "eventAddToUploadList"
 	EventBackend         = "eventBackend"
 
-	TypeErrorEvent       = "error"
-	TypeListObjectsEvent = "listObjects"
-	TypeShowTasksEvent   = "showTasks"
+	TypeErrorEvent            = "error"
+	TypeListObjectsEvent      = "listObjects"
+	TypeShowTasksEvent        = "showTasks"
+	TypeListenUploadTaskEvent = "listenUploadTask"
 )
 
 type Event struct {

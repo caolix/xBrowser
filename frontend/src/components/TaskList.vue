@@ -35,7 +35,7 @@
                   <el-col :span="4" class="hidden-name">{{ task.humanSize }}</el-col>
                   <el-col :span="8" style="text-align: right">
                     <el-button
-                        v-if="i.status===1"
+                        v-if="task.status===0"
                         plain
                         type="success"
                         @click="resumeUpload(task, i)"
@@ -60,9 +60,11 @@
               </li>
             </ul>
             <p v-if="loading" style="color: black">Loading...</p>
+            <p v-if="noMore"></p>
           </div>
-          <div>
-            <span style="text-align: left; color: black">Data: {{ uploadTotalSize }}</span>
+          <div style="text-align: left">
+            <span style="color: black">Data: {{ uploadTotalSize }}</span>
+            <span style="color: red; margin-left: 10px">Failed: 0</span>
           </div>
         </el-tab-pane>
 
@@ -142,10 +144,6 @@ export default {
       context.emit('cancelVisible', false)
     }
 
-    const InitListItemCount = 20
-    var hasLoadedOnce = false
-    var count = 20
-
     const uploadSuccessCount = computed(() => {
       return store.state.uploadSuccessCount
     })
@@ -158,17 +156,23 @@ export default {
       return humanReadableFilesize(store.state.uploadTotalSize)
     })
 
+    const InitListItemCount = ref(20)
+    var hasLoadedOnce = false
+    const listCount = ref(20)
+
     const listItemCount = computed(() => {
       if (!hasLoadedOnce) {
-        if (InitListItemCount >= store.state.uploadList.length) {
-          return store.state.uploadList.length
+        if (InitListItemCount.value >= store.state.uploadList.length) {
+          listCount.value = store.state.uploadList.length
+          return listCount
         }
         return InitListItemCount
       }
-      return count
+      return listCount
     })
+
     const loading = ref(false)
-    const noMore = computed(() => count >= store.state.uploadList.length)
+    const noMore = computed(() => listCount.value >= store.state.uploadList.length)
     const disabled = computed(() => loading.value || noMore.value)
     const load = () => {
       if (!hasLoadedOnce) {
@@ -176,13 +180,16 @@ export default {
       }
       loading.value = true
       setTimeout(() => {
-        count += 20
+        listCount.value += 20
+        console.log("load", listCount.value)
         loading.value = false
       }, 1000)
     }
 
     const uploadListData = computed(() => {
-      return store.state.uploadList.slice(0, listItemCount.value)
+      var v = listItemCount.value.value
+      console.log("listv:", listItemCount.value.value)
+      return store.state.uploadList.slice(0, v)
     })
 
     const downloadListData = computed(() => {
@@ -339,7 +346,7 @@ export default {
       uploadSuccessCount,
       uploadListCount,
       uploadTotalSize,
-      count,
+      listCount,
       loading,
       noMore,
       disabled,

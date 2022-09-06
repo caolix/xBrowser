@@ -61,7 +61,7 @@ func (a *App) listenTaskWaitQ() {
 			continue
 		}
 		// control running queue size
-		if a.uploadTaskRunningQ[a.AccountId].Size() > 10 {
+		if a.uploadTaskRunningQ[a.AccountId].Size() > 100 {
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
@@ -99,6 +99,7 @@ func (a *App) GetAccountId() string {
 func (a *App) registerWorkers() {
 	TaskCancelFunc = make(map[string]context.CancelFunc)
 	a.uploadCtx, a.uploadCancelFunc = context.WithCancel(context.Background())
+	go a.ListenListObjectsEvent()
 	for i := 0; i < db.MaxUploadConcurrency; i++ {
 		var ctx context.Context
 		ctx, _ = context.WithCancel(a.uploadCtx)

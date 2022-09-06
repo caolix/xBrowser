@@ -8,6 +8,7 @@ import (
 	"os"
 	"sync"
 	"sync/atomic"
+	"time"
 	"xBrowser/app/db"
 	"xBrowser/app/util"
 )
@@ -41,6 +42,22 @@ func GenerateEventProgressName(eventType string, key string) string {
 	return eventType + key + rand.String(32, util.Alphanumeric)
 }
 
+var EventListObjectsQ = *util.NewQueue()
+
+func (a *App) ListenListObjectsEvent() {
+	for {
+		if EventListObjectsQ.Size() == 0 {
+			time.Sleep(time.Second)
+			continue
+		}
+		EventListObjectsQ.Pop()
+		runtime.EventsEmit(a.ctx, EventBackend, Event{
+			Type: TypeListObjectsEvent,
+			Args: nil,
+		})
+	}
+}
+
 func (u *uploadWorker) start(a *App) {
 	for {
 		if u.status == WorkerStopping {
@@ -57,6 +74,10 @@ func (u *uploadWorker) start(a *App) {
 			runtime.LogDebugf(a.ctx, "recieve stopCh on worker %d", u.num)
 			u.setStatus(WorkerStopping)
 		case wrapper := <-u.taskCh:
+			runtime.EventsEmit(a.ctx, EventBackend, Event{
+				Type: TypeListenUploadTaskEvent,
+				Args: []string{wrapper.task.TaskId},
+			})
 			u.setStatus(WorkerRunning)
 			uploadCtx, cancel := context.WithCancel(u.ctx)
 			lock.Lock()
@@ -70,10 +91,9 @@ func (u *uploadWorker) start(a *App) {
 				a.ErrLogger.Error(fmt.Sprintf("upload task %s %s err: %s",
 					wrapper.task.Bucket, wrapper.task.Key, uploadErr.Error()))
 			} else {
-				runtime.EventsEmit(a.ctx, EventBackend, Event{
-					Type: TypeListObjectsEvent,
-					Args: nil,
-				})
+				if EventListObjectsQ.Size() < 2 {
+					EventListObjectsQ.Push(struct{}{})
+				}
 			}
 			runtime.EventsOff(a.ctx, wrapper.task.TaskId)
 		}
