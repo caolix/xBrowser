@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"io/fs"
 	"os"
@@ -151,7 +150,6 @@ func (a *App) SelectUploadFolder(prefix string, bucketName string) ObjectHandler
 		return nil
 	})
 
-	fmt.Println("SelectUploadFolder FINISH")
 	return ObjectHandlerResult{}
 }
 
@@ -183,7 +181,6 @@ func (a *App) SelectUploadFiles(prefix string, bucketName string) ObjectHandlerR
 		}
 	}()
 
-	fmt.Println("SelectUploadFiles FINISH")
 	return ObjectHandlerResult{}
 }
 

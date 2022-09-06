@@ -18,7 +18,7 @@ func getWindowSize() (width, height int) {
 }
 
 func openDirCmd(dir string) (string, []string) {
-	return "start", []string{dir}
+	return "explorer", []string{dir}
 }
 
 func openTextFileCmd(text string) (string, []string) {

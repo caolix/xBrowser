@@ -88,6 +88,14 @@ const store = createStore({
                 state.uploadSuccessCount -= delCount
                 state.uploadList.splice(start, delCount)
             }
+            // FIXME: add lock to update array
+            if (state.uploadSuccessCount < 0) {
+                state.uploadSuccessCount = 0
+            }
+            if (state.uploadTotalSize < 0) {
+                state.uploadTotalSize = 0
+            }
+
         },
         removeUploadListParam(state, payload) {
             state.uploadTotalSize -= state.uploadList[payload.index].size

@@ -68,6 +68,7 @@ func (a *App) listenTaskWaitQ() {
 		w := a.uploadTaskWaitQ[a.AccountId].Pop()
 		wrapper := w.(*UploadTaskWrapper)
 		if !wrapper.disabelUpdateList {
+			runtime.LogDebugf(a.ctx, "EventAddToUploadList: %s", wrapper.task.TaskId)
 			runtime.EventsEmit(a.ctx, EventAddToUploadList, *wrapper.task)
 		}
 		a.uploadTaskRunningQ[a.AccountId].Push(w)
