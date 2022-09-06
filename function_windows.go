@@ -16,3 +16,11 @@ func getWindowSize() (width, height int) {
 	w := h * 4 / 3
 	return int(w * 93 / 100), int(h * 93 / 100)
 }
+
+func openDirCmd(dir string) (string, []string) {
+	return "start", []string{dir}
+}
+
+func openTextFileCmd(text string) (string, []string) {
+	return "notepad", []string{text}
+}

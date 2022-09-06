@@ -106,10 +106,6 @@ export function SelectUploadFolder(arg1, arg2) {
   return window['go']['app']['App']['SelectUploadFolder'](arg1, arg2);
 }
 
-export function SetupMenu() {
-  return window['go']['app']['App']['SetupMenu']();
-}
-
 export function UpdateSettings(arg1) {
   return window['go']['app']['App']['UpdateSettings'](arg1);
 }

@@ -19,25 +19,34 @@ var logFlags = log.Ldate | log.Ltime | log.Lmicroseconds
 
 const AppName = "xBrowser"
 
+var (
+	AppLogDir     string
+	AppLogDirErr  error
+	AppLogName    string
+	AppErrLogName string
+)
+
+func init() {
+	logName := AppName + "-" + time.Now().Local().Format("2006-01-02")
+	AppLogName = logName + ".log"
+	AppErrLogName = logName + "_error.log"
+	AppLogDir, AppLogDirErr = getLogDir()
+}
+
 // NewDefaultLogger creates a new Logger.
 func NewAppLogger() (*FileLogger, error) {
-	logName := AppName + "-" + time.Now().Local().Format("2006-01-02") + ".log"
-	return NewLogger(logName)
+	return NewLogger(AppLogName)
 }
 
 func NewAppErrLogger() (*FileLogger, error) {
-	logName := AppName + "-" + time.Now().Local().Format("2006-01-02") + "_error.log"
-	return NewLogger(logName)
+	return NewLogger(AppErrLogName)
 }
 
 func NewLogger(logName string) (*FileLogger, error) {
-	logDir, err := getLogDir()
+
+	f, err := os.Create(AppLogDir + logName)
 	if err != nil {
-		return nil, err
-	}
-	f, err := os.Create(logDir + logName)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to open log file %s error: %s", logDir+logName, err)
+		return nil, fmt.Errorf("Failed to open log file %s error: %s", AppLogDir+logName, err)
 	}
 	return &FileLogger{
 		out:    f,

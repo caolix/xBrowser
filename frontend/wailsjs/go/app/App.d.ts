@@ -55,6 +55,4 @@ export function SelectUploadFiles(arg1:string,arg2:string):Promise<app.ObjectHan
 
 export function SelectUploadFolder(arg1:string,arg2:string):Promise<app.ObjectHandlerResult>;
 
-export function SetupMenu():void;
-
 export function UpdateSettings(arg1:db.Settings):Promise<app.ObjectHandlerResult>;

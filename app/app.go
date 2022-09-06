@@ -5,13 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/wailsapp/wails/v2/pkg/logger"
-	"github.com/wailsapp/wails/v2/pkg/menu"
-	"github.com/wailsapp/wails/v2/pkg/menu/keys"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"os"
 	"path/filepath"
-	os_runtime "runtime"
-	"time"
 	"xBrowser/app/db"
 	logger2 "xBrowser/app/logger"
 	"xBrowser/app/s3lib"
@@ -79,61 +75,6 @@ func NewApp() *App {
 		fmt.Println(app.InitLoggerErr)
 	}
 	return app
-}
-
-func (a *App) SetupMenu() {
-	ctx := a.ctx
-	AppMenu := menu.NewMenu()
-	if os_runtime.GOOS == "darwin" {
-		AppMenu.Append(menu.AppMenu())
-		AppMenu.Append(menu.EditMenu()) // on macos platform, we should append EditMenu to enable Cmd+C,Cmd+V,Cmd+Z... shortcut
-	}
-	FileMenu := AppMenu.AddSubmenu("Debug")
-	FileMenu.AddText("WindowSetTitle", keys.CmdOrCtrl("1"), func(_ *menu.CallbackData) {
-		runtime.WindowSetTitle(ctx, time.Now().Local().String())
-	})
-	FileMenu.AddSeparator()
-	FileMenu.AddText("WindowCenter", keys.CmdOrCtrl("2"), func(_ *menu.CallbackData) {
-		runtime.WindowCenter(ctx)
-	})
-	FileMenu.AddSeparator()
-	FileMenu.AddText("1", keys.CmdOrCtrl("3"), func(_ *menu.CallbackData) {
-		runtime.OpenDirectoryDialog(ctx, runtime.OpenDialogOptions{})
-	})
-	FileMenu.AddText("2", keys.CmdOrCtrl("4"), func(_ *menu.CallbackData) {
-		runtime.WindowSetDarkTheme(ctx)
-	})
-	FileMenu.AddSeparator()
-	FileMenu.AddText("WindowGetSize", keys.CmdOrCtrl("5"), func(_ *menu.CallbackData) {
-		fmt.Println(runtime.WindowGetSize(ctx))
-	})
-	FileMenu.AddSeparator()
-	FileMenu.AddText("WindowGetPosition", keys.CmdOrCtrl("5"), func(_ *menu.CallbackData) {
-		fmt.Println(runtime.WindowGetPosition(ctx))
-	})
-	FileMenu.AddSeparator()
-	FileMenu.AddText("WindowSetAlwaysOnTop", keys.CmdOrCtrl("5"), func(_ *menu.CallbackData) {
-		runtime.WindowSetAlwaysOnTop(ctx, true)
-	})
-	FileMenu.AddSeparator()
-	FileMenu.AddText("WindowMaximise", keys.CmdOrCtrl("5"), func(_ *menu.CallbackData) {
-		runtime.WindowMaximise(ctx)
-	})
-	FileMenu.AddSeparator()
-	FileMenu.AddText("WindowUnMaximise", keys.CmdOrCtrl("5"), func(_ *menu.CallbackData) {
-		runtime.WindowUnmaximise(ctx)
-	})
-
-	FileMenu.AddSeparator()
-	FileMenu.AddText("WindowMinimise", keys.CmdOrCtrl("5"), func(_ *menu.CallbackData) {
-		runtime.WindowMinimise(ctx)
-	})
-	FileMenu.AddSeparator()
-	FileMenu.AddText("WindowUnminimise", keys.CmdOrCtrl("5"), func(_ *menu.CallbackData) {
-		runtime.WindowUnminimise(ctx)
-	})
-
-	runtime.MenuSetApplicationMenu(ctx, AppMenu)
 }
 
 // startup is called at application startup
