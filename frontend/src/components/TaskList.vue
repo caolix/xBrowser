@@ -2,7 +2,19 @@
   <el-drawer v-model="props.visible" :show-close="false" size="40%" @close="closeDrawer">
     <template #default>
       <el-tabs v-model="props.tabName" class="demo-tabs" @tab-click="handleClick">
+
         <div style="text-align: right;margin-bottom: 8px">
+          <el-button
+              plain
+              type="info"
+              @click="resumeAllPausedTask"
+          >
+            <el-icon color="#67C23A" style="margin-right: 3px; right: 3px">
+              <CaretRight/>
+            </el-icon>
+            Start All
+          </el-button>
+
           <el-button
               plain
               type="info"
@@ -13,6 +25,7 @@
             </el-icon>
             Clear Finished
           </el-button>
+
         </div>
         <el-tab-pane name="upload">
           <template #label>
@@ -225,24 +238,12 @@ export default {
       t.isMultipart = task.isMultipart
       t.partSize = task.partSize
       t.source = task.source
-      t.status = task.status
+      t.status = 1 // WAITING
       t.taskId = task.taskId
       t.uploadId = task.uploadId
       ResumeUploadTask(t).then((res) => {
-        console.log(t.status)
         if (res.err !== '') {
           ElMessage.error(res.err)
-        } else {
-          const payload = {
-            data: 100,
-            progress: t.taskId
-          }
-          store.commit('updateUploadProgress', payload)
-          const statusPayload = {
-            index: index,
-            status: 3, // finish
-          }
-          store.commit('updateUploadStatus', statusPayload)
         }
       })
     }

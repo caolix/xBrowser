@@ -346,6 +346,7 @@ export default {
       })
 
       EventsOn(eventAddToUploadList, (uploadTask) => {
+        console.log("eventAddToUploadList")
         addToUploadList(uploadTask)
       })
     })

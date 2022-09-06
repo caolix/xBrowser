@@ -217,7 +217,7 @@ func (a *App) DoPutObject(bucketName, key, filePath, eventProgress string) Objec
 		Source:       filePath,
 		Size:         fInfo.Size(),
 		HumanSize:    util.IBytes(uint64(fInfo.Size())),
-		Status:       db.PAUSE,
+		Status:       db.WAITING,
 		ModifiedTime: time.Now().Local(),
 	}
 
@@ -282,7 +282,7 @@ func (a *App) DoGetObject(bucketName, key, destPath string, size int64, eventPro
 		Destination: filePath,
 		Size:        size,
 		HumanSize:   util.IBytes(uint64(size)),
-		Status:      db.PAUSE,
+		Status:      db.WAITING,
 	}
 
 	p := NewProgress(a.ctx, eventProgress, size)

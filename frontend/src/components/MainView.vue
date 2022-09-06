@@ -37,8 +37,8 @@ export default {
       LoadAllUploadTasks().then((tasks) => {
         if (tasks.length !== 0) {
           tasks.forEach((task, i) => {
-            if (task.status === 1) {
-              task.status = 0
+            if (task.status === 1 || task.status === 2) {
+              task.status = 0 // PAUSE
             }
             const file = {
               name: task.name,

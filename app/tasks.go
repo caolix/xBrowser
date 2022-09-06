@@ -21,9 +21,10 @@ const (
 )
 
 type UploadTaskWrapper struct {
-	task       *db.UploadTask
-	readSeeker io.ReadSeeker
-	resCh      chan error
+	task              *db.UploadTask
+	disabelUpdateList bool
+	readSeeker        io.ReadSeeker
+	resCh             chan error
 }
 
 type uploadWorker struct {
@@ -140,11 +141,12 @@ func (a *App) ResumeUploadTask(u db.UploadTask) ObjectHandlerResult {
 	}
 	p := NewProgress(a.ctx, u.TaskId, fInfo.Size())
 	wrapper := &UploadTaskWrapper{
-		task:       &u,
-		readSeeker: NewUploadProgressReader(f, p),
-		resCh:      make(chan error),
+		task:              &u,
+		disabelUpdateList: true,
+		readSeeker:        NewUploadProgressReader(f, p),
+		resCh:             make(chan error),
 	}
-	a.uploadTaskCh <- wrapper
+	a.uploadTaskWaitQ[a.AccountId].Push(wrapper)
 	return ObjectHandlerResult{}
 }
 

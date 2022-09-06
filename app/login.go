@@ -66,8 +66,10 @@ func (a *App) listenTaskWaitQ() {
 			continue
 		}
 		w := a.uploadTaskWaitQ[a.AccountId].Pop()
-		task := w.(*UploadTaskWrapper).task
-		runtime.EventsEmit(a.ctx, EventAddToUploadList, *task)
+		wrapper := w.(*UploadTaskWrapper)
+		if !wrapper.disabelUpdateList {
+			runtime.EventsEmit(a.ctx, EventAddToUploadList, *wrapper.task)
+		}
 		a.uploadTaskRunningQ[a.AccountId].Push(w)
 	}
 }
