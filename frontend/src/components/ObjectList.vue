@@ -198,7 +198,7 @@
 <script lang="ts">
 
 import {useRoute, useRouter} from "vue-router";
-import {computed, onMounted, reactive, ref, toRefs} from "vue";
+import {computed, onMounted, onUnmounted, reactive, ref, toRefs} from "vue";
 import {
   DeleteObject,
   DeleteObjects,
@@ -349,6 +349,11 @@ export default {
         LogDebug("receive addToUploadList:" + uploadTask.taskId)
         addToUploadList(uploadTask)
       })
+    })
+
+    onUnmounted(() => {
+      EventsOff(eventBackend)
+      EventsOff(eventAddToUploadList)
     })
 
     const addToUploadList = (uploadTask) => {
