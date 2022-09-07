@@ -59,10 +59,12 @@ const store = createStore({
             state.uploadList[payload.index].status = payload.status
         },
         updateUploadProgress(state, payload) {
-            if (payload.data === 100) {
-                state.uploadSuccessCount ++
+            if (state.uploadProgress.hasOwnProperty(payload.progress)) {
+                if (payload.data === 100) {
+                    state.uploadSuccessCount ++
+                }
+                state.uploadProgress[payload.progress] = payload.data
             }
-            state.uploadProgress[payload.progress] = payload.data
         },
         clearUploadFinished(state) {
             var start = 0
@@ -72,11 +74,13 @@ const store = createStore({
                 if (state.uploadProgress[state.uploadList[i].taskId] === 100) {
                     delCount ++
                     uploadTotalSize += state.uploadList[i].size
+                    delete state.uploadProgress[state.uploadList[i].taskId]
                 } else if (delCount === 0){
                     start ++
                 } else {
                     state.uploadTotalSize -= uploadTotalSize
                     state.uploadSuccessCount -= delCount
+                    console.log(start, delCount)
                     state.uploadList.splice(start, delCount)
                     i = start
                     uploadTotalSize = 0

@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -174,6 +175,7 @@ func (a *App) SelectUploadFiles(prefix string, bucketName string) ObjectHandlerR
 		Type: TypeShowTasksEvent,
 		Args: []string{"upload"},
 	})
+
 	go func() {
 		for _, fp := range filePaths {
 			key := prefix + getUploadName(fp)
@@ -204,29 +206,50 @@ func (a *App) DoPutObject(bucketName, key, filePath, eventProgress string) Objec
 		runtime.LogErrorf(a.ctx, "Stat file %s err: %s ", filePath, err)
 		return ObjectHandlerResult{Err: err.Error()}
 	}
+	// NOTE: App file on MacOS is a DIRECTORY !
+	if fInfo.IsDir() {
+		go filepath.Walk(filePath, func(fp string, info fs.FileInfo, err error) error {
+			kp := strings.Replace(fp, string(os.PathSeparator), "/", -1)
+			k := key + kp[len(filePath):]
+			if info.IsDir() {
+				res := a.PutDir(bucketName, k, "")
+				if res.Err != "" {
+					return errors.New(res.Err)
+				}
+				return nil
+			}
+			a.DoPutObject(bucketName, k, fp, GenerateEventProgressName("upload", key))
+			return nil
+		})
+	} else {
+		task := &db.UploadTask{
+			AccountId:    a.AccountId,
+			TaskId:       eventProgress,
+			Bucket:       bucketName,
+			Key:          key,
+			Name:         getUploadName(key),
+			Source:       filePath,
+			Size:         fInfo.Size(),
+			HumanSize:    util.IBytes(uint64(fInfo.Size())),
+			Status:       db.WAITING,
+			ModifiedTime: time.Now().Local(),
+		}
 
-	task := &db.UploadTask{
-		AccountId:    a.AccountId,
-		TaskId:       eventProgress,
-		Bucket:       bucketName,
-		Key:          key,
-		Name:         getUploadName(key),
-		Source:       filePath,
-		Size:         fInfo.Size(),
-		HumanSize:    util.IBytes(uint64(fInfo.Size())),
-		Status:       db.WAITING,
-		ModifiedTime: time.Now().Local(),
+		a.pushUploadTask(task, f)
+		return ObjectHandlerResult{}
 	}
 
-	p := NewProgress(a.ctx, eventProgress, fInfo.Size())
+	return ObjectHandlerResult{}
+}
+
+func (a *App) pushUploadTask(task *db.UploadTask, f io.ReadSeekCloser) {
+	p := NewProgress(a.ctx, task.TaskId, task.Size)
 	wrapper := &UploadTaskWrapper{
 		task:       task,
 		readSeeker: NewUploadProgressReader(f, p),
 		resCh:      make(chan error),
 	}
-
 	a.uploadTaskWaitQ[a.AccountId].Push(wrapper)
-	return ObjectHandlerResult{}
 }
 
 func (a *App) PutDir(bucketName, dirName, prefix string) ObjectHandlerResult {

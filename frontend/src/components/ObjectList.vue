@@ -210,7 +210,7 @@ import {
   SelectUploadFolder
 } from "../../wailsjs/go/app/App";
 import {ElMessage, ElMessageBox, ElTable} from "element-plus";
-import {EventsOff, EventsOn} from "../../wailsjs/runtime";
+import {EventsOff, EventsOn, LogDebug} from "../../wailsjs/runtime";
 import {useStore} from "vuex";
 import {app} from "../../wailsjs/go/models";
 import DeleteKey = app.DeleteKey;
@@ -346,7 +346,7 @@ export default {
       })
 
       EventsOn(eventAddToUploadList, (uploadTask) => {
-        console.log("eventAddToUploadList")
+        LogDebug("receive addToUploadList:" + uploadTask.taskId)
         addToUploadList(uploadTask)
       })
     })

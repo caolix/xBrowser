@@ -40,7 +40,7 @@ func (p *Progress) Set(num int64) {
 
 func (p *Progress) Ratio() int64 {
 	if p.TotalBytes == 0 {
-		return 0
+		return 100
 	}
 	return p.CurrentBytes * 100 / p.TotalBytes
 }
@@ -72,36 +72,41 @@ func (p *Progress) calc() {
 }
 
 // ReadSeeker is the progressbar io.Reader struct
-type ReadSeeker struct {
-	io.ReadSeeker
+type ReadSeekCloser struct {
+	io.ReadSeekCloser
 	p *Progress
 }
 
-func NewUploadProgressReader(rs io.ReadSeeker, p *Progress) *ReadSeeker {
-	return &ReadSeeker{
-		ReadSeeker: rs,
-		p:          p,
+func NewUploadProgressReader(rs io.ReadSeekCloser, p *Progress) *ReadSeekCloser {
+	return &ReadSeekCloser{
+		ReadSeekCloser: rs,
+		p:              p,
 	}
 }
 
 // Read will read the data and add the number of bytes to the progressbar
-func (r *ReadSeeker) Read(p []byte) (n int, err error) {
+func (r *ReadSeekCloser) Read(p []byte) (n int, err error) {
 	if !r.p.IsCalc {
 		go r.p.calc()
 		r.p.IsCalc = true
 	}
-	n, err = r.ReadSeeker.Read(p)
+	n, err = r.ReadSeekCloser.Read(p)
 	if err != nil {
+		r.Close()
 		r.p.closeCh <- struct{}{}
 	}
 	r.p.Add(int64(n))
 	return
 }
 
-func (r *ReadSeeker) Seek(offset int64, whence int) (n int64, err error) {
-	n, err = r.ReadSeeker.Seek(offset, whence)
+func (r *ReadSeekCloser) Seek(offset int64, whence int) (n int64, err error) {
+	n, err = r.ReadSeekCloser.Seek(offset, whence)
 	r.p.Set(offset)
 	return n, err
+}
+
+func (r *ReadSeekCloser) Close() error {
+	return r.ReadSeekCloser.Close()
 }
 
 type WriterAt struct {
