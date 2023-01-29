@@ -2,18 +2,21 @@
   <el-menu
       class="el-menu-demo"
       mode="horizontal"
-      background-color="#ffffff"
-      text-color="#000000"
-      active-text-color="#409EFF"
+      background-color="#545c64"
+      text-color="#fff"
+      active-text-color="#ffd04b"
       :ellipsis="false"
   >
+    <!--    background-color="#ffffff"-->
+    <!--    text-color="#000000"-->
+    <!--    active-text-color="#409EFF"-->
+    <!--      background-color="#545c64"-->
+    <!--      text-color="#fff"-->
+    <!--      active-text-color="#ffd04b"-->
     <el-menu-item index="0">
-    <img src="../assets/images/uni2.png" style="width:140px; height:50px; margin-top:6px;"/>
-      <!--      background-color="#545c64"-->
-      <!--      text-color="#fff"-->
-      <!--      active-text-color="#ffd04b"-->
-<!--      <img src="../assets/images/bear.gif" style="width:50px; height:50px; margin-top:6px;"/>-->
-<!--      <img src="../assets/images/logo4.png" style="width:150px; height:50px; margin-top:6px;"/>-->
+      <!--    <img src="../assets/images/uni2.png" style="width:140px; height:50px; margin-top:6px;"/>-->
+      <img src="../assets/images/bear.gif" style="width:50px; height:50px; margin-top:6px;"/>
+      <img src="../assets/images/logo4.png" style="width:150px; height:50px; margin-top:6px;"/>
     </el-menu-item>
     <div class="flex-grow"/>
     <el-menu-item index="1" @click="showDrawer">
