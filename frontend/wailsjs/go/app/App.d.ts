@@ -23,7 +23,7 @@ export function ListBuckets():Promise<app.ListBucketResult>;
 
 export function ListObjects(arg1:string,arg2:string,arg3:string,arg4:number):Promise<app.ListObjectResult>;
 
-export function ListenListObjectsEvent():void;
+export function ListenListObjectsEvent():Promise<void>;
 
 export function LoadAllDownloadTasks():Promise<Array<db.DownloadTask>>;
 
@@ -35,7 +35,7 @@ export function LoadSettings():Promise<db.Settings>;
 
 export function Login(arg1:db.LoginInfo,arg2:boolean,arg3:boolean):Promise<string>;
 
-export function Logout():void;
+export function Logout():Promise<void>;
 
 export function MakeBucket(arg1:string):Promise<string>;
 
