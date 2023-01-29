@@ -215,7 +215,6 @@ import {useStore} from "vuex";
 import {app} from "../../wailsjs/go/models";
 import DeleteKey = app.DeleteKey;
 
-
 export default {
   setup(props, context) {
     const TypeFolder = 'Folder'
@@ -264,9 +263,6 @@ export default {
       {color: '#1989fa', percentage: 100},
       {color: '#5cb87a', percentage: 101},
     ]
-
-    const eventAddToUploadList = "eventAddToUploadList"
-    const eventBackend = "eventBackend"
 
     const handleUploadCommand = (command: string | number | object) => {
       if (command === "UploadFiles") {
@@ -320,10 +316,14 @@ export default {
       tableData: [],
     })
 
+    const appEventBusName = 'eventBus'
+    const eventAddToUploadList = 'eventAddToUploadList'
+
     onMounted(() => {
       listObjects(bucketName, marker, prefix.value, 100)
-      EventsOn(eventBackend, (e) => {
-        switch (e.type) {
+      console.log(appEventBusName)
+      EventsOn(appEventBusName, (e) => {
+        switch (e.name) {
           case "listObjects":
             listObjects(bucketName, marker, prefix.value, 100)
             return
@@ -352,7 +352,7 @@ export default {
     })
 
     onUnmounted(() => {
-      EventsOff(eventBackend)
+      EventsOff(appEventBusName)
       EventsOff(eventAddToUploadList)
     })
 
@@ -464,7 +464,8 @@ export default {
     }
 
     const selectUploadObjects = () => {
-      SelectUploadFiles(prefix.value, <string>bucketName).then(() => {})
+      SelectUploadFiles(prefix.value, <string>bucketName).then(() => {
+      })
     }
 
     // params:
@@ -595,16 +596,15 @@ export default {
             cancelButtonText: 'Cancel',
             type: 'warning',
           }
-      )
-          .then(() => {
-            deleteObjects()
-          })
-          .catch(() => {
-            ElMessage({
-              type: 'info',
-              message: 'Delete canceled',
-            })
-          })
+      ).then(() => {
+        deleteObjects()
+      }).catch((e) => {
+        console.error(e)
+        ElMessage({
+          type: 'info',
+          message: 'Delete canceled',
+        })
+      })
     }
 
     // delete multiple objects

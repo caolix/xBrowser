@@ -16,6 +16,7 @@ import (
 	"sync"
 	"time"
 	"xBrowser/app/db"
+	. "xBrowser/app/models"
 )
 
 // MaxUploadParts is the maximum allowed number of parts in a multi-part upload
@@ -61,7 +62,7 @@ const DefaultUploadConcurrency = 5
 type UploadInput struct {
 	_ struct{} `type:"structure" payload:"Body"`
 
-	UploadTask *db.UploadTask
+	UploadTask *UploadTask
 
 	// The canned ACL to apply to the object.
 	ACL *string `location:"header" locationName:"x-amz-acl" type:"string" enum:"ObjectCannedACL"`
@@ -82,7 +83,7 @@ type UploadInput struct {
 
 	// Specifies what content encodings have been applied to the object and thus
 	// what decoding mechanisms must be applied to obtain the media-type referenced
-	// by the Content-Type header field.
+	// by the Content-Name header field.
 	ContentEncoding *string `location:"header" locationName:"Content-Encoding" type:"string"`
 
 	// The language the content is in.
@@ -92,7 +93,7 @@ type UploadInput struct {
 	ContentMD5 *string `location:"header" locationName:"Content-MD5" type:"string"`
 
 	// A standard MIME type describing the format of the object data.
-	ContentType *string `location:"header" locationName:"Content-Type" type:"string"`
+	ContentType *string `location:"header" locationName:"Content-Name" type:"string"`
 
 	// The date and time at which the object is no longer cacheable.
 	Expires *time.Time `location:"header" locationName:"Expires" type:"timestamp"`

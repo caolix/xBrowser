@@ -13,17 +13,12 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"xBrowser/app/db"
+	. "xBrowser/app/models"
 	"xBrowser/app/util"
 )
 
-type ListBucketResult struct {
-	Buckets []string `json:"buckets"`
-	Err     string   `json:"err"`
-}
-
-func (a *App) ListBuckets() ListBucketResult {
-	res := ListBucketResult{}
+func (a *App) ListBuckets() ListBucketsResult {
+	res := ListBucketsResult{}
 	buckets, err := a.S3Client.ListBuckets()
 	if err != nil {
 		runtime.LogErrorf(a.ctx, "ListBuckets err: %s ", err)
@@ -51,21 +46,6 @@ func (a *App) DeleteBucket(bucket string) string {
 		return err.Error()
 	}
 	return ""
-}
-
-type Object struct {
-	Key          string    `json:"key"`
-	Size         int64     `json:"size"`
-	HumanSize    string    `json:"humanSize"`
-	LastModified time.Time `json:"lastModified"`
-}
-
-type ListObjectResult struct {
-	Contents    []Object `json:"contents"`
-	Prefixes    []string `json:"prefixes"`
-	NextMarker  string   `json:"nextMarker"`
-	IsTruncated bool     `json:"isTruncated"`
-	Err         string   `json:"err"`
 }
 
 func (a *App) ListObjects(bucketName, marker, prefix string, maxKeys int64) ListObjectResult {
@@ -100,10 +80,7 @@ func (a *App) ListObjects(bucketName, marker, prefix string, maxKeys int64) List
 	return res
 }
 
-type ObjectHandlerResult struct {
-	Err string `json:"err"`
-}
-
+// Windows will return '\'
 func getUploadName(key string) string {
 	sp := strings.Split(key, string(os.PathSeparator))
 	return sp[len(sp)-1]
@@ -119,20 +96,20 @@ type SelectUploadFolderResult struct {
 	Err  string `json:"err"`
 }
 
-func (a *App) SelectUploadFolder(prefix string, bucketName string) ObjectHandlerResult {
+func (a *App) SelectUploadFolder(prefix string, bucketName string) ErrResult {
 	root, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{})
 	if err != nil {
 		runtime.LogErrorf(a.ctx, "OpenDirectoryDialog err: %s ", err)
-		return ObjectHandlerResult{Err: err.Error()}
+		return ErrResult{Err: err.Error()}
 	}
 
 	if len(root) == 0 {
-		return ObjectHandlerResult{}
+		return ErrResult{}
 	}
 
 	folderName := getUploadName(root)
-	runtime.EventsEmit(a.ctx, EventBackend, Event{
-		Type: TypeShowTasksEvent,
+	runtime.EventsEmit(a.ctx, AppEventBus, Event{
+		Name: EventShowTasks,
 		Args: []string{"upload"},
 	})
 
@@ -151,28 +128,20 @@ func (a *App) SelectUploadFolder(prefix string, bucketName string) ObjectHandler
 		return nil
 	})
 
-	return ObjectHandlerResult{}
+	return ErrResult{}
 }
 
-type SelectedUploadFile struct {
-	Object
-	AccountId  string `json:"accountId"`
-	Type       string `json:"type"`
-	SourcePath string `json:"source"`
-	Name       string `json:"name"`
-}
-
-func (a *App) SelectUploadFiles(prefix string, bucketName string) ObjectHandlerResult {
+func (a *App) SelectUploadFiles(prefix string, bucketName string) ErrResult {
 	filePaths, err := runtime.OpenMultipleFilesDialog(a.ctx, runtime.OpenDialogOptions{})
 	if err != nil {
-		return ObjectHandlerResult{Err: err.Error()}
+		return ErrResult{Err: err.Error()}
 	}
 	if len(filePaths) == 0 {
-		return ObjectHandlerResult{}
+		return ErrResult{}
 	}
 
-	runtime.EventsEmit(a.ctx, EventBackend, Event{
-		Type: TypeShowTasksEvent,
+	runtime.EventsEmit(a.ctx, AppEventBus, Event{
+		Name: EventShowTasks,
 		Args: []string{"upload"},
 	})
 
@@ -183,7 +152,7 @@ func (a *App) SelectUploadFiles(prefix string, bucketName string) ObjectHandlerR
 		}
 	}()
 
-	return ObjectHandlerResult{}
+	return ErrResult{}
 }
 
 func (a *App) doPut(ctx context.Context, wrapper *UploadTaskWrapper) {
@@ -195,16 +164,16 @@ func (a *App) doPut(ctx context.Context, wrapper *UploadTaskWrapper) {
 	wrapper.resCh <- nil
 }
 
-func (a *App) DoPutObject(bucketName, key, filePath, eventProgress string) ObjectHandlerResult {
+func (a *App) DoPutObject(bucketName, key, filePath, eventProgress string) ErrResult {
 	f, err := os.Open(filePath)
 	if err != nil {
 		runtime.LogErrorf(a.ctx, "Open file %s err: %s ", filePath, err)
-		return ObjectHandlerResult{Err: err.Error()}
+		return ErrResult{Err: err.Error()}
 	}
 	fInfo, err := f.Stat()
 	if err != nil {
 		runtime.LogErrorf(a.ctx, "Stat file %s err: %s ", filePath, err)
-		return ObjectHandlerResult{Err: err.Error()}
+		return ErrResult{Err: err.Error()}
 	}
 	// NOTE: App file on MacOS is a DIRECTORY !
 	if fInfo.IsDir() {
@@ -222,7 +191,7 @@ func (a *App) DoPutObject(bucketName, key, filePath, eventProgress string) Objec
 			return nil
 		})
 	} else {
-		task := &db.UploadTask{
+		task := &UploadTask{
 			AccountId:    a.AccountId,
 			TaskId:       eventProgress,
 			Bucket:       bucketName,
@@ -231,18 +200,18 @@ func (a *App) DoPutObject(bucketName, key, filePath, eventProgress string) Objec
 			Source:       filePath,
 			Size:         fInfo.Size(),
 			HumanSize:    util.IBytes(uint64(fInfo.Size())),
-			Status:       db.WAITING,
+			Status:       WAITING,
 			ModifiedTime: time.Now().Local(),
 		}
 
 		a.pushUploadTask(task, f)
-		return ObjectHandlerResult{}
+		return ErrResult{}
 	}
 
-	return ObjectHandlerResult{}
+	return ErrResult{}
 }
 
-func (a *App) pushUploadTask(task *db.UploadTask, f io.ReadSeekCloser) {
+func (a *App) pushUploadTask(task *UploadTask, f io.ReadSeekCloser) {
 	p := NewProgress(a.ctx, task.TaskId, task.Size)
 	wrapper := &UploadTaskWrapper{
 		task:       task,
@@ -252,21 +221,15 @@ func (a *App) pushUploadTask(task *db.UploadTask, f io.ReadSeekCloser) {
 	a.uploadTaskWaitQ[a.AccountId].Push(wrapper)
 }
 
-func (a *App) PutDir(bucketName, dirName, prefix string) ObjectHandlerResult {
+func (a *App) PutDir(bucketName, dirName, prefix string) ErrResult {
 	key := prefix + dirName + "/"
 	r := bytes.NewReader([]byte(""))
 	err := a.S3Client.PutObject(bucketName, key, r)
 	if err != nil {
 		runtime.LogErrorf(a.ctx, "PutDir %s in bucket %s err: %s ", key, bucketName, err)
-		return ObjectHandlerResult{Err: err.Error()}
+		return ErrResult{Err: err.Error()}
 	}
-	return ObjectHandlerResult{}
-}
-
-type SelectDownloadPathResult struct {
-	AccountId string `json:"accountId"`
-	Path      string `json:"path"`
-	Err       string `json:"err"`
+	return ErrResult{}
 }
 
 func (a *App) SelectDownloadPath() SelectDownloadPathResult {
@@ -281,7 +244,7 @@ func (a *App) SelectDownloadPath() SelectDownloadPathResult {
 	}
 }
 
-func (a *App) DoGetObject(bucketName, key, destPath string, size int64, eventProgress string, override bool) ObjectHandlerResult {
+func (a *App) DoGetObject(bucketName, key, destPath string, size int64, eventProgress string, override bool) ErrResult {
 	downloadFileName := getDownloadName(key) + ".download"
 	downloadFilePath := destPath + string(os.PathSeparator) + downloadFileName
 	filePath := destPath + string(os.PathSeparator) + getDownloadName(key)
@@ -290,10 +253,10 @@ func (a *App) DoGetObject(bucketName, key, destPath string, size int64, eventPro
 	f, err := os.Create(downloadFilePath)
 	if err != nil {
 		runtime.LogErrorf(a.ctx, "Create file %s err: %s ", downloadFilePath, err)
-		return ObjectHandlerResult{Err: err.Error()}
+		return ErrResult{Err: err.Error()}
 	}
 
-	task := &db.DownloadTask{
+	task := &DownloadTask{
 		AccountId:   a.AccountId,
 		TaskId:      eventProgress,
 		Bucket:      bucketName,
@@ -302,7 +265,7 @@ func (a *App) DoGetObject(bucketName, key, destPath string, size int64, eventPro
 		Destination: filePath,
 		Size:        size,
 		HumanSize:   util.IBytes(uint64(size)),
-		Status:      db.WAITING,
+		Status:      WAITING,
 	}
 
 	p := NewProgress(a.ctx, eventProgress, size)
@@ -316,14 +279,14 @@ func (a *App) DoGetObject(bucketName, key, destPath string, size int64, eventPro
 	a.downloadTaskQ <- wrapper
 	if err = <-wrapper.requestCh; err != nil {
 		f.Close()
-		return ObjectHandlerResult{Err: err.Error()}
+		return ErrResult{Err: err.Error()}
 	}
 	f.Close()
 	err = os.Rename(downloadFilePath, filePath)
 	if err != nil {
-		return ObjectHandlerResult{Err: err.Error()}
+		return ErrResult{Err: err.Error()}
 	}
-	return ObjectHandlerResult{}
+	return ErrResult{}
 }
 
 func (a *App) doGet(ctx context.Context, wrapper *DownloadTaskWrapper) {
@@ -336,7 +299,7 @@ func (a *App) doGet(ctx context.Context, wrapper *DownloadTaskWrapper) {
 }
 
 func (a *App) DeleteObject(bucketName, key string, selectedType string,
-	eventDeleteSuccess, eventDeleteCount string) ObjectHandlerResult {
+	eventDeleteSuccess, eventDeleteCount string) ErrResult {
 	task := &DeleteTask{
 		a:                  a,
 		bucketName:         bucketName,
@@ -353,16 +316,11 @@ func (a *App) DeleteObject(bucketName, key string, selectedType string,
 	}
 	task.Start()
 	task.wg.Wait()
-	return ObjectHandlerResult{}
-}
-
-type SelectedObject struct {
-	Type string
-	Key  string
+	return ErrResult{}
 }
 
 func (a *App) DeleteObjects(bucketName string, keys []DeleteKey,
-	eventDeleteSuccess, eventDeleteCount string) ObjectHandlerResult {
+	eventDeleteSuccess, eventDeleteCount string) ErrResult {
 	task := &DeleteTask{
 		a:                  a,
 		bucketName:         bucketName,
@@ -375,5 +333,5 @@ func (a *App) DeleteObjects(bucketName string, keys []DeleteKey,
 
 	task.Start()
 	task.wg.Wait()
-	return ObjectHandlerResult{}
+	return ErrResult{}
 }

@@ -1,4 +1,4 @@
-package db
+package models
 
 import (
 	"time"
@@ -15,11 +15,13 @@ type LoginInfo struct {
 	UseSSL    bool      `json:"useSSL"`
 }
 
+type TaskStatus int
+
 const (
-	PAUSE int = iota
+	QUEUED TaskStatus = iota
 	WAITING
 	RUNNING
-	ERROR
+	STOPPED
 	FINISH
 )
 
@@ -37,7 +39,7 @@ type UploadTask struct {
 	UploadId      string           `json:"uploadId"`
 	IsMultipart   bool             `json:"isMultipart"`
 	PartSize      int64            `json:"partSize"`
-	Status        int              `json:"status"`
+	Status        TaskStatus       `json:"status"`
 	CompletedPart []*CompletedPart `json:"completedPart" gorm:"-"`
 	ModifiedTime  time.Time        `json:"modifiedTime"`
 }
@@ -53,7 +55,7 @@ type DownloadTask struct {
 	Size          int64                    `json:"size"`
 	HumanSize     string                   `json:"humanSize"`
 	CompletedPart []*CompletedDownloadPart `json:"completedPart" gorm:"-"`
-	Status        int                      `json:"status"`
+	Status        TaskStatus               `json:"status"`
 }
 
 type CompletedDownloadPart struct {

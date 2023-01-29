@@ -16,6 +16,7 @@ import (
 	"sync"
 	"time"
 	"xBrowser/app/db"
+	. "xBrowser/app/models"
 )
 
 // DefaultDownloadPartSize is the default range of bytes to get at a time when
@@ -97,7 +98,7 @@ type maxRetrier interface {
 type GetObjectInput struct {
 	_ struct{} `type:"structure"`
 
-	DownloadTask *db.DownloadTask
+	DownloadTask *DownloadTask
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -148,7 +149,7 @@ type GetObjectInput struct {
 	// Sets the Content-Language header of the response.
 	ResponseContentLanguage *string `location:"querystring" locationName:"response-content-language" type:"string"`
 
-	// Sets the Content-Type header of the response.
+	// Sets the Content-Name header of the response.
 	ResponseContentType *string `location:"querystring" locationName:"response-content-type" type:"string"`
 
 	// Sets the Expires header of the response.

@@ -1,5 +1,7 @@
 package db
 
+import . "xBrowser/app/models"
+
 type DB_TYPE string
 
 var GlobalAppDB AppDB

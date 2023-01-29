@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"xBrowser/app/db"
+	. "xBrowser/app/models"
 )
 
 func (a *App) reloadWorkers() {
@@ -62,7 +63,7 @@ func (a *App) reloadWorkers() {
 	}
 }
 
-func (a *App) UpdateSettings(s db.Settings) ObjectHandlerResult {
+func (a *App) UpdateSettings(s Settings) ErrResult {
 	settings := &s
 	settings.AccountId = a.AccountId
 	if _, ok := settings.Validate(); !ok {
@@ -71,13 +72,13 @@ func (a *App) UpdateSettings(s db.Settings) ObjectHandlerResult {
 	runtime.LogDebugf(a.ctx, "update settings: %v", *settings)
 	err := db.GlobalAppDB.UpdateSettings(settings)
 	if err != nil {
-		return ObjectHandlerResult{Err: err.Error()}
+		return ErrResult{Err: err.Error()}
 	}
 	a.Config.AppSettings = settings
 	a.reloadWorkers()
-	return ObjectHandlerResult{}
+	return ErrResult{}
 }
 
-func (a *App) LoadSettings() db.Settings {
+func (a *App) LoadSettings() Settings {
 	return *a.Config.AppSettings
 }

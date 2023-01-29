@@ -4,10 +4,10 @@ import (
 	"github.com/journeymidnight/aws-sdk-go/aws"
 	"github.com/journeymidnight/aws-sdk-go/service/s3"
 	"io"
-	"xBrowser/app/db"
+	. "xBrowser/app/models"
 )
 
-func (s3client *S3Client) UploadObject(ctx aws.Context, body io.ReadSeeker, task *db.UploadTask) (out *UploadOutput, err error) {
+func (s3client *S3Client) UploadObject(ctx aws.Context, body io.ReadSeeker, task *UploadTask) (out *UploadOutput, err error) {
 	params := &UploadInput{
 		Body:       body,
 		Bucket:     aws.String(task.Bucket),
@@ -17,7 +17,7 @@ func (s3client *S3Client) UploadObject(ctx aws.Context, body io.ReadSeeker, task
 	return s3client.Uploader.UploadWithContext(ctx, params)
 }
 
-func (s3client *S3Client) DownloadObject(ctx aws.Context, w io.WriterAt, task *db.DownloadTask) (int64, error) {
+func (s3client *S3Client) DownloadObject(ctx aws.Context, w io.WriterAt, task *DownloadTask) (int64, error) {
 	params := &GetObjectInput{
 		Bucket:       aws.String(task.Bucket),
 		Key:          aws.String(task.Key),

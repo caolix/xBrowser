@@ -133,7 +133,7 @@ import {computed, ref} from 'vue'
 import {useStore} from "vuex";
 import {RemoveDownloadTask, RemoveUploadTask, ResumeUploadTask} from "../../wailsjs/go/app/App";
 import {ElMessage} from "element-plus";
-import {db} from '../../wailsjs/go/models'
+import {models} from '../../wailsjs/go/models'
 
 export default {
   name: "TaskList",
@@ -236,7 +236,7 @@ export default {
     }
 
     const resumeUpload = (task) => {
-      var t = new db.UploadTask()
+      var t = new models.UploadTask()
       t.uploadedSize = task.uploadedSize
       t.key = task.key
       t.size = task.size
@@ -263,7 +263,7 @@ export default {
 
     const removeUpload = (task, index) => {
       if (uploadPercentageMap[task.taskId] !== 100) {
-        var t = new db.UploadTask()
+        var t = new models.UploadTask()
         t.uploadedSize = task.uploadedSize
         t.key = task.key
         t.size = task.size
@@ -293,7 +293,7 @@ export default {
 
     const removeDownload = (task, index) => {
       if (downloadPercentageMap[task.taskId] !== 100) {
-        var t = new db.DownloadTask()
+        var t = new models.DownloadTask()
         t.key = task.key
         t.size = task.size
         t.name = task.name

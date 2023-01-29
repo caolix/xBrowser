@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 	"os"
 	"time"
+	. "xBrowser/app/models"
 )
 
 type AppSqlite struct {

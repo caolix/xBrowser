@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"xBrowser/app/db"
 	logger2 "xBrowser/app/logger"
+	. "xBrowser/app/models"
 	"xBrowser/app/s3lib"
 	"xBrowser/app/util"
 )
@@ -44,7 +45,7 @@ type App struct {
 type AppConfig struct {
 	DbType      db.DB_TYPE
 	Address     string
-	AppSettings *db.Settings
+	AppSettings *Settings
 }
 
 // NewApp creates a new App application struct
@@ -79,6 +80,7 @@ func NewApp() *App {
 
 // startup is called at application startup
 // startup 在应用程序启动时调用
+// 1. Init db, and then load account settings.
 func (a *App) Startup(ctx context.Context) {
 	// Perform your setup here
 	// 在这里执行初始化设置

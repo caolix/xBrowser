@@ -5,12 +5,12 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"time"
 	"xBrowser/app/db"
+	. "xBrowser/app/models"
 	"xBrowser/app/s3lib"
 	"xBrowser/app/util"
 )
 
-// Greet returns a greeting for the given name
-func (a *App) Login(l db.LoginInfo, needSave bool, isHttps bool) string {
+func (a *App) Login(l LoginInfo, needSave bool, isHttps bool) string {
 	runtime.LogDebugf(a.ctx, "Login info: %s %s %s %v %v", l.Endpoint, l.AccessKey, l.SecretKey, needSave, isHttps)
 	a.S3Client = s3lib.NewS3(l.Endpoint, l.AccessKey, l.SecretKey, isHttps)
 	_, err := a.S3Client.ListBuckets()
@@ -22,7 +22,7 @@ func (a *App) Login(l db.LoginInfo, needSave bool, isHttps bool) string {
 	a.AccountId = util.GenAccountId(l.AccessKey, l.Endpoint)
 	if needSave {
 		// Update if the database has the same record, otherwise insert
-		err = db.GlobalAppDB.UpsertLoginInfo(&db.LoginInfo{
+		err = db.GlobalAppDB.UpsertLoginInfo(&LoginInfo{
 			Endpoint:  l.Endpoint,
 			AccessKey: l.AccessKey,
 			SecretKey: l.SecretKey,
@@ -42,7 +42,7 @@ func (a *App) Login(l db.LoginInfo, needSave bool, isHttps bool) string {
 }
 
 func (a *App) loadTaskQueues() {
-	a.loadTaskRunnningQ()
+	a.loadTaskRunningQ()
 	a.loadTaskWaitQ()
 }
 
@@ -75,7 +75,7 @@ func (a *App) listenTaskWaitQ() {
 	}
 }
 
-func (a *App) loadTaskRunnningQ() {
+func (a *App) loadTaskRunningQ() {
 	if _, ok := a.uploadTaskRunningQ[a.AccountId]; !ok {
 		a.uploadTaskRunningQ[a.AccountId] = util.NewQueue()
 		go a.listenTaskRunningQ()
@@ -103,7 +103,7 @@ func (a *App) registerWorkers() {
 	TaskCancelFunc = make(map[string]context.CancelFunc)
 	a.uploadCtx, a.uploadCancelFunc = context.WithCancel(context.Background())
 	go a.ListenListObjectsEvent()
-	for i := 0; i < db.MaxUploadConcurrency; i++ {
+	for i := 0; i < MaxUploadConcurrency; i++ {
 		var ctx context.Context
 		ctx, _ = context.WithCancel(a.uploadCtx)
 		worker := &uploadWorker{
@@ -122,7 +122,7 @@ func (a *App) registerWorkers() {
 	}
 
 	a.downloadCtx, a.downloadCancelFunc = context.WithCancel(context.Background())
-	for i := 0; i < db.MaxDownloadConcurrency; i++ {
+	for i := 0; i < MaxDownloadConcurrency; i++ {
 		var ctx context.Context
 		ctx, _ = context.WithCancel(a.downloadCtx)
 		worker := &downloadWorker{
@@ -153,8 +153,8 @@ func (a *App) CheckDbError() string {
 	return ""
 }
 
-func (a *App) LoadLatestLoginInfo() db.LoginInfo {
-	info := db.LoginInfo{}
+func (a *App) LoadLatestLoginInfo() LoginInfo {
+	info := LoginInfo{}
 	res, err := db.GlobalAppDB.GetLatestLoginInfo()
 	if err != nil {
 		return info
@@ -165,8 +165,8 @@ func (a *App) LoadLatestLoginInfo() db.LoginInfo {
 	return info
 }
 
-func (a *App) ListAllLoginInfo() []db.LoginInfo {
-	infos := []db.LoginInfo{}
+func (a *App) ListAllLoginInfo() []LoginInfo {
+	infos := []LoginInfo{}
 	res, err := db.GlobalAppDB.ListAllLoginInfo()
 	if err != nil {
 		return infos

@@ -67,7 +67,7 @@
 import {reactive} from 'vue'
 import {CheckDbError, LoadLatestLoginInfo, Login} from '../../wailsjs/go/app/App'
 import {useRouter} from "vue-router";
-import {db} from '../../wailsjs/go/models'
+import {models} from '../../wailsjs/go/models'
 import {ElLoading, ElMessage} from 'element-plus'
 
 export default {
@@ -112,7 +112,7 @@ export default {
     )
 
     const login = () => {
-      let info = new db.LoginInfo()
+      let info = new models.LoginInfo()
       info.endpoint = data.endpoint
       info.ak = data.ak
       info.sk = data.sk

@@ -31,7 +31,7 @@
 <script lang="ts">
 import {onMounted, reactive} from 'vue'
 import {LoadSettings, UpdateSettings} from "../../wailsjs/go/app/App";
-import {db} from "../../wailsjs/go/models";
+import {models} from "../../wailsjs/go/models";
 import {ElMessage} from "element-plus";
 
 export default {
@@ -57,7 +57,7 @@ export default {
     })
 
     const onSubmit = () => {
-      var s = new db.Settings()
+      var s = new models.Settings()
       s.uploadConcurrency = form.uploadConcurrency
       s.downloadConcurrency = form.downloadConcurrency
       UpdateSettings(s).then((res) => {

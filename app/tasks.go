@@ -10,6 +10,7 @@ import (
 	"sync/atomic"
 	"time"
 	"xBrowser/app/db"
+	. "xBrowser/app/models"
 	"xBrowser/app/util"
 )
 
@@ -21,7 +22,7 @@ const (
 )
 
 type UploadTaskWrapper struct {
-	task              *db.UploadTask
+	task              *UploadTask
 	disabelUpdateList bool
 	readSeeker        io.ReadSeeker
 	resCh             chan error
@@ -52,8 +53,8 @@ func (a *App) ListenListObjectsEvent() {
 			continue
 		}
 		EventListObjectsQ.Pop()
-		runtime.EventsEmit(a.ctx, EventBackend, Event{
-			Type: TypeListObjectsEvent,
+		runtime.EventsEmit(a.ctx, AppEventBus, Event{
+			Name: EventListObjects,
 			Args: nil,
 		})
 	}
@@ -75,8 +76,8 @@ func (u *uploadWorker) start(a *App) {
 			runtime.LogDebugf(a.ctx, "recieve stopCh on worker %d", u.num)
 			u.setStatus(WorkerStopping)
 		case wrapper := <-u.taskCh:
-			runtime.EventsEmit(a.ctx, EventBackend, Event{
-				Type: TypeListenUploadTaskEvent,
+			runtime.EventsEmit(a.ctx, AppEventBus, Event{
+				Name: EventListenUploadTask,
 				Args: []string{wrapper.task.TaskId},
 			})
 			u.setStatus(WorkerRunning)
@@ -105,7 +106,7 @@ func (u *uploadWorker) setStatus(status int32) {
 	atomic.StoreInt32(&u.status, status)
 }
 
-func (a *App) LoadAllUploadTasks() []db.UploadTask {
+func (a *App) LoadAllUploadTasks() []UploadTask {
 	tasks, err := db.GlobalAppDB.ListAllUploadTasks(a.AccountId)
 	if err != nil {
 		runtime.LogErrorf(a.ctx, "db.ListAllUploadTasks err: %s", err.Error())
@@ -115,28 +116,28 @@ func (a *App) LoadAllUploadTasks() []db.UploadTask {
 	return tasks
 }
 
-func (a *App) ResumeUploadTask(u db.UploadTask) ObjectHandlerResult {
+func (a *App) ResumeUploadTask(u UploadTask) ErrResult {
 	f, err := os.Open(u.Source)
 	if err != nil {
 		runtime.LogErrorf(a.ctx, "Open file %s err: %s ", u.Source, err)
-		return ObjectHandlerResult{Err: err.Error()}
+		return ErrResult{Err: err.Error()}
 	}
 	fInfo, err := f.Stat()
 	if err != nil {
 		runtime.LogErrorf(a.ctx, "Stat file %s err: %s ", u.Source, err)
-		return ObjectHandlerResult{Err: err.Error()}
+		return ErrResult{Err: err.Error()}
 	}
 	runtime.LogDebugf(a.ctx, "ResumeUploadTask source: %s bucket: %s, key: %s", u.Source, u.Bucket, u.Key)
 	if u.IsMultipart {
 		completePart, maxPartNum, err := a.getUploadedParts(&u)
 		if err != nil {
-			return ObjectHandlerResult{Err: err.Error()}
+			return ErrResult{Err: err.Error()}
 		}
 		u.UploadedSize = maxPartNum * u.PartSize
 		u.CompletedPart = completePart
 		runtime.LogDebugf(a.ctx, "getMaxUploadedPartNumber: %d", maxPartNum)
 		if err != nil {
-			return ObjectHandlerResult{Err: err.Error()}
+			return ErrResult{Err: err.Error()}
 		}
 	}
 	p := NewProgress(a.ctx, u.TaskId, fInfo.Size())
@@ -147,10 +148,10 @@ func (a *App) ResumeUploadTask(u db.UploadTask) ObjectHandlerResult {
 		resCh:             make(chan error),
 	}
 	a.uploadTaskWaitQ[a.AccountId].Push(wrapper)
-	return ObjectHandlerResult{}
+	return ErrResult{}
 }
 
-func (a *App) RemoveUploadTask(u db.UploadTask) ObjectHandlerResult {
+func (a *App) RemoveUploadTask(u UploadTask) ErrResult {
 	defer func() {
 		runtime.LogDebugf(a.ctx, "CancelUploadTask: %s %s %s", u.Bucket, u.Key, u.UploadId)
 		runtime.LogDebugf(a.ctx, "DeleteUploadTask: %s %s", u.AccountId, u.TaskId)
@@ -162,20 +163,20 @@ func (a *App) RemoveUploadTask(u db.UploadTask) ObjectHandlerResult {
 		delete(TaskCancelFunc, u.TaskId)
 		lock.Unlock()
 	}
-	if u.IsMultipart && u.Status != db.FINISH {
+	if u.IsMultipart && u.Status != FINISH {
 		runtime.LogDebugf(a.ctx, "AbortMultiPartUpload: %s %s %s", u.Bucket, u.Key, u.UploadId)
 		err := a.S3Client.AbortMultiPartUpload(u.Bucket, u.Key, u.UploadId)
 		if err != nil {
 			runtime.LogErrorf(a.ctx, "AbortMultiPartUpload err: %v", err)
-			return ObjectHandlerResult{Err: err.Error()}
+			return ErrResult{Err: err.Error()}
 		}
 	}
-	return ObjectHandlerResult{}
+	return ErrResult{}
 }
 
-func (a *App) getUploadedParts(u *db.UploadTask) ([]*db.CompletedPart, int64, error) {
+func (a *App) getUploadedParts(u *UploadTask) ([]*CompletedPart, int64, error) {
 	var partNumberMarker int64 = 0
-	var completePart = []*db.CompletedPart{}
+	var completePart = []*CompletedPart{}
 	for {
 		out, err := a.S3Client.ListMultipartUploadParts(u.Bucket, u.Key, u.UploadId, partNumberMarker)
 		if err != nil {
@@ -185,7 +186,7 @@ func (a *App) getUploadedParts(u *db.UploadTask) ([]*db.CompletedPart, int64, er
 		for _, p := range out.Parts {
 			if *p.PartNumber == partNumberMarker+1 {
 				partNumberMarker = *p.PartNumber
-				completePart = append(completePart, &db.CompletedPart{ETag: *p.ETag, PartNumber: partNumberMarker})
+				completePart = append(completePart, &CompletedPart{ETag: *p.ETag, PartNumber: partNumberMarker})
 				continue
 			} else {
 				return completePart, partNumberMarker, nil
@@ -201,7 +202,7 @@ func (a *App) getUploadedParts(u *db.UploadTask) ([]*db.CompletedPart, int64, er
 }
 
 type DownloadTaskWrapper struct {
-	task      *db.DownloadTask
+	task      *DownloadTask
 	w         io.WriterAt
 	resCh     chan error
 	requestCh chan error
@@ -251,7 +252,7 @@ func (u *downloadWorker) setStatus(status int32) {
 	atomic.StoreInt32(&u.status, status)
 }
 
-func (a *App) LoadAllDownloadTasks() []db.DownloadTask {
+func (a *App) LoadAllDownloadTasks() []DownloadTask {
 	tasks, err := db.GlobalAppDB.ListAllDownloadTasks(a.AccountId)
 	if err != nil {
 		runtime.LogErrorf(a.ctx, "db.ListAllDownloadTasks err: %s", err.Error())
@@ -261,11 +262,11 @@ func (a *App) LoadAllDownloadTasks() []db.DownloadTask {
 	return tasks
 }
 
-func (a *App) ResumeDownloadTask(u db.DownloadTask) ObjectHandlerResult {
+func (a *App) ResumeDownloadTask(u DownloadTask) ErrResult {
 	f, err := os.Create(u.Destination)
 	if err != nil {
 		runtime.LogErrorf(a.ctx, "Open file %s err: %s ", u.Destination, err)
-		return ObjectHandlerResult{Err: err.Error()}
+		return ErrResult{Err: err.Error()}
 	}
 	runtime.LogDebugf(a.ctx, "ResumeDownloadTask source: %s bucket: %s, key: %s", u.Destination, u.Bucket, u.Key)
 	p := NewProgress(a.ctx, u.TaskId, u.Size)
@@ -277,12 +278,12 @@ func (a *App) ResumeDownloadTask(u db.DownloadTask) ObjectHandlerResult {
 	}
 	a.downloadTaskQ <- wrapper
 	if err = <-wrapper.requestCh; err != nil {
-		return ObjectHandlerResult{Err: err.Error()}
+		return ErrResult{Err: err.Error()}
 	}
-	return ObjectHandlerResult{}
+	return ErrResult{}
 }
 
-func (a *App) RemoveDownloadTask(u db.DownloadTask) ObjectHandlerResult {
+func (a *App) RemoveDownloadTask(u DownloadTask) ErrResult {
 	defer func() {
 		runtime.LogDebugf(a.ctx, "CancelDownloadTask: %s %s %s", u.Bucket, u.Key, u.Destination)
 		runtime.LogDebugf(a.ctx, "DeleteDownloadTask: %s %s", u.AccountId, u.TaskId)
@@ -294,5 +295,5 @@ func (a *App) RemoveDownloadTask(u db.DownloadTask) ObjectHandlerResult {
 		delete(TaskCancelFunc, u.TaskId)
 		lock.Unlock()
 	}
-	return ObjectHandlerResult{}
+	return ErrResult{}
 }
