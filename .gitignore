@@ -2,6 +2,7 @@
 frontend/dist/
 frontend/dist/index.html
 frontend/wailsjs/go/models.ts
+frontend/node_modules
 .idea/
 build/bin/
 build/windows/installer/tmp/
