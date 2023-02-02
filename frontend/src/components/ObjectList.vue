@@ -115,7 +115,7 @@
   <div class="container">
     <el-table
         :data="objectList"
-        max-height="800"
+        max-height=65vh
         class="table"
         v-loading="loading"
         ref="multipleTableRef"
