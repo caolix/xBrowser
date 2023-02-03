@@ -21,6 +21,7 @@ func (s3client *S3Client) DownloadObject(ctx aws.Context, w io.WriterAt, task *D
 	params := &GetObjectInput{
 		Bucket:       aws.String(task.Bucket),
 		Key:          aws.String(task.Key),
+		VersionId:    aws.String(task.VersionId),
 		DownloadTask: task,
 	}
 	return s3client.Downloader.DownloadWithContext(ctx, w, params)
@@ -36,18 +37,20 @@ func (s3client *S3Client) PutObject(bucketName, key string, body io.ReadSeeker) 
 	return err
 }
 
-func (s3client *S3Client) GetObjectOutPut(bucketName, key string) (out *s3.GetObjectOutput, err error) {
+func (s3client *S3Client) GetObjectOutPut(bucketName, key string, versionId string) (out *s3.GetObjectOutput, err error) {
 	params := &s3.GetObjectInput{
-		Bucket: aws.String(bucketName),
-		Key:    aws.String(key),
+		Bucket:    aws.String(bucketName),
+		Key:       aws.String(key),
+		VersionId: aws.String(versionId),
 	}
 	return s3client.Client.GetObject(params)
 }
 
-func (s3client *S3Client) DeleteObject(bucketName, key string) (err error) {
+func (s3client *S3Client) DeleteObject(bucketName, key, versionId string) (err error) {
 	params := &s3.DeleteObjectInput{
-		Bucket: aws.String(bucketName),
-		Key:    aws.String(key),
+		Bucket:    aws.String(bucketName),
+		Key:       aws.String(key),
+		VersionId: aws.String(versionId),
 	}
 	_, err = s3client.Client.DeleteObject(params)
 	return err
@@ -75,4 +78,12 @@ func (s3client *S3Client) DeleteObjects(bucketName string, keys map[string]strin
 		return err
 	}
 	return
+}
+
+func (s3client *S3Client) ListObjectVersions(bucketName string, key string) (out *s3.ListObjectVersionsOutput, err error) {
+	params := &s3.ListObjectVersionsInput{
+		Bucket: aws.String(bucketName),
+		Prefix: aws.String(key),
+	}
+	return s3client.Client.ListObjectVersions(params)
 }

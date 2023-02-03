@@ -7,11 +7,28 @@ type ListBucketsResult struct {
 	Err     string   `json:"err"`
 }
 
+type GetBucketVersioningResult struct {
+	Bucket     string `json:"bucket"`
+	Versioning string `json:"versioning"`
+	Err        string `json:"err"`
+}
+
 type Object struct {
 	Key          string    `json:"key"`
 	Size         int64     `json:"size"`
 	HumanSize    string    `json:"humanSize"`
 	LastModified time.Time `json:"lastModified"`
+}
+
+type ObjectVersioning struct {
+	ETag         string    `json:"ETag"`
+	IsLatest     bool      `json:"isLatest"`
+	Key          string    `json:"key"`
+	LastModified time.Time `json:"lastModified"`
+	Owner        string    `json:"owner"`
+	Size         int64     `json:"size"`
+	StorageClass string    `json:"storageClass"`
+	VersionId    string    `json:"versionId"`
 }
 
 type ListObjectResult struct {
@@ -43,4 +60,9 @@ type SelectDownloadPathResult struct {
 type SelectedObject struct {
 	Type string
 	Key  string
+}
+
+type GetObjectVersionsResult struct {
+	Versions []ObjectVersioning `json:"versions"`
+	Err      string             `json:"err"`
 }

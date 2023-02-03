@@ -508,7 +508,7 @@ export default {
         // open TaskList and download label
         context.emit('changeVisible', true)
         context.emit('setTaskTabName', "download")
-        DoGetObject(<string>bucketName, prefix.value + v.key, v.path, v.size, eventProgress, false)
+        DoGetObject(<string>bucketName, prefix.value + v.key, "", v.path, v.size, eventProgress, false)
             .then(res => {
               if (res.err !== '') {
                 ElMessage.error(res.err)
@@ -577,7 +577,7 @@ export default {
         deleteData.success = data
       })
       dialogDeleteVisible.value = true
-      DeleteObject(<string>bucketName, prefix.value + key, keyType, eventDeleteSuccess, eventDeleteCount)
+      DeleteObject(<string>bucketName, prefix.value + key, "", keyType, eventDeleteSuccess, eventDeleteCount)
           .then(res => {
             if (res.err !== '') {
               ElMessage.error("delete object failed")

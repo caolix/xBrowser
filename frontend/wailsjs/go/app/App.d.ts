@@ -7,19 +7,23 @@ export function CheckDbError():Promise<string>;
 
 export function DeleteBucket(arg1:string):Promise<string>;
 
-export function DeleteObject(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string):Promise<models.ErrResult>;
+export function DeleteObject(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string):Promise<models.ErrResult>;
 
 export function DeleteObjects(arg1:string,arg2:Array<app.DeleteKey>,arg3:string,arg4:string):Promise<models.ErrResult>;
 
-export function DoGetObject(arg1:string,arg2:string,arg3:string,arg4:number,arg5:string,arg6:boolean):Promise<models.ErrResult>;
+export function DoGetObject(arg1:string,arg2:string,arg3:string,arg4:string,arg5:number,arg6:string,arg7:boolean):Promise<models.ErrResult>;
 
 export function DoPutObject(arg1:string,arg2:string,arg3:string,arg4:string):Promise<models.ErrResult>;
 
 export function GetAccountId():Promise<string>;
 
+export function GetBucketDetailResult(arg1:string):Promise<models.GetBucketVersioningResult>;
+
 export function ListAllLoginInfo():Promise<Array<models.LoginInfo>>;
 
 export function ListBuckets():Promise<models.ListBucketsResult>;
+
+export function ListObjectVersions(arg1:string,arg2:string):Promise<models.GetObjectVersionsResult>;
 
 export function ListObjects(arg1:string,arg2:string,arg3:string,arg4:number):Promise<models.ListObjectResult>;
 
@@ -38,6 +42,8 @@ export function Login(arg1:models.LoginInfo,arg2:boolean,arg3:boolean):Promise<s
 export function Logout():Promise<void>;
 
 export function MakeBucket(arg1:string):Promise<string>;
+
+export function PutBucketVersioning(arg1:string,arg2:string):Promise<string>;
 
 export function PutDir(arg1:string,arg2:string,arg3:string):Promise<models.ErrResult>;
 
