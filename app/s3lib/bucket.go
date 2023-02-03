@@ -35,6 +35,34 @@ func (s3client *S3Client) HeadBucket(bucketName string) (err error) {
 	return
 }
 
+func (s3client *S3Client) GetBucketVersioning(bucketName string) (status string, MFADelete string, err error) {
+	params := &s3.GetBucketVersioningInput{
+		Bucket: aws.String(bucketName),
+	}
+	out, err := s3client.Client.GetBucketVersioning(params)
+	if err != nil {
+		return "", "", err
+	}
+	status = *out.Status
+	MFADelete = *out.MFADelete
+	return
+}
+
+func (s3client *S3Client) PutBucketVersioning(bucketName string, status string, MFADelete string) (err error) {
+	params := &s3.PutBucketVersioningInput{
+		Bucket: aws.String(bucketName),
+		VersioningConfiguration: &s3.VersioningConfiguration{
+			Status:    aws.String(status),
+			MFADelete: aws.String(MFADelete),
+		},
+	}
+	_, err = s3client.Client.PutBucketVersioning(params)
+	if err != nil {
+		return err
+	}
+	return
+}
+
 func (s3client *S3Client) ListBuckets() (buckets []string, err error) {
 	params := &s3.ListBucketsInput{}
 	out, err := s3client.Client.ListBuckets(params)

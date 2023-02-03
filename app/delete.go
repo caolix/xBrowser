@@ -12,8 +12,9 @@ const (
 )
 
 type DeleteKey struct {
-	Key     string `json:"key"`
-	KeyType string `json:"keyType"`
+	Key       string `json:"key"`
+	KeyType   string `json:"keyType"`
+	VersionId string `json:"versionId"`
 }
 
 type DeleteTask struct {
@@ -31,7 +32,7 @@ func (t *DeleteTask) doDelete() {
 	for {
 		select {
 		case d := <-t.delCh:
-			err := t.a.S3Client.DeleteObject(t.bucketName, d.Key)
+			err := t.a.S3Client.DeleteObject(t.bucketName, d.Key, d.VersionId)
 			if err != nil {
 				runtime.LogErrorf(t.a.ctx, "DeleteObject %s in bucket %s err: %s ", d.Key, t.bucketName, err)
 				continue

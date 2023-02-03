@@ -10,16 +10,16 @@ export function DeleteBucket(arg1) {
   return window['go']['app']['App']['DeleteBucket'](arg1);
 }
 
-export function DeleteObject(arg1, arg2, arg3, arg4, arg5) {
-  return window['go']['app']['App']['DeleteObject'](arg1, arg2, arg3, arg4, arg5);
+export function DeleteObject(arg1, arg2, arg3, arg4, arg5, arg6) {
+  return window['go']['app']['App']['DeleteObject'](arg1, arg2, arg3, arg4, arg5, arg6);
 }
 
 export function DeleteObjects(arg1, arg2, arg3, arg4) {
   return window['go']['app']['App']['DeleteObjects'](arg1, arg2, arg3, arg4);
 }
 
-export function DoGetObject(arg1, arg2, arg3, arg4, arg5, arg6) {
-  return window['go']['app']['App']['DoGetObject'](arg1, arg2, arg3, arg4, arg5, arg6);
+export function DoGetObject(arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
+  return window['go']['app']['App']['DoGetObject'](arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 }
 
 export function DoPutObject(arg1, arg2, arg3, arg4) {
@@ -30,12 +30,20 @@ export function GetAccountId() {
   return window['go']['app']['App']['GetAccountId']();
 }
 
+export function GetBucketDetailResult(arg1) {
+  return window['go']['app']['App']['GetBucketDetailResult'](arg1);
+}
+
 export function ListAllLoginInfo() {
   return window['go']['app']['App']['ListAllLoginInfo']();
 }
 
 export function ListBuckets() {
   return window['go']['app']['App']['ListBuckets']();
+}
+
+export function ListObjectVersions(arg1, arg2) {
+  return window['go']['app']['App']['ListObjectVersions'](arg1, arg2);
 }
 
 export function ListObjects(arg1, arg2, arg3, arg4) {
@@ -72,6 +80,10 @@ export function Logout() {
 
 export function MakeBucket(arg1) {
   return window['go']['app']['App']['MakeBucket'](arg1);
+}
+
+export function PutBucketVersioning(arg1, arg2) {
+  return window['go']['app']['App']['PutBucketVersioning'](arg1, arg2);
 }
 
 export function PutDir(arg1, arg2, arg3) {

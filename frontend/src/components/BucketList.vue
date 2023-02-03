@@ -27,7 +27,7 @@
   <div class="container">
     <el-table
         :data="bucketList"
-        max-height="800"
+        max-height=80vh
         class="table"
         v-loading="loading"
     >
@@ -172,6 +172,7 @@ export default {
 <style scoped>
 .container {
   width: 90%;
+  height: 80%;
   text-align: left;
   margin: 6px auto 3% auto;
   border: 1px solid #EEE;

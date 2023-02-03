@@ -48,6 +48,26 @@ func (a *App) DeleteBucket(bucket string) string {
 	return ""
 }
 
+func (a *App) PutBucketVersioning(bucket string, status string) string {
+	err := a.S3Client.PutBucketVersioning(bucket, status, "")
+	if err != nil {
+		runtime.LogErrorf(a.ctx, "PutBucketVersioning %s status %s err: %s", bucket, status, err)
+		return err.Error()
+	}
+	return ""
+}
+
+func (a *App) GetBucketDetailResult(bucket string) GetBucketVersioningResult {
+	versioning, _, err := a.S3Client.GetBucketVersioning(bucket)
+	if err != nil {
+		runtime.LogErrorf(a.ctx, "GetBucketVersioning %s err: %s", bucket, err)
+		return GetBucketVersioningResult{Err: err.Error()}
+	}
+	res := GetBucketVersioningResult{}
+	res.Versioning = versioning
+	return res
+}
+
 func (a *App) ListObjects(bucketName, marker, prefix string, maxKeys int64) ListObjectResult {
 	out, err := a.S3Client.ListObjects(bucketName, marker, prefix, maxKeys, "/")
 	if err != nil {
@@ -244,7 +264,7 @@ func (a *App) SelectDownloadPath() SelectDownloadPathResult {
 	}
 }
 
-func (a *App) DoGetObject(bucketName, key, destPath string, size int64, eventProgress string, override bool) ErrResult {
+func (a *App) DoGetObject(bucketName, key, versionId, destPath string, size int64, eventProgress string, override bool) ErrResult {
 	downloadFileName := getDownloadName(key) + ".download"
 	downloadFilePath := destPath + string(os.PathSeparator) + downloadFileName
 	filePath := destPath + string(os.PathSeparator) + getDownloadName(key)
@@ -261,6 +281,7 @@ func (a *App) DoGetObject(bucketName, key, destPath string, size int64, eventPro
 		TaskId:      eventProgress,
 		Bucket:      bucketName,
 		Key:         key,
+		VersionId:   versionId,
 		Name:        getDownloadName(key),
 		Destination: filePath,
 		Size:        size,
@@ -298,7 +319,7 @@ func (a *App) doGet(ctx context.Context, wrapper *DownloadTaskWrapper) {
 	wrapper.resCh <- nil
 }
 
-func (a *App) DeleteObject(bucketName, key string, selectedType string,
+func (a *App) DeleteObject(bucketName, key, versionId string, selectedType string,
 	eventDeleteSuccess, eventDeleteCount string) ErrResult {
 	task := &DeleteTask{
 		a:                  a,
@@ -308,8 +329,9 @@ func (a *App) DeleteObject(bucketName, key string, selectedType string,
 		delCh:              make(chan DeleteKey, 100),
 		keys: []DeleteKey{
 			{
-				Key:     key,
-				KeyType: selectedType,
+				Key:       key,
+				KeyType:   selectedType,
+				VersionId: versionId,
 			},
 		},
 		wg: &sync.WaitGroup{},
@@ -334,4 +356,26 @@ func (a *App) DeleteObjects(bucketName string, keys []DeleteKey,
 	task.Start()
 	task.wg.Wait()
 	return ErrResult{}
+}
+
+func (a *App) ListObjectVersions(bucketName string, key string) GetObjectVersionsResult {
+	out, err := a.S3Client.ListObjectVersions(bucketName, key)
+	if err != nil {
+		runtime.LogErrorf(a.ctx, "ListObjectVersions %s %s err: %s", bucketName, key, err)
+	}
+	res := GetObjectVersionsResult{}
+	for _, object := range out.Versions {
+		obj := ObjectVersioning{
+			ETag:         *object.ETag,
+			IsLatest:     *object.IsLatest,
+			Key:          *object.Key,
+			LastModified: *object.LastModified,
+			Owner:        *object.Owner.DisplayName,
+			Size:         *object.Size,
+			StorageClass: *object.StorageClass,
+			VersionId:    *object.VersionId,
+		}
+		res.Versions = append(res.Versions, obj)
+	}
+	return res
 }

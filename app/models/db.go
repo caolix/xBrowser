@@ -50,6 +50,7 @@ type DownloadTask struct {
 	TaskId        string                   `json:"taskId"`
 	Bucket        string                   `json:"bucket"`
 	Key           string                   `json:"key"`
+	VersionId     string                   `json:"versionId"`
 	Name          string                   `json:"name"`
 	Destination   string                   `json:"dest"`
 	Size          int64                    `json:"size"`
