@@ -46,6 +46,13 @@
             </el-button>
         </template>
       </el-table-column>
+      <el-table-column
+          show-overflow-tooltip
+          label="BucketCreateTime"
+          align="center"
+          prop="createtime"
+      >
+      </el-table-column>
       <el-table-column label="Operations" align="right">
         <template #default="scope">
           <el-popconfirm
@@ -106,10 +113,12 @@ export default {
         loading.value = true
         if (res.err !== '') {
           ElMessage.error(res)
-        } else {
+        }
+        if (res.buckets !==null) {
           res.buckets.forEach((b, i) => {
             const bucketInfo = {
-              name: b,
+              name: b.bucketname,
+              createtime: b.createtime
             }
             data.tableData.push(bucketInfo)
           })
