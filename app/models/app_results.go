@@ -3,7 +3,7 @@ package models
 import "time"
 
 type ListBucketsResult struct {
-	Buckets []string `json:"buckets"`
+	Buckets []Buckets `json:"buckets"`
 	Err     string   `json:"err"`
 }
 
@@ -11,6 +11,11 @@ type GetBucketVersioningResult struct {
 	Bucket     string `json:"bucket"`
 	Versioning string `json:"versioning"`
 	Err        string `json:"err"`
+}
+
+type Buckets struct {
+	Bucket string `json:"bucketname"`
+	CreateTime string `json:"createtime"`
 }
 
 type Object struct {

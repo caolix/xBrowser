@@ -25,18 +25,16 @@ func (a *App) ListBuckets() ListBucketsResult {
 		res.Err = err.Error()
 		return res
 	}
-	res.Buckets = buckets
+	for _, bucket := range buckets.Buckets{
+		b := Buckets{
+			Bucket: *bucket.Name,
+			CreateTime: (*bucket.CreationDate).Local().Format("2006-01-02 15:04:05"),
+			//CreateTime: (*bucket.CreationDate).String(),
+		}
+		res.Buckets = append(res.Buckets, b)
+	}
 	runtime.LogDebug(a.ctx, "ListBuckets success.")
 	return res
-}
-
-func (a *App) MakeBucket(bucket string) string {
-	err := a.S3Client.MakeBucket(bucket)
-	if err != nil {
-		runtime.LogErrorf(a.ctx, "MakeBucket %s err: %s ", bucket, err)
-		return err.Error()
-	}
-	return ""
 }
 
 func (a *App) DeleteBucket(bucket string) string {

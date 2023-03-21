@@ -63,17 +63,17 @@ func (s3client *S3Client) PutBucketVersioning(bucketName string, status string, 
 	return
 }
 
-func (s3client *S3Client) ListBuckets() (buckets []string, err error) {
+type Bucket struct {
+	buckename, createtime string
+}
+
+func (s3client *S3Client) ListBuckets() (buckets *s3.ListBucketsOutput, err error) {
 	params := &s3.ListBucketsInput{}
 	out, err := s3client.Client.ListBuckets(params)
 	if err != nil {
 		return nil, err
 	}
-
-	for _, bucket := range out.Buckets {
-		buckets = append(buckets, *bucket.Name)
-	}
-	return
+	return out, nil
 }
 
 func (s3client *S3Client) ListObjects(bucketName, marker, prefix string, maxKeys int64, delemiter string) (*s3.ListObjectsOutput, error) {
