@@ -37,6 +37,15 @@ func (a *App) ListBuckets() ListBucketsResult {
 	return res
 }
 
+func (a *App) MakeBucket(bucket string) string {
+	err := a.S3Client.MakeBucket(bucket)
+	if err != nil {
+		runtime.LogErrorf(a.ctx, "MakeBucket %s err: %s ", bucket, err)
+		return err.Error()
+	}
+	return ""
+}
+
 func (a *App) DeleteBucket(bucket string) string {
 	err := a.S3Client.DeleteBucket(bucket)
 	if err != nil {
