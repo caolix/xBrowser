@@ -1,10 +1,11 @@
 package s3lib
 
 import (
-	"github.com/journeymidnight/aws-sdk-go/aws"
-	"github.com/journeymidnight/aws-sdk-go/service/s3"
 	"io"
 	. "xBrowser/app/models"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3"
 )
 
 func (s3client *S3Client) UploadObject(ctx aws.Context, body io.ReadSeeker, task *UploadTask) (out *UploadOutput, err error) {

@@ -3,20 +3,21 @@ package s3lib
 import (
 	"bytes"
 	"fmt"
-	"github.com/journeymidnight/aws-sdk-go/aws"
-	"github.com/journeymidnight/aws-sdk-go/aws/awserr"
-	"github.com/journeymidnight/aws-sdk-go/aws/awsutil"
-	"github.com/journeymidnight/aws-sdk-go/aws/client"
-	"github.com/journeymidnight/aws-sdk-go/aws/credentials"
-	"github.com/journeymidnight/aws-sdk-go/aws/request"
-	"github.com/journeymidnight/aws-sdk-go/service/s3"
-	"github.com/journeymidnight/aws-sdk-go/service/s3/s3iface"
 	"io"
 	"sort"
 	"sync"
 	"time"
 	"xBrowser/app/db"
 	. "xBrowser/app/models"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/awsutil"
+	"github.com/aws/aws-sdk-go/aws/client"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 )
 
 // MaxUploadParts is the maximum allowed number of parts in a multi-part upload
@@ -199,7 +200,7 @@ type multiUploadError struct {
 
 // Error returns the string representation of the error.
 //
-// See apierr.BaseError ErrorWithExtra for output format
+// # See apierr.BaseError ErrorWithExtra for output format
 //
 // Satisfies the error interface.
 func (m multiUploadError) Error() string {
@@ -280,16 +281,17 @@ type Uploader struct {
 // satisfies the client.ConfigProvider interface.
 //
 // Example:
-//     // The session the S3 Uploader will use
-//     sess := session.Must(session.NewSession())
 //
-//     // Create an uploader with the session and default options
-//     uploader := s3manager.NewUploader(sess)
+//	// The session the S3 Uploader will use
+//	sess := session.Must(session.NewSession())
 //
-//     // Create an uploader with the session and custom options
-//     uploader := s3manager.NewUploader(session, func(u *s3manager.Uploader) {
-//          u.PartSize = 64 * 1024 * 1024 // 64MB per part
-//     })
+//	// Create an uploader with the session and default options
+//	uploader := s3manager.NewUploader(sess)
+//
+//	// Create an uploader with the session and custom options
+//	uploader := s3manager.NewUploader(session, func(u *s3manager.Uploader) {
+//	     u.PartSize = 64 * 1024 * 1024 // 64MB per part
+//	})
 func NewUploader(c client.ConfigProvider, options ...func(*Uploader)) *Uploader {
 	u := &Uploader{
 		S3:                s3.New(c),
@@ -320,21 +322,22 @@ func NewUploader(c client.ConfigProvider, options ...func(*Uploader)) *Uploader 
 // It is safe to call this method concurrently across goroutines.
 //
 // Example:
-//     // Upload input parameters
-//     upParams := &s3manager.UploadInput{
-//         Bucket: &bucketName,
-//         Key:    &keyName,
-//         Body:   file,
-//     }
 //
-//     // Perform an upload.
-//     result, err := uploader.Upload(upParams)
+//	// Upload input parameters
+//	upParams := &s3manager.UploadInput{
+//	    Bucket: &bucketName,
+//	    Key:    &keyName,
+//	    Body:   file,
+//	}
 //
-//     // Perform upload with options different than the those in the Uploader.
-//     result, err := uploader.Upload(upParams, func(u *s3manager.Uploader) {
-//          u.PartSize = 10 * 1024 * 1024 // 10MB part size
-//          u.LeavePartsOnError = true    // Don't delete the parts if the upload fails.
-//     })
+//	// Perform an upload.
+//	result, err := uploader.Upload(upParams)
+//
+//	// Perform upload with options different than the those in the Uploader.
+//	result, err := uploader.Upload(upParams, func(u *s3manager.Uploader) {
+//	     u.PartSize = 10 * 1024 * 1024 // 10MB part size
+//	     u.LeavePartsOnError = true    // Don't delete the parts if the upload fails.
+//	})
 func (u Uploader) Upload(input *UploadInput, options ...func(*Uploader)) (*UploadOutput, error) {
 	return u.UploadWithContext(aws.BackgroundContext(), input, options...)
 }

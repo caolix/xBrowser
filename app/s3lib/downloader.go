@@ -2,13 +2,6 @@ package s3lib
 
 import (
 	"fmt"
-	"github.com/journeymidnight/aws-sdk-go/aws"
-	"github.com/journeymidnight/aws-sdk-go/aws/awserr"
-	"github.com/journeymidnight/aws-sdk-go/aws/awsutil"
-	"github.com/journeymidnight/aws-sdk-go/aws/client"
-	"github.com/journeymidnight/aws-sdk-go/aws/request"
-	"github.com/journeymidnight/aws-sdk-go/service/s3"
-	"github.com/journeymidnight/aws-sdk-go/service/s3/s3iface"
 	"io"
 	"net/http"
 	"strconv"
@@ -17,6 +10,14 @@ import (
 	"time"
 	"xBrowser/app/db"
 	. "xBrowser/app/models"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/awsutil"
+	"github.com/aws/aws-sdk-go/aws/client"
+	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 )
 
 // DefaultDownloadPartSize is the default range of bytes to get at a time when
@@ -68,16 +69,17 @@ func WithDownloaderRequestOptions(opts ...request.Option) func(*Downloader) {
 // interface.
 //
 // Example:
-//     // The session the S3 Downloader will use
-//     sess := session.Must(session.NewSession())
 //
-//     // Create a downloader with the session and default options
-//     downloader := s3manager.NewDownloader(sess)
+//	// The session the S3 Downloader will use
+//	sess := session.Must(session.NewSession())
 //
-//     // Create a downloader with the session and custom options
-//     downloader := s3manager.NewDownloader(sess, func(d *s3manager.Downloader) {
-//          d.PartSize = 64 * 1024 * 1024 // 64MB per part
-//     })
+//	// Create a downloader with the session and default options
+//	downloader := s3manager.NewDownloader(sess)
+//
+//	// Create a downloader with the session and custom options
+//	downloader := s3manager.NewDownloader(sess, func(d *s3manager.Downloader) {
+//	     d.PartSize = 64 * 1024 * 1024 // 64MB per part
+//	})
 func NewDownloader(c client.ConfigProvider, options ...func(*Downloader)) *Downloader {
 	d := &Downloader{
 		S3:          s3.New(c),

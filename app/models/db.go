@@ -5,7 +5,7 @@ import (
 )
 
 type LoginInfo struct {
-	AccountId string    `gorm:"primaryKey" json:"accountId"`
+	AccountId string    `json:"accountId"`
 	Endpoint  string    `json:"endpoint"`
 	AccessKey string    `json:"ak"`
 	SecretKey string    `json:"sk"`
@@ -40,7 +40,7 @@ type UploadTask struct {
 	IsMultipart   bool             `json:"isMultipart"`
 	PartSize      int64            `json:"partSize"`
 	Status        TaskStatus       `json:"status"`
-	CompletedPart []*CompletedPart `json:"completedPart" gorm:"-"`
+	CompletedPart []*CompletedPart `json:"completedPart"`
 	ModifiedTime  time.Time        `json:"modifiedTime"`
 }
 
@@ -55,7 +55,7 @@ type DownloadTask struct {
 	Destination   string                   `json:"dest"`
 	Size          int64                    `json:"size"`
 	HumanSize     string                   `json:"humanSize"`
-	CompletedPart []*CompletedDownloadPart `json:"completedPart" gorm:"-"`
+	CompletedPart []*CompletedDownloadPart `json:"completedPart"`
 	Status        TaskStatus               `json:"status"`
 }
 
@@ -82,7 +82,7 @@ const (
 )
 
 type Settings struct {
-	AccountId              string `gorm:"primaryKey" json:"accountId"`
+	AccountId              string `json:"accountId"`
 	PartSizeMB             int    `json:"partSize"`
 	UploadPartsConcurrency int    `json:"uploadPartsConcurrency"`
 	UploadConcurrency      int    `json:"uploadConcurrency"`

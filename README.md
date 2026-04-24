@@ -13,3 +13,9 @@ browser and connect to your application.
 ## Building
 
 To build a redistributable, production mode package, use `wails build`.
+
+## Building prepare
+go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+wails build -platform windows/amd64 2>&1
+wails build -platform windows/amd64 -webview2 embed 2>&1
