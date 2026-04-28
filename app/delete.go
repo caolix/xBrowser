@@ -47,7 +47,7 @@ func (t *DeleteTask) doDelete() {
 func (t *DeleteTask) deleteFolder(key *DeleteKey) error {
 	marker := ""
 	for {
-		res, err := t.a.S3Client.ListObjects(t.bucketName, marker, key.Key, 1000, "")
+		res, err := t.a.S3Client.ListObjects(t.bucketName, marker, key.Key, 1000, "/")
 		if err != nil {
 			return err
 		}
@@ -56,10 +56,22 @@ func (t *DeleteTask) deleteFolder(key *DeleteKey) error {
 		t.wg.Add(len(res.Contents))
 		for _, c := range res.Contents {
 			delKey := DeleteKey{
-				Key:     *c.Key,
-				KeyType: TypeFolder,
+				Key:       *c.Key,
+				KeyType:   TypeObject,
+				VersionId: key.VersionId,
 			}
 			t.delCh <- delKey
+		}
+		for _, prefix := range res.CommonPrefixes {
+			subKey := DeleteKey{
+				Key:       *prefix.Prefix,
+				KeyType:   TypeFolder,
+				VersionId: key.VersionId,
+			}
+			t.wg.Add(1)
+			atomic.AddInt64(&t.total, 1)
+			runtime.EventsEmit(t.a.ctx, t.eventDeleteCount, t.total)
+			t.delCh <- subKey
 		}
 		if !*res.IsTruncated {
 			break

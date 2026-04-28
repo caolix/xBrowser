@@ -131,14 +131,12 @@ func (a *App) ResumeUploadTask(u UploadTask) ErrResult {
 	if u.IsMultipart {
 		completePart, maxPartNum, err := a.getUploadedParts(&u)
 		if err != nil {
+			f.Close()
 			return ErrResult{Err: err.Error()}
 		}
 		u.UploadedSize = maxPartNum * u.PartSize
 		u.CompletedPart = completePart
 		runtime.LogDebugf(a.ctx, "getMaxUploadedPartNumber: %d", maxPartNum)
-		if err != nil {
-			return ErrResult{Err: err.Error()}
-		}
 	}
 	p := NewProgress(a.ctx, u.TaskId, fInfo.Size())
 	wrapper := &UploadTaskWrapper{
@@ -238,12 +236,12 @@ func (u *downloadWorker) start(a *App) {
 			TaskCancelFunc[wrapper.task.TaskId] = cancel
 			lock.Unlock()
 			go a.doGet(downloadCtx, wrapper)
-			uploadErr := <-wrapper.resCh
-			if uploadErr != nil {
+			taskErr := <-wrapper.resCh
+			if taskErr != nil {
 				runtime.LogErrorf(a.ctx, "download task %s %s err: %s",
-					wrapper.task.Bucket, wrapper.task.Key, uploadErr.Error())
+					wrapper.task.Bucket, wrapper.task.Key, taskErr.Error())
 			}
-			wrapper.requestCh <- uploadErr
+			wrapper.requestCh <- taskErr
 		}
 	}
 }
@@ -269,6 +267,15 @@ func (a *App) ResumeDownloadTask(u DownloadTask) ErrResult {
 		return ErrResult{Err: err.Error()}
 	}
 	runtime.LogDebugf(a.ctx, "ResumeDownloadTask source: %s bucket: %s, key: %s", u.Destination, u.Bucket, u.Key)
+
+	completedParts, err := db.GlobalAppDB.GetAllDownloadParts(u.TaskId)
+	if err != nil {
+		runtime.LogErrorf(a.ctx, "GetAllDownloadParts err: %s", err)
+	}
+	if len(completedParts) > 0 {
+		u.CompletedPart = completedParts
+	}
+
 	p := NewProgress(a.ctx, u.TaskId, u.Size)
 	wrapper := &DownloadTaskWrapper{
 		task:      &u,

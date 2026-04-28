@@ -96,6 +96,9 @@ func (a *App) listenTaskRunningQ() {
 }
 
 func (a *App) GetAccountId() string {
+	if a == nil {
+		return ""
+	}
 	return a.AccountId
 }
 
@@ -132,7 +135,7 @@ func (a *App) registerWorkers() {
 			stopCh: make(chan struct{}, 1),
 			status: WorkerStopped,
 		}
-		if i < a.Config.AppSettings.UploadConcurrency {
+		if i < a.Config.AppSettings.DownloadConcurrency {
 			worker.setStatus(WorkerRunning)
 			go worker.start(a)
 		}

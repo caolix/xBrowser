@@ -116,7 +116,7 @@ func (a *App) Startup(ctx context.Context) {
 func (a *App) DomReady(ctx context.Context) {
 	// Add your action here
 	// 在这里添加你的操作
-	defer runtime.LogInfo(ctx, fmt.Sprintf("DomReady finished."))
+	defer runtime.LogInfo(ctx, "DomReady finished.")
 }
 
 // shutdown is called at application termination
@@ -124,9 +124,9 @@ func (a *App) DomReady(ctx context.Context) {
 func (a *App) Shutdown(ctx context.Context) {
 	// Perform your teardown here
 	// 在此处做一些资源释放的操作
-	//if a.DB != nil {
-	//	a.DB.Close()
-	//}
+	if sqlite, ok := db.GlobalAppDB.(*db.AppSqlite); ok && sqlite.DB != nil {
+		sqlite.DB.Close()
+	}
 	runtime.LogInfo(ctx, "Shutdown finished.")
 }
 

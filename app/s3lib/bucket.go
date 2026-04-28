@@ -43,8 +43,12 @@ func (s3client *S3Client) GetBucketVersioning(bucketName string) (status string,
 	if err != nil {
 		return "", "", err
 	}
-	status = *out.Status
-	MFADelete = *out.MFADelete
+	if out.Status != nil {
+		status = *out.Status
+	}
+	if out.MFADelete != nil {
+		MFADelete = *out.MFADelete
+	}
 	return
 }
 

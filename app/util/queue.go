@@ -152,7 +152,7 @@ func (q *Queue) Push(e interface{}) {
 				q.cap *= 2
 			} else {
 				//容量增加2^16
-				q.cap += 2 ^ 16
+				q.cap += 65536
 			}
 			//复制扩容前的元素
 			tmp := make([]interface{}, q.cap, q.cap)

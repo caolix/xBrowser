@@ -22,8 +22,10 @@ func (s3client *S3Client) DownloadObject(ctx aws.Context, w io.WriterAt, task *D
 	params := &GetObjectInput{
 		Bucket:       aws.String(task.Bucket),
 		Key:          aws.String(task.Key),
-		VersionId:    aws.String(task.VersionId),
 		DownloadTask: task,
+	}
+	if task.VersionId != "" {
+		params.VersionId = aws.String(task.VersionId)
 	}
 	return s3client.Downloader.DownloadWithContext(ctx, w, params)
 }
@@ -40,18 +42,22 @@ func (s3client *S3Client) PutObject(bucketName, key string, body io.ReadSeeker) 
 
 func (s3client *S3Client) GetObjectOutPut(bucketName, key string, versionId string) (out *s3.GetObjectOutput, err error) {
 	params := &s3.GetObjectInput{
-		Bucket:    aws.String(bucketName),
-		Key:       aws.String(key),
-		VersionId: aws.String(versionId),
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(key),
+	}
+	if versionId != "" {
+		params.VersionId = aws.String(versionId)
 	}
 	return s3client.Client.GetObject(params)
 }
 
 func (s3client *S3Client) DeleteObject(bucketName, key, versionId string) (err error) {
 	params := &s3.DeleteObjectInput{
-		Bucket:    aws.String(bucketName),
-		Key:       aws.String(key),
-		VersionId: aws.String(versionId),
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(key),
+	}
+	if versionId != "" {
+		params.VersionId = aws.String(versionId)
 	}
 	_, err = s3client.Client.DeleteObject(params)
 	return err
@@ -62,8 +68,10 @@ func (s3client *S3Client) DeleteObjects(bucketName string, keys map[string]strin
 	objects = []*s3.ObjectIdentifier{}
 	for k, v := range keys {
 		object := &s3.ObjectIdentifier{
-			Key:       aws.String(k),
-			VersionId: aws.String(v),
+			Key: aws.String(k),
+		}
+		if v != "" {
+			object.VersionId = aws.String(v)
 		}
 		objects = append(objects, object)
 	}
