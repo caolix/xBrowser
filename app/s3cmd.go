@@ -13,8 +13,8 @@ import (
 	"strings"
 	"sync"
 	"time"
-	. "xBrowser/app/models"
-	"xBrowser/app/util"
+	. "oBrowser/app/models"
+	"oBrowser/app/util"
 )
 
 func (a *App) ListBuckets() ListBucketsResult {

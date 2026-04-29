@@ -8,8 +8,8 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"xBrowser/app/db"
-	. "xBrowser/app/models"
+	"oBrowser/app/db"
+	. "oBrowser/app/models"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"

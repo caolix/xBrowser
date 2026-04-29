@@ -2,7 +2,7 @@ package s3lib
 
 import (
 	"io"
-	. "xBrowser/app/models"
+	. "oBrowser/app/models"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"

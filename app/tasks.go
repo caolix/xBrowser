@@ -9,9 +9,9 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-	"xBrowser/app/db"
-	. "xBrowser/app/models"
-	"xBrowser/app/util"
+	"oBrowser/app/db"
+	. "oBrowser/app/models"
+	"oBrowser/app/util"
 )
 
 const (

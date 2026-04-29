@@ -1,6 +1,6 @@
 package db
 
-import . "xBrowser/app/models"
+import . "oBrowser/app/models"
 
 type DB_TYPE string
 
@@ -10,7 +10,7 @@ const (
 	TYPE_SQLITE = "sqlite"
 )
 
-const DB_NAME = "xbrowser_db"
+const DB_NAME = "obrowser_db"
 
 type AppDB interface {
 	Init(addr string) (err error)

@@ -4,10 +4,10 @@ import (
 	"context"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"time"
-	"xBrowser/app/db"
-	. "xBrowser/app/models"
-	"xBrowser/app/s3lib"
-	"xBrowser/app/util"
+	"oBrowser/app/db"
+	. "oBrowser/app/models"
+	"oBrowser/app/s3lib"
+	"oBrowser/app/util"
 )
 
 func (a *App) Login(l LoginInfo, needSave bool, isHttps bool) string {

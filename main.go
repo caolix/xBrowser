@@ -13,8 +13,8 @@ import (
 	"os"
 	"os/exec"
 	os_runtime "runtime"
-	"xBrowser/app"
-	logger2 "xBrowser/app/logger"
+	"oBrowser/app"
+	logger2 "oBrowser/app/logger"
 )
 
 //go:embed frontend/dist
@@ -51,7 +51,7 @@ func main() {
 	myApp := app.NewApp()
 
 	err := wails.Run(&options.App{
-		Title:              "xBrowser",
+		Title:              "oBrowser",
 		Width:              w * 4 / 5,
 		Height:             h * 4 / 5,
 		MaxWidth:           w,
@@ -78,7 +78,7 @@ func main() {
 			//WebviewIsTransparent: true,
 			//WindowIsTranslucent:  true,
 			About: &mac.AboutInfo{
-				Title:   "xBrowser",
+				Title:   "oBrowser",
 				Message: "A oss browser written by wails.",
 				Icon:    icon,
 			},

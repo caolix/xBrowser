@@ -7,7 +7,7 @@ import (
 	"time"
 
 	_ "github.com/glebarez/go-sqlite"
-	"xBrowser/app/models"
+	"oBrowser/app/models"
 )
 
 type AppSqlite struct {

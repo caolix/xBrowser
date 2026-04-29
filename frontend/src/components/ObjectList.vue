@@ -589,7 +589,7 @@ export default {
 
     const confirmDeleteObjects = () => {
       ElMessageBox.confirm(
-          'xBrowser will permanently delete these files. Continue?',
+          'oBrowser will permanently delete these files. Continue?',
           'Warning',
           {
             confirmButtonText: 'Delete',

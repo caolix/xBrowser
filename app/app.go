@@ -8,11 +8,11 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"os"
 	"path/filepath"
-	"xBrowser/app/db"
-	logger2 "xBrowser/app/logger"
-	. "xBrowser/app/models"
-	"xBrowser/app/s3lib"
-	"xBrowser/app/util"
+	"oBrowser/app/db"
+	logger2 "oBrowser/app/logger"
+	. "oBrowser/app/models"
+	"oBrowser/app/s3lib"
+	"oBrowser/app/util"
 )
 
 // App struct

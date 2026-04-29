@@ -3,8 +3,8 @@ package app
 import (
 	"context"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
-	"xBrowser/app/db"
-	. "xBrowser/app/models"
+	"oBrowser/app/db"
+	. "oBrowser/app/models"
 )
 
 func (a *App) reloadWorkers() {

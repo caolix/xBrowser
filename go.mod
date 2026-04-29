@@ -1,4 +1,4 @@
-module xBrowser
+module oBrowser
 
 go 1.24
 

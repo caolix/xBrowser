@@ -17,7 +17,7 @@ type FileLogger struct {
 
 var logFlags = log.Ldate | log.Ltime | log.Lmicroseconds
 
-const AppName = "xBrowser"
+const AppName = "oBrowser"
 
 var (
 	AppLogDir     string
